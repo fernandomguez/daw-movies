@@ -1,0 +1,32 @@
+# Infraestructura local del proyecto. De momento, solo la base de datos.
+# Los valores ${...} se leen del archivo .env (ver .env.example).
+name: movies
+
+services:
+  mariadb:
+    image: mariadb:12.3
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+    # Juego de caracteres que admite cualquier carácter Unicode (tildes, eñes, emojis)
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_uca1400_ai_ci
+    # "puerto_de_tu_ordenador:puerto_del_contenedor"
+    ports:
+      - "${MARIADB_PORT:-3307}:3306"
+    # Los datos se guardan en un volumen para que sobrevivan al borrado del contenedor
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    # Comprueba periódicamente que MariaDB acepta conexiones y que InnoDB está listo
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  mariadb-data:
