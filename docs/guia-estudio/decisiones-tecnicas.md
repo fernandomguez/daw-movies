@@ -161,3 +161,27 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Contexto:** al ejecutar los tests aparece `Mockito is currently self-attaching ... This will no longer work in future releases of the JDK` y `Dynamic loading of agents will be disallowed by default in a future release`.
 - **Alternativas:** (A) dejarlo por ahora: el test pasa y no usamos Mockito todavía; (B) configurar Mockito como agente Java en el `pom.xml` (plugin de Surefire con `-javaagent`), como indica la documentación de Mockito.
 - **Decisión provisional:** A. Se revisará en la primera fase que use Mockito, o antes si una versión de Java lo convierte en error.
+
+
+## D-32 Spring lee las credenciales de `.env` con `spring.config.import` — ✅ Decidido (fase 7)
+- **Contexto:** las credenciales de MariaDB están en `.env` (no versionado, D-17). Docker Compose lo lee solo; Spring Boot no.
+- **Alternativas:** (A) `spring.config.import: optional:file:.env[.properties]` en `application.yaml`; (B) exportar las variables a mano en cada terminal y en la configuración del IDE; (C) una librería *dotenv*.
+- **Elección:** A. Un único archivo de secretos para Docker y para Spring; funciona igual con `mvnw`, con el IDE y en los tests; no añade dependencias. Una variable de entorno real del sistema tiene prioridad sobre `.env`, así que en otro entorno basta con definir las variables.
+- **Cuidado:** `.env` se lee con formato *properties*. Si un valor se escribe entre comillas, las comillas formarán parte del valor. La ruta es relativa a la carpeta desde la que se arranca la aplicación (la raíz del proyecto).
+
+## D-33 Hibernate escribe la contraseña en el log de arranque — ✅ Decidido por el alumno: A (fase 7)
+- **Contexto:** al conectar, Hibernate escribe con nivel `INFO` (logger `org.hibernate.orm.connections.pooling`, mensaje `HHH10001005: Database info`) la URL que le devuelve el driver de MariaDB, y esa URL incluye `user=...&password=...` en claro. También queda en `target/surefire-reports/*.xml` (ignorado por Git).
+- **Alternativas:** (A) subir ese logger a `WARN` en `application.yaml`: desaparece todo el bloque "Database info" (también la versión y el dialecto, que son útiles); (B) dejarlo: es una contraseña local de desarrollo, pero se filtraría al copiar logs en un foro, un chat o un CI.
+- **Decisión:** A. En `application.yaml`: `logging.level.org.hibernate.orm.connections.pooling: WARN`. Comprobado: 0 líneas con `password=` en la salida y en `target/surefire-reports`; la conexión se sigue viendo en `HikariPool-1 - Added connection`. Se pierde el bloque `Database info` (versión y dialecto); si hace falta verlo, se baja el nivel temporalmente y no se comparte ese log.
+
+
+## D-34 `spring.jpa.hibernate.ddl-auto: validate` — ✅ Decidido (fase 7)
+- **Contexto:** Hibernate puede crear o cambiar tablas a partir de las entidades. El esquema lo gestionará Flyway (fase 8), con migraciones SQL revisadas y versionadas.
+- **Alternativas:** `create`/`create-drop` (borran los datos al arrancar); `update` (cambia tablas sin que nadie lo revise y nunca borra columnas); `none` (no hace nada; es lo que Spring Boot aplica sin decirlo para bases de datos que no están en memoria); `validate`.
+- **Elección:** `validate`. No modifica nada y, desde la fase 11, la aplicación no arrancará si una entidad no encaja con su tabla (columna o tabla que falta, tipo incompatible). Así un error de mapeo aparece al arrancar y no en mitad de una petición.
+- **Comprobado con test:** `DatabaseConnectionTests.hibernateOnlyValidatesTheSchema` (rojo antes de configurarlo: la propiedad `hibernate.hbm2ddl.auto` no existía).
+
+## D-35 Los tests necesitan MariaDB arrancado — ✅ Aceptado (fase 7, provisional hasta la fase 19)
+- **Contexto:** desde la fase 7, `@SpringBootTest` se conecta a la base de datos al arrancar. Si Docker o el contenedor están apagados, todos los tests fallan (`Connection refused`).
+- **Elección provisional:** ejecutar `docker compose up -d` antes de `.\mvnw.cmd test`. Está anotado en `DatabaseConnectionTests` y en el README.
+- **Más adelante:** en la fase 19, Testcontainers arrancará un MariaDB desechable para los tests, sin depender del contenedor de desarrollo.

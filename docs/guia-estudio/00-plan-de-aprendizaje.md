@@ -87,7 +87,7 @@ Depende de: 5.
 | 7.1 Driver JDBC y `DataSource` | Cómo Java habla con una BD | Dependencia `mariadb-java-client` |
 | 7.2 `application.yaml` con variables de entorno | Configuración externa | URL, usuario y contraseña sin escribir secretos |
 | 7.3 Hibernate no toca el esquema | `ddl-auto` | `none`/`validate`, nunca `update` |
-| 7.4 Comprobar la conexión | Logs de arranque | La aplicación arranca conectada |
+| 7.4 Comprobar la conexión | Logs de arranque y un test | La aplicación arranca conectada (comprobado con `DatabaseConnectionTests`) |
 
 Depende de: 4, 6.
 
