@@ -1,6 +1,6 @@
 # 00 — Plan de aprendizaje (hoja de ruta)
 
-> **Estado:** aprobado el 2026-10-19.
+> **Estado:** aprobado el 2026-10-19. Revisado el 2026-10-20: dominio con anotaciones JPA y `@Service` (D-19, D-29); la fase 13 se elimina.
 > **Regla de trabajo:** solo trabajamos en el siguiente paso pendiente. No se avanza sin confirmación explícita.
 
 Leyenda: 🔴 imprescindible · 🟡 recomendable · ⚪ opcional
@@ -119,7 +119,7 @@ Depende de: 8.
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 10.1 Modelo anémico vs. rico | Datos frente a datos + comportamiento | Elección justificada para nuestro problema |
-| 10.2 Clases de dominio en Java puro | Sin Spring ni JPA | `Movie`, `Director`, `Actor` |
+| 10.2 Clases de dominio en Java | Diseñarlas pensando en el negocio (las anotaciones JPA se añaden en la fase 11, D-29) | `Movie`, `Director`, `Actor` |
 | 10.3 Representar relaciones en Java | Referencias y colecciones, dirección de la relación | `Movie` conoce a su `Director` y sus `Actor` |
 | 10.4 Reglas del dominio con TDD | Test primero | Tests unitarios de las reglas que existan |
 
@@ -131,10 +131,10 @@ Punto de partida: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.m
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 11.1 Qué es JPA y qué es Hibernate | ORM, especificación vs. implementación | Explicación |
-| 11.2 Entidad JPA ≠ objeto de dominio | Responsabilidades distintas | Justificación |
-| 11.3 Entidades simples | `@Entity`, `@Table`, `@Id`, `@Column` | `DirectorEntity`, `ActorEntity` |
-| 11.4 `@ManyToOne` | Relación 1:N desde el lado "muchos" | `MovieEntity.director` |
-| 11.5 `@ManyToMany` + `@JoinTable` | Tabla intermedia en JPA | `MovieEntity.actors` |
+| 11.2 JPA en las clases del dominio (D-29) | Qué impone JPA (constructor vacío, campos no `final`) y qué ganamos (sin entidad aparte ni mapper) | Justificación; comparación con la entidad separada |
+| 11.3 Entidades simples | `@Entity`, `@Table`, `@Id`, `@Column` | `Director` y `Actor` anotadas |
+| 11.4 `@ManyToOne` | Relación 1:N desde el lado "muchos" | `Movie.director` |
+| 11.5 `@ManyToMany` + `@JoinTable` | Tabla intermedia en JPA | `Movie.actors` |
 | 11.6 `FetchType` | Carga perezosa (`LAZY`) vs. ansiosa (`EAGER`) | Elección justificada |
 
 Depende de: 8, 10.
@@ -143,22 +143,15 @@ Depende de: 8, 10.
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 12.1 DAO frente a Repositorio | Acceso a datos pensado desde la tabla vs. desde el dominio | Elección justificada (avance en [temario/05](temario/05-arquitectura-tres-capas-dip.md), sección 10) |
-| 12.2 Interfaz de repositorio en el dominio (puerto) | DIP aplicado | `MovieRepository` sin dependencias de Spring |
-| 12.3 Repositorio Spring Data JPA | `JpaRepository` | `MovieJpaRepository` en persistencia |
-| 12.4 Adaptador | Implementa el puerto usando Spring Data | `MovieRepositoryAdapter` |
-| 12.5 Inyección de dependencias | Cómo Spring une las piezas | El dominio recibe la implementación sin conocerla |
+| 12.2 Interfaz de repositorio en el dominio (puerto) | DIP aplicado | `MovieRepository` sin dependencias de Spring Data |
+| 12.3 Repositorio Spring Data JPA | `JpaRepository` | `MovieJpaRepository extends JpaRepository<Movie, Long>` en persistencia |
+| 12.4 Adaptador | Implementa el puerto delegando en Spring Data (sin mapper, D-29) | `MovieRepositoryAdapter` |
+| 12.5 Inyección de dependencias | `@Service`, `@Component` e inyección por constructor (D-19) | El servicio recibe la implementación sin conocerla |
 
 Depende de: 11.
 
-### Fase 13 🔴 Mapeos entre persistencia y dominio
-| Paso | Concepto | Resultado esperado |
-|---|---|---|
-| 13.1 Mapeo simple | `DirectorEntity` → `Director` | Mapper manual + test |
-| 13.2 Mapeo con relación 1:N | `MovieEntity` → `Movie` con su director | Mapper que reutiliza otro mapper |
-| 13.3 Mapeo con N:M | Colección de actores | Lista de `Actor` en `Movie` |
-| 13.4 Mapeo inverso | Dominio → entidad (para guardar) | Qué se copia, qué se calcula, qué se omite |
-
-Depende de: 12.
+### ~~Fase 13 Mapeos entre persistencia y dominio~~ — Eliminada (D-29, 2026-10-20)
+Con las anotaciones JPA en las clases del dominio ya no existen `MovieEntity` ni `MovieEntityMapper`, así que no hay nada que mapear entre persistencia y dominio. Los conceptos de mapeo (campos copiados, calculados y omitidos) se estudian en la fase 15 con el mapper dominio → DTO. La comparación con la entidad separada se ve en el paso 11.2.
 
 ### Fase 14 🔴 Consultas de información relacionada y problemas habituales
 | Paso | Concepto | Resultado esperado |
@@ -169,7 +162,7 @@ Depende de: 12.
 | 14.4 `LazyInitializationException` | Sesión cerrada | Entender el error |
 | 14.5 Referencias circulares | Relaciones bidireccionales y serialización | Por qué evitamos la bidireccionalidad innecesaria |
 
-Depende de: 13.
+Depende de: 12.
 
 ## Bloque D — API como herramienta de aprendizaje
 
@@ -178,9 +171,9 @@ Depende de: 13.
 |---|---|---|
 | 15.1 Qué es un DTO y cuándo compensa | Ventajas y coste | Decisión documentada |
 | 15.2 DTO de salida con `record` | Inmutabilidad | `MovieResponse` |
-| 15.3 Mapper dominio → DTO | Campos copiados, calculados (p. ej., nombre completo) y omitidos | Recorrido completo MariaDB → entidad → dominio → DTO |
+| 15.3 Mapper dominio → DTO | Campos copiados, calculados (p. ej., nombre completo) y omitidos | Recorrido completo MariaDB → `Movie` (dominio con JPA) → DTO |
 
-Depende de: 13.
+Depende de: 12.
 
 ### Fase 16 🔴 Servicio y controladores REST de lectura
 | Paso | Concepto | Resultado esperado |
@@ -196,7 +189,7 @@ Depende de: 15.
 |---|---|---|
 | 17.1 DTO de entrada | Diferencia con el de salida | `CreateMovieRequest` |
 | 17.2 Recorrido inverso | DTO → dominio → entidad → fila | `POST /movies` |
-| 17.3 Transacciones | Atomicidad: todo o nada | `@Transactional` sin ensuciar el dominio |
+| 17.3 Transacciones | Atomicidad: todo o nada | `@Transactional` en el servicio |
 
 Depende de: 16.
 
@@ -219,12 +212,12 @@ Depende de: 16 (17 recomendable).
 | 19.2 Pruebas de persistencia | MariaDB real en contenedor (Testcontainers) | Tests del adaptador y las consultas |
 | 19.3 Pruebas del controlador | Petición HTTP simulada | Tests de la API |
 
-Depende de: 13 (y 16 para 19.3). Las pruebas unitarias se hacen desde la fase 6.
+Depende de: 12 (y 16 para 19.3). Las pruebas unitarias se hacen desde la fase 6.
 
 ### Fase 20 🔴 Revisión de arquitectura y documentación final
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
-| 20.1 Comprobar dependencias entre paquetes | El dominio no importa nada de Spring/JPA | Revisión hecha |
+| 20.1 Comprobar dependencias entre paquetes | El dominio solo importa JPA (`jakarta.persistence`) y anotaciones de Spring permitidas (`@Service`, `@Transactional`); nunca web, Spring Data, Jackson ni `persistence`/`controller` | Revisión hecha |
 | 20.2 Revisar la guía | Coherencia con el código real | Guía actualizada |
 | 20.3 README del proyecto | Cómo arrancarlo desde cero | Instrucciones verificadas |
 
@@ -232,7 +225,7 @@ Depende de: todas las anteriores que hayamos hecho.
 
 ### Fases opcionales ⚪
 - **21. Contenerizar la aplicación** (`Dockerfile` + servicio `app` en Compose). Depende de: 20.
-- **22. MapStruct**, solo si los mapeos manuales se vuelven repetitivos y lo justificamos. Depende de: 13 y 15.
+- **22. MapStruct**, solo si los mapeos manuales se vuelven repetitivos y lo justificamos. Depende de: 15.
 - **23. Ampliar la relación película–actor con datos propios** (por ejemplo, el nombre del personaje). Convierte la tabla intermedia en una entidad con identidad. Depende de: 14.
 - **24. Seguridad con Spring Security y JWT.** Login, token JWT que el cliente envía en cada petición y rutas protegidas (por ejemplo, solo usuarios autenticados pueden crear películas). Necesita una tabla de usuarios (migración Flyway) y contraseñas cifradas. Depende de: 18.
 
@@ -244,7 +237,7 @@ Depende de: todas las anteriores que hayamos hecho.
                            │
                10 (necesita 3 y 5)
                            ↓
-                  11 → 12 → 13 → 14
+                  11 → 12 → 14
                               ↓
                        15 → 16 → 17 → 18
                               ↓

@@ -8,5 +8,6 @@ Proyecto educativo guiado (estudiante de 2.º de DAW). Prioridad: que el alumno 
 4. Antes de modificar archivos, explica el objetivo y los cambios. No inventes resultados de comandos.
 5. Documenta cada fase mientras se hace: archivo de la fase (`docs/guia-estudio/NN-*.md`), tema del temario (`docs/guia-estudio/temario/NN-*.md`), `decisiones-tecnicas.md` y `glosario.md`.
 6. Al terminar cada paso: qué se ha conseguido, archivos, conceptos, qué recordar, qué se ha documentado y siguiente paso (sin ejecutarlo).
+7. En cada cambio de fase, actualiza también el [README.md](README.md) de la raíz (progreso, decisiones, errores) y `decisiones-tecnicas.md`. Después **pregunta** si se hace commit y push a GitHub (`origin`); nunca sin confirmación. **Un único commit por fase** (`tipo(fase-NN): ...`) + etiqueta anotada `fase-NN` + `git push` y `git push origin fase-NN`; sin commits intermedios (D-30).
 
 Entorno: MariaDB 12.3 en Docker (`docker compose up -d`) en `localhost:3307`; el 3306 lo usa un MariaDB instalado en Windows.

@@ -1,0 +1,6 @@
+# Finales de línea: el repositorio guarda siempre LF, sea cual sea el sistema operativo
+* text=auto eol=lf
+
+# Los scripts de Windows necesitan CRLF para funcionar
+*.cmd text eol=crlf
+*.bat text eol=crlf

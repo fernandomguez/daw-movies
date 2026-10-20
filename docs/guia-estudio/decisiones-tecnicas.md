@@ -89,13 +89,14 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 
 ## D-18 Paquetes organizados por capa — ✅ Decidido (fase 5)
 - **Alternativas:** por capa (`controller`, `domain`, `persistence`); por funcionalidad (`movie`, `director`, `actor`).
-- **Decisión:** por capa, más `config/` para el ensamblaje.
+- **Decisión:** por capa, más `config/` para el ensamblaje. (Revisado con D-19: `config/` solo se creará si hace falta otra configuración.)
 - **Motivo:** el objetivo es aprender las capas, y con tres entidades la organización por capa es clara. Los paquetes se crean cuando se necesitan.
 
-## D-19 Dominio sin anotaciones de Spring — ⏳ Pendiente de confirmar (se aplica en la fase 12)
+## D-19 Servicios del dominio con `@Service` — ✅ Decidido por el alumno (2026-10-20, se aplica en la fase 12)
 - **Alternativas:** (A) dominio puro y una clase `@Configuration` en `config/` que crea sus objetos con `@Bean`; (B) permitir `@Service` en los servicios del dominio.
-- **Recomendación:** A. Cumple la regla "el dominio no depende de Spring" y hace visible la inyección de dependencias.
-- **Relacionado:** dónde colocar `@Transactional` se decide en la fase 17.
+- **Recomendación inicial:** A (dominio sin Spring, inyección visible).
+- **Decisión:** B. Es la forma habitual, la que se usa en clase, y más sencilla: Spring detecta el servicio solo. `config/` deja de ser necesario para los servicios (se creará solo si hace falta otra configuración).
+- **Consecuencia:** el dominio depende de las anotaciones de Spring `@Service` (y en la fase 17, probablemente `@Transactional`). Sigue sin depender de Spring Web, Spring Data ni Jackson.
 
 ## D-20 Repositorio (puerto + adaptador) en lugar de DAO — ✅ Decidido (consecuencia de D-18 y de la DIP, fase 5)
 - **Alternativas:** (A) Repositorio: interfaz definida por el dominio (`MovieRepository`) e implementada por un adaptador con Spring Data; (B) DAO: interfaz en la persistencia (`MovieDao` + `MovieDaoImpl`) que usa directamente el servicio.
@@ -112,3 +113,51 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 
 ## D-23 Seguridad con JWT — ✅ Añadida al plan como fase opcional 24
 - **Motivo:** el alumno lo verá en clase. Va al final porque necesita la API terminada (depende de la fase 18).
+
+## D-24 Finales de línea con `.gitattributes` — ✅ Decidido (fase 6)
+- **Alternativas:** (A) `.gitattributes` en el repositorio; (B) `core.autocrlf` en la configuración de cada ordenador.
+- **Decisión:** A, con `* text=auto eol=lf` y CRLF solo para `*.cmd` y `*.bat`. Viaja con el proyecto y no depende de cómo tenga configurado Git cada persona (en este equipo, `core.autocrlf = true` venía del instalador de Git para Windows, a nivel de sistema; `.gitattributes` tiene prioridad sobre ese ajuste).
+
+## D-25 Paquete base `com.daw.movies` — ✅ Decidido por el alumno (fase 6)
+- Se usará como `groupId` (`com.daw`) + `artifactId` (`movies`) en el paso 6.2, y como raíz de las carpetas de `src/main/java`.
+- Repositorio remoto: `git@github.com:fernandomguez/daw-movies.git`.
+
+## D-26 Cada dependencia se añade en la fase que la necesita — ✅ Decidido (fase 6)
+- **Alternativas:** (A) marcar todas las dependencias en Initializr desde el principio; (B) empezar con `spring-boot-starter` + `spring-boot-starter-test` y añadir cada una en su fase.
+- **Decisión:** B.
+- **Motivo:** Spring Boot se autoconfigura según las dependencias presentes: JPA sin base de datos configurada impide arrancar, y Spring Web levanta un servidor que aún no usamos. Añadirlas una a una permite ver qué aporta cada una. Lista completa y nombres reales de Boot 4.1.1: [temario/06, sección 6](temario/06-proyecto-spring-boot-y-git.md).
+
+## D-27 Dependencias descartadas — ✅ Decidido (fase 6, revisable)
+| Dependencia | Motivo |
+|---|---|
+| Lombok | Oculta el código que queremos aprender; para DTOs usaremos `record` |
+| DevTools | Comodidad, no aprendizaje; se puede añadir si molesta reiniciar a mano |
+| Docker Compose Support | Configuraría la conexión sola, justo lo que se aprende en la fase 7 |
+| H2 | Su SQL no es el de MariaDB; los tests de integración usarán MariaDB real (Testcontainers, fase 19) |
+| Actuator, REST Docs / OpenAPI | Fuera del alcance actual |
+
+## D-28 Proyecto generado con Initializr y revisado antes de copiarlo — ✅ Decidido (fase 6)
+- Se generó en una carpeta temporal y se copiaron `pom.xml`, Maven Wrapper y `src/`. No se copiaron `HELP.md`, `.gitignore` ni `.gitattributes` (se fusionaron con los nuestros). Se quitaron del `pom.xml` las etiquetas vacías (`<url/>`, `<licenses>`, `<developers>`, `<scm>`).
+- Se usa el **Maven Wrapper** (`mvnw.cmd`, Maven 3.10.0): no hace falta instalar Maven y todos usan la misma versión.
+
+## D-29 Anotaciones JPA en las clases del dominio (sin entidad separada) — ✅ Decidido por el alumno (2026-10-20)
+- **Contexto:** el diseño de la fase 5 separaba `Movie` (dominio en Java puro), `MovieEntity` (JPA) y `MovieResponse` (DTO), con dos mappers.
+- **Alternativas:** (A) dominio en Java puro + entidad JPA separada; (B) anotaciones `jakarta.persistence` (`@Entity`, `@Id`, `@ManyToOne`...) en `Movie`, `Director` y `Actor`; (C) además, Bean Validation (`jakarta.validation`) en el dominio.
+- **Decisión:** B. Bean Validation queda en los DTOs de entrada (fase 18): en el dominio no valida nada por sí sola, y las reglas se comprueban en el constructor.
+- **Motivo:** menos código (desaparecen `MovieEntity` y `MovieEntityMapper`), estructura parecida a la de clase y el dominio sigue sin depender de Spring Data. JPA es una especificación estándar (Jakarta EE), no Spring.
+- **Coste aceptado:** JPA impone condiciones a las clases del dominio (constructor sin argumentos, campos no `final`) y la clase de negocio refleja la tabla; un cambio en la tabla puede obligar a tocarla. Ya no hay frontera "entidad ↔ dominio".
+- **Se mantiene:** el puerto `MovieRepository` y su adaptador (D-20), que ahora solo delega en Spring Data sin mapear; los DTOs y el mapper dominio ↔ DTO (la API no expone las entidades).
+- **Impacto en el plan:** fase 10 diseña las clases pensando en el negocio; fase 11 les añade las anotaciones; **la fase 13 (mapeos persistencia ↔ dominio) se elimina**.
+- **Documentación:** [temario/05](temario/05-arquitectura-tres-capas-dip.md) describe el diseño estricto de la fase 5 (sigue siendo válido como referencia) y, en la sección "Cambio de diseño", lo que cambia con esta decisión.
+
+## D-30 Un commit y una etiqueta por fase — ✅ Decidido por el alumno (2026-10-20)
+- **Objetivo:** poder recorrer el proyecto fase a fase (`git checkout fase-07`) y ver cómo crece.
+- **Forma de trabajo:** sin commits intermedios. Al cerrar cada fase se actualizan los documentos, se pregunta al alumno y se hace **un único commit** con el mensaje `tipo(fase-NN): ...`, una **etiqueta anotada** `fase-NN` y el push (`git push` + `git push origin fase-NN`).
+- **Historial anterior:** los 5 commits hechos durante la fase 6 se **reescribieron**. Las fases 1–5 se hicieron antes de que existiera Git, así que quedan en un único commit (etiqueta `fase-05`), reconstruido a partir del primer commit sin lo que añadió el paso 6.1. La fase 6 irá en un solo commit al terminar el paso 6.5. Hizo falta `git push --force-with-lease`. Antes se guardó una copia en la rama local `backup/historial-original`.
+- **Alternativa descartada:** rama por fase con commits pequeños y `git merge --squash` al cerrarla. Más segura en fases largas, pero innecesaria con fases cortas.
+
+
+## D-31 Aviso de Mockito "self-attaching" con Java 25 — ⏳ Pendiente (cuando usemos Mockito)
+- **Contexto:** al ejecutar los tests aparece `Mockito is currently self-attaching ... This will no longer work in future releases of the JDK` y `Dynamic loading of agents will be disallowed by default in a future release`.
+- **Alternativas:** (A) dejarlo por ahora: el test pasa y no usamos Mockito todavía; (B) configurar Mockito como agente Java en el `pom.xml` (plugin de Surefire con `-javaagent`), como indica la documentación de Mockito.
+- **Decisión provisional:** A. Se revisará en la primera fase que use Mockito, o antes si una versión de Java lo convierte en error.
