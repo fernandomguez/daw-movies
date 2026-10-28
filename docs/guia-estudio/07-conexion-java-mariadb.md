@@ -2,6 +2,17 @@
 
 > Estado: **completada** (2026-10-20). Conceptos: [temario/07-conexion-jdbc-datasource.md](temario/07-conexion-jdbc-datasource.md).
 
+## En pocas palabras
+
+> Este archivo es el **diario** de la fase: comandos y salidas reales. Para **entender** los conceptos, lee primero el [tema 07](temario/07-conexion-jdbc-datasource.md), que tiene también las preguntas de repaso.
+
+1. **7.1** Añadimos las librerías para trabajar con bases de datos y el driver de MariaDB. El test se puso en **rojo a propósito**: Spring intentaba conectar y no sabía a dónde.
+2. **7.2** Escribimos en `application.yaml` a dónde conectar. El usuario y la contraseña se leen de `.env`, así que no están en el código. De paso descubrimos que Hibernate escribía la contraseña en el log, y lo tapamos.
+3. **7.3** Configuramos Hibernate para que **no toque las tablas** (`ddl-auto: validate`); eso será trabajo de Flyway. Con TDD: primero el test en rojo, después el ajuste y verde.
+4. **7.4** Un test comprueba que la conexión es a MariaDB, a la base de datos `movies` y con el usuario `movies_app`. Lo hicimos fallar a propósito con una contraseña falsa, para asegurarnos de que comprueba de verdad.
+
+Resultado final: **3 tests en verde**. Desde ahora, **MariaDB tiene que estar encendido** para pasar los tests.
+
 ## Objetivo
 
 Que la aplicación Spring Boot arranque **conectada** a la base de datos MariaDB que corre en Docker (`localhost:3307`), sin escribir secretos en el código y sin que Hibernate modifique el esquema.
@@ -19,7 +30,7 @@ Que la aplicación Spring Boot arranque **conectada** a la base de datos MariaDB
 
 ### Qué se ha cambiado
 
-`pom.xml`: tres dependencias nuevas, las previstas para la fase 7 en el [temario 06, sección 6](temario/06-proyecto-spring-boot-y-git.md#6-dependencias-cuáles-y-por-qué) (D-26).
+`pom.xml`: tres dependencias nuevas, las previstas para la fase 7 en el [temario 06, «Referencia: plan de dependencias»](temario/06-proyecto-spring-boot-y-git.md#referencia-plan-de-dependencias) (D-26).
 
 ```xml
 <dependency>

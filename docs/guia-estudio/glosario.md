@@ -118,11 +118,11 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Repositorio (patrón)**: interfaz pensada desde el dominio que se comporta como una colección de objetos de negocio (`save(Movie)`, `findByDirector`). La define el dominio (es un puerto) y la implementa la persistencia. No confundir con un repositorio Git. Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), sección 10.
 
-**Restricción (*constraint*)**: regla que la base de datos comprueba siempre: `PRIMARY KEY`, `NOT NULL`, `FOREIGN KEY`, `CHECK`, `UNIQUE`.
+**Restricción (*constraint*)**: regla que la base de datos comprueba siempre: `PRIMARY KEY`, `NOT NULL`, `FOREIGN KEY`, `CHECK`, `UNIQUE`. En MySQL/MariaDB, la clave primaria se llama siempre `PRIMARY` (su nombre propio se ignora, aviso 1280); las `FOREIGN KEY` y los `CHECK` sí conservan el nombre y lo muestran en los errores.
 
 **Servicio (caso de uso)**: clase del dominio que coordina una operación de la aplicación y aplica sus reglas. Ejemplo: `MovieService.findById`.
 
-**`@SpringBootApplication`**: anotación de la clase de arranque. Agrupa `@SpringBootConfiguration`, `@EnableAutoConfiguration` y `@ComponentScan`. Ver [temario/06](temario/06-proyecto-spring-boot-y-git.md), sección 7.
+**`@SpringBootApplication`**: anotación de la clase de arranque. Agrupa `@SpringBootConfiguration`, `@EnableAutoConfiguration` y `@ComponentScan`. Ver [temario/06](temario/06-proyecto-spring-boot-y-git.md), sección 6.
 
 **Autoconfiguración**: Spring Boot se configura solo según las dependencias que encuentra (por ejemplo, con el driver de MariaDB y JPA intenta crear la conexión).
 
@@ -168,7 +168,7 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Error frente a fallo (JUnit)**: un *failure* es una aserción que no se cumple; un *error* es una excepción inesperada (por ejemplo, que el contexto de Spring no pueda arrancar).
 
-**Dialecto (Hibernate)**: clase que conoce las particularidades del SQL de una base de datos concreta. Hibernate lo elige solo al conectar (`MariaDBDialect`). Ver [temario/07](temario/07-conexion-jdbc-datasource.md), sección 8.
+**Dialecto (Hibernate)**: clase que conoce las particularidades del SQL de una base de datos concreta. Hibernate lo elige solo al conectar (`MariaDBDialect`). Ver [temario/07](temario/07-conexion-jdbc-datasource.md), sección 7.
 
 **`spring.config.import`**: propiedad que añade otros archivos de configuración. La usamos para leer `.env`: `optional:file:.env[.properties]` (D-32).
 
@@ -186,4 +186,32 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **try-with-resources**: `try (Recurso r = ...) { }`. Java cierra el recurso al salir del bloque, aunque haya una excepción. Con un pool, cerrar una conexión significa devolverla.
 
+**`flyway_schema_history`**: tabla de control que crea Flyway en nuestra base de datos. Apunta qué migraciones se han aplicado, cuándo y con qué checksum. Ver [temario/08](temario/08-migraciones-flyway.md).
+
+**Checksum**: número calculado a partir del contenido de un archivo. Si el archivo cambia, el número cambia. Flyway lo usa para detectar migraciones editadas después de aplicarse.
+
+**Migración pendiente**: migración que está en la carpeta `db/migration` pero todavía no aparece en `flyway_schema_history`. Flyway la ejecuta al arrancar.
+
+**Autoconfiguración (*auto-configuration*)**: mecanismo de Spring Boot por el que, al encontrar una librería en el *classpath*, la configura solo. Es lo que hace que baste con añadir `spring-boot-starter-flyway` para que Flyway se ejecute sin escribir código.
+
+**`db/migration` (locations)**: carpeta por defecto donde Flyway busca los `.sql` (`src/main/resources/db/migration`, en el `classpath`). Se cambia con `spring.flyway.locations`.
+
 **Uno a muchos (1:N)**: un elemento de un lado se relaciona con varios del otro, pero cada uno de esos solo con uno. Director–película.
+
+**API REST**: forma de ofrecer los datos de una aplicación a otros programas por HTTP. Cada cosa (película, director) es un **recurso** con su URL, y lo que se hace con ella lo dice el método (`GET`, `POST`, `PUT`, `DELETE`). Ver [temario/08-diseno-de-endpoints](temario/08-diseno-de-endpoints.md).
+
+**Endpoint**: cada operación que ofrece la API: un método HTTP más una URL. Ejemplo: `GET /movies/3` = leer la película 3.
+
+**Recurso (REST)**: cosa a la que se accede con una URL, nombrada con un sustantivo en plural: `/movies`, `/directors/1`.
+
+**Frontend / backend**: el frontend es lo que ve el usuario (una web o una app) y pinta las pantallas; el backend es este proyecto: guarda los datos y los entrega por la API. El back devuelve datos y códigos; el front decide cómo mostrarlos.
+
+**JSON**: formato de texto para enviar datos entre programas: `{ "id": 1, "title": "The Prestige" }`. Es lo que devolverá nuestra API.
+
+**Código de estado HTTP**: número que acompaña a cada respuesta y dice cómo ha ido. `200` = bien; `400` = petición mal hecha; `404` = no existe. Los 4xx son errores de quien pide; los 5xx, del servidor.
+
+**Problem Details**: formato estándar (RFC 9457) para el cuerpo de una respuesta de error, con campos como `status`, `title` y `detail`. Spring lo trae incorporado.
+
+**Contrato de la API**: la forma acordada de peticiones y respuestas. Quien usa la API depende de ella, así que no se cambia a la ligera. Por eso los actores se devuelven con su `id` aunque hoy solo se muestre el nombre (D-36).
+
+**`TEXT` (MariaDB)**: tipo de columna para texto largo, sin el límite pequeño de `VARCHAR(n)`. Lo usa `biography` (D-37).
