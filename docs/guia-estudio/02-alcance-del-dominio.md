@@ -19,6 +19,8 @@ Dejar cerrado, **con palabras y sin código**, qué vamos a guardar y con qué d
 
 Datos reales y públicamente conocidos. Usamos el **título original** de cada película. Las duraciones son las de la versión de cines más citada; algunas fuentes pueden diferir en un minuto.
 
+Estos datos se cargan en la base de desarrollo con `src/main/resources/db/testdata/seed.sql` (fase 9, [D-42](decisiones-tecnicas.md)).
+
 ### Directores (5)
 
 | Nombre | Apellidos | Fecha de nacimiento |
@@ -98,7 +100,7 @@ No incluimos todo el reparto de cada película: solo lo necesario para comprobar
 
 - **The Matrix**: la dirigieron dos personas (Lana y Lilly Wachowski). Con "un director principal" tendríamos que falsear el dato.
 - **Tarantino como actor en Pulp Fiction**: lo usaremos en la fase 3 para razonar si director y actor deberían ser una sola entidad.
-- **Un director sin películas**: no está en los datos iniciales. Lo añadiremos en la fase 9 para practicar `LEFT JOIN`.
+- **Un director sin películas**: los datos iniciales no incluían ninguno. En la fase 9 se añadió **Sofia Coppola** (1971-05-14) solo a la semilla, para practicar `LEFT JOIN` ([D-43](decisiones-tecnicas.md)).
 
 ## Decisiones de esta fase
 

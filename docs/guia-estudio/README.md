@@ -31,6 +31,7 @@ Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el pr
 | 07 | [Conexión con la base de datos: JDBC, driver y `DataSource`](temario/07-conexion-jdbc-datasource.md) | Completo |
 | 08 | [Diseño de los endpoints antes de crear las tablas](temario/08-diseno-de-endpoints.md) | Completo (paso 8.2) |
 | 08 | [Migraciones del esquema con Flyway](temario/08-migraciones-flyway.md) | Completo (incluye cómo se activa en Spring Boot) |
+| 09 | [Datos de prueba, `INSERT` y consultas con `JOIN`](temario/09-datos-de-prueba-y-consultas.md) | Completo |
 | 11 | [Introducción a JPA](temario/11-introduccion-jpa.md) | Introducción conceptual, adaptada a D-29 (se ampliará en la fase 11) |
 
 Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conceptos, por qué los necesitamos, archivos implicados, código explicado, recorrido de los datos, comandos y comprobaciones, errores y soluciones, decisiones, resumen y preguntas de repaso.
@@ -47,6 +48,7 @@ Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conce
 | 6. Creación del proyecto Spring Boot | ✅ Completada | [06-creacion-proyecto-spring-boot.md](06-creacion-proyecto-spring-boot.md) |
 | 7. Conexión entre Java y MariaDB | ✅ Completada | [07-conexion-java-mariadb.md](07-conexion-java-mariadb.md) |
 | 8. Flyway: migraciones del esquema | ✅ Completada (6 de 6 pasos; pendiente el commit) | [08-flyway-migraciones.md](08-flyway-migraciones.md) |
-| 9 a 20 | Pendientes (la 13 se eliminó, D-29) | Ver el [plan](00-plan-de-aprendizaje.md) |
+| 9. Datos de prueba y comprobación de relaciones | ✅ Completada (5 de 5 pasos; pendiente el commit) | [09-datos-de-prueba.md](09-datos-de-prueba.md) |
+| 10 a 20 | Pendientes (la 13 se eliminó, D-29) | Ver el [plan](00-plan-de-aprendizaje.md) |
 
 > Normas del proyecto: [base-standards.md](../../base-standards.md). Código en inglés; documentación y comentarios en español.

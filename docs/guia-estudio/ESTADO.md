@@ -10,28 +10,20 @@
 
 | Dato | Valor |
 |---|---|
-| Fase del plan | **8 — Flyway: migraciones del esquema → COMPLETA** (6 de 6 pasos). Pendiente solo el commit de la fase |
-| Paso en curso | **ninguno**: el siguiente es la **fase 9, paso 9.1** (datos de prueba), tras el commit de la fase 8 |
-| Último paso terminado | 8.6 — checksum: se rompió a propósito una migración, se leyó el error y se revirtió |
-| Último commit | `ccbf5b7` — `feat(fase-07): connect Spring Boot to MariaDB with JPA and connection tests` |
-| Etiqueta más reciente | `fase-07` |
-| Tests | **4 en verde** (2 conexión + 1 Flyway + 1 contexto) |
-| Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director`, `actor`, `movie`, `movie_actor` |
-| Cambios sin commitear | sí: `pom.xml`, test de Flyway, `V1`–`V4` y documentación (ver §5) |
+| Fase del plan | **9 — Datos de prueba y comprobación de relaciones → COMPLETA** (5 de 5 pasos). Pendiente solo el commit de la fase |
+| Paso en curso | **ninguno**: el siguiente es la **fase 10, paso 10.1** (modelo de dominio: anémico frente a rico), tras el commit de la fase 9 |
+| Último paso terminado | 9.5 — `LEFT JOIN` y agregados (Sofia Coppola sin películas, `COUNT`/`AVG`, `HAVING`) |
+| Último commit | **`3e38972`** — `feat(fase-08): create schema with Flyway migrations` |
+| Etiqueta más reciente | **`fase-08`** (anotada y subida a `origin`) |
+| Tests | **4 en verde** (2 conexión + 1 Flyway + 1 contexto); la fase 9 es SQL y no añadió tests |
+| Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
+| Cambios sin commitear | los de la fase 9 (ver §5) |
 
 ### La siguiente acción, exacta
 
-La fase 8 está terminada: **lo que toca es el commit único de la fase**, con permiso del alumno (D-30):
+La **fase 9 está terminada** (pasos 9.1 a 9.5). Lo que toca es su **commit único** (D-30), con permiso del alumno, y después la **fase 10, paso 10.1**: decidir si el modelo de dominio es **anémico** (solo datos, la lógica fuera) o **rico** (datos + reglas) y justificarlo para este problema. En el 10.2 se escribirán `Movie`, `Director` y `Actor` **en Java puro**; las anotaciones JPA llegan en la fase 11 (D-29).
 
-```powershell
-git add -A
-git commit -m "feat(fase-08): create schema with Flyway migrations"
-git tag -a fase-08 -m "Fase 8: esquema creado con migraciones Flyway"
-git push
-git push origin fase-08
-```
-
-Después, **fase 9, paso 9.1**: decidir dónde viven los datos de prueba (migraciones nuevas solo para desarrollo, o un archivo aparte) y cargar los 5 directores, 10 películas y 14 actores de la [fase 2](02-alcance-del-dominio.md).
+Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` (los tests de integración lo necesitan; los unitarios de dominio, no). Los datos de prueba ya están cargados; si la base se recrea (`docker compose down -v`), hay que volver a cargarlos con la receta del [diario 09](09-datos-de-prueba.md#cómo-se-recarga-desde-cero).
 
 ---
 
@@ -71,6 +63,8 @@ Después, **fase 9, paso 9.1**: decidir dónde viven los datos de prueba (migrac
 | `ERROR 1142 ... SELECT command denied ... 'mysql'.'user'` | `movies_app` sin permiso sobre la tabla de usuarios: mínimo privilegio (D-17) | Usar `root` si hace falta |
 | `DB: Name 'pk_director' ignored for PRIMARY key. (Error Code: 1280)` | MariaDB no admite nombre para la clave primaria: se llama siempre `PRIMARY` | Ninguna; sale una vez por tabla con PK nombrada (`V1`–`V4`). D-41 |
 | `Validate failed: Migrations have failed validation / Migration checksum mismatch for migration version N` | Se ha editado una migración ya aplicada | Revertir el archivo a su contenido original. `flyway repair` reescribe el checksum y **oculta** el problema: no usarlo |
+| `NativeCommandError` + `CategoryInfo : NotSpecified` al ejecutar SQL que falla | PowerShell trata la salida de error de `mariadb` como un error propio | Ruido de PowerShell: la línea que importa es la de MariaDB (`ERROR 1452`, `ERROR 4025`...) |
+| `ERROR 1062 ... Duplicate entry '1' for key 'PRIMARY'` al cargar `seed.sql` | El script solo inserta y los datos ya están | Vaciar las tablas en orden inverso y reiniciar los `AUTO_INCREMENT` (receta del [diario 09](09-datos-de-prueba.md#cómo-se-recarga-desde-cero)) |
 
 ### Trampas de PowerShell (nos costaron un archivo roto)
 
@@ -172,36 +166,61 @@ Después, **fase 9, paso 9.1**: decidir dónde viven los datos de prueba (migrac
 5. `.\mvnw.cmd test` → `Successfully validated 4 migrations`, `Schema movies is up to date. No migration necessary.`, 4 tests en verde.
 6. Documentado: sección 8.6 del [diario](08-flyway-migraciones.md) (con el incidente de PowerShell), filas nuevas en las trampas conocidas de este archivo y en los errores del `README.md`.
 
-**Siguiente:** commit único de la fase 8 + etiqueta `fase-08` (con permiso), y después fase 9, paso 9.1.
+**Siguiente:** fase 9, paso 9.1 (cerrada la fase 8: commit `3e38972`, etiqueta `fase-08` subida).
+
+### 2026-10-28 (quinta parte) — cierre de la fase 8
+
+```
+git add -A
+git commit -m "feat(fase-08): create schema with Flyway migrations"
+# [main 3e38972] 23 files changed, 2144 insertions(+), 341 deletions(-)
+git tag -a fase-08 -m "Fase 8: esquema creado con migraciones Flyway"
+git push          # ccbf5b7..3e38972  main -> main
+git push origin fase-08   # [new tag] fase-08 -> fase-08
+```
+
+Un único commit para toda la fase (D-30). No se comiteó `.env` (ignorado) ni `target/`.
+
+### 2026-10-28 (sexta parte) — fase 9 completa (pasos 9.1 a 9.5)
+
+1. `docker info` → `29.8.0`; `docker compose ps` → `movies-mariadb-1` **healthy** en el 3307; esquema en la versión 4.
+2. **9.1:** se probó primero una migración `V100__insert_test_data.sql` en `db/testdata` con un perfil `dev` de Spring. Se aplicó (`Successfully applied 1 migration ... now at version v100`), pero al ejecutar sin el perfil salió:
+   ```
+   Current version of schema `movies`: 100
+   WARN : Schema `movies` has a version (100) that is newer than the latest available migration (4) !
+   ```
+   Descartado: el historial de Flyway es único y una futura `V5` quedaría fuera de orden (D-42). Se borraron las filas, la fila `version = 100` del historial y se reiniciaron los `AUTO_INCREMENT`.
+3. **9.2:** creado `src/main/resources/db/testdata/seed.sql` (6 directores —incluida Sofia Coppola, D-43—, 10 películas, 14 actores y 24 participaciones) y cargado con:
+   ```
+   docker compose cp src/main/resources/db/testdata/seed.sql mariadb:/tmp/seed.sql
+   docker compose exec -T mariadb sh -c 'mariadb -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" movies < /tmp/seed.sql'
+   ```
+   Resultado: `exit=0` y conteos `director 6`, `actor 14`, `movie 10`, `movie_actor 24`. Las tildes se guardaron bien (`Amenábar`, `Verdú`). Las tres consultas de huérfanos dieron 0.
+4. **9.3:** cinco operaciones que deben fallar, con estos errores reales: `1452` (película con `director_id = 99`), `1451` (`DELETE` del director 1), `4025` (`duration_minutes = 0` y `release_year = 1800`) y `1062` (Bale repetido en *The Prestige*). Los cinco intentos no dejaron rastro (siguen 6 directores y 10 películas).
+5. **9.4:** `INNER JOIN` de dos tablas (película + director), filtro por director con `ORDER BY release_year, title`, `JOIN` de tres tablas con `GROUP_CONCAT` para el reparto y la misma relación desde el actor. Coincide con la fase 2.
+6. **9.5:** `LEFT JOIN`: 5 directores con `INNER` frente a 6 con `LEFT`; Sofia aparece con `COUNT(m.id) = 0` pero `COUNT(*) = 1`; `AVG` devuelve `NULL` para ella; `HAVING COUNT(m.id) > 1` deja a Nolan, Scorsese y Tarantino.
+7. `.\mvnw.cmd test` → **4 en verde**, `Successfully validated 4 migrations`, `Schema movies is up to date`. Ningún aviso de la versión 100.
+8. Documentado: [diario 09](09-datos-de-prueba.md), [temario 09](temario/09-datos-de-prueba-y-consultas.md), D-42 y D-43, glosario (datos de prueba, `INSERT`, `JOIN`, `LEFT JOIN`, `GROUP BY`, agregados, `HAVING`, SQLSTATE...), `README.md` de la raíz y de la guía, y la [fase 2](02-alcance-del-dominio.md) con Sofia Coppola.
+
+**Siguiente:** fase 10, paso 10.1 (modelo anémico frente a rico).
 
 ---
 
-## 5. Trabajo sin commitear (a 2026-10-28)
+## 5. Trabajo sin commitear
 
 ```
  M README.md
- M claude.md
- M docs/guia-estudio/00-plan-de-aprendizaje.md
- M docs/guia-estudio/02-alcance-del-dominio.md
- M docs/guia-estudio/03-diseno-del-esquema.md
- M docs/guia-estudio/06-creacion-proyecto-spring-boot.md
- M docs/guia-estudio/07-conexion-java-mariadb.md
+ M docs/guia-estudio/ESTADO.md
  M docs/guia-estudio/README.md
+ M docs/guia-estudio/02-alcance-del-dominio.md
  M docs/guia-estudio/decisiones-tecnicas.md
  M docs/guia-estudio/glosario.md
- M docs/guia-estudio/temario/03-diseno-esquema-relacional.md
- M docs/guia-estudio/temario/06-proyecto-spring-boot-y-git.md
- M docs/guia-estudio/temario/07-conexion-jdbc-datasource.md
- M pom.xml
-?? docs/guia-estudio/08-flyway-migraciones.md
-?? docs/guia-estudio/ESTADO.md                    ← este archivo
-?? docs/guia-estudio/temario/08-diseno-de-endpoints.md
-?? docs/guia-estudio/temario/08-migraciones-flyway.md
-?? src/main/resources/db/                          ← V1–V4 (las cuatro migraciones)
-?? src/test/java/com/daw/movies/FlywayMigrationTests.java
+?? docs/guia-estudio/09-datos-de-prueba.md
+?? docs/guia-estudio/temario/09-datos-de-prueba-y-consultas.md
+?? src/main/resources/db/testdata/seed.sql
 ```
 
-Todo esto entra en **un único commit** al cerrar la fase 8 (D-30): `feat(fase-08): ...`, etiqueta `fase-08`, `git push` y `git push origin fase-08`. **Solo con confirmación del alumno.**
+Todo esto entra en el **único commit de la fase 9** (D-30): `feat(fase-09): ...`, etiqueta `fase-09`, `git push` y `git push origin fase-09`. **Solo con confirmación del alumno.** No hay cambios de código Java: la fase 9 es SQL.
 
 ---
 
