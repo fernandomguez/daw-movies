@@ -2,7 +2,7 @@
 
 > **Para qué sirve este archivo:** es el parte de situación. Se lee **al empezar cualquier sesión** (humano o asistente de IA) y se **actualiza al terminar cada paso**, antes de cerrar. Así se puede empezar de cero, sin memoria de la conversación anterior, sin inventar nada.
 >
-> Última actualización: **2026-10-31**.
+> Última actualización: **2026-11-01**.
 
 ---
 
@@ -13,11 +13,11 @@
 | Fase del plan | **11 — Fundamentos de JPA → EN CURSO** (1 de 6 pasos) |
 | Paso en curso | **11.2** — JPA en las clases del dominio (D-29), cuando el alumno lo pida |
 | Último paso terminado | 11.1 — qué es JPA y qué es Hibernate |
-| Último commit | `docs: add study guide index, guided tour and history notes` (sobre la etiqueta `fase-15A`) |
+| Último commit | `docs: remove references to deleted backup branches` (sobre `0dea9c6`, apuntes del 11.1) |
 | Etiqueta más reciente | **`fase-15A`** (anotada y publicada; la del plan es `fase-10`, también publicada) |
 | Tests | **55 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
-| Cambios sin commitear | los documentos del 11.1 (ver §5) |
+| Cambios sin commitear | ninguno (ver §5) |
 
 ### La siguiente acción, exacta
 
@@ -96,7 +96,7 @@ Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` 
 
 ## 4. Bitácora por sesiones
 
-> Los hashes de commit anteriores al **2026-10-31** son los que se usaron de verdad en su momento. Al rehacer la historia para el recorrido guiado, esos commits ya no están en `main`: siguen accesibles desde la rama `historial-antes-de-recorrido` y la etiqueta `pre-recorrido`. Se conservan como registro de lo ejecutado.
+> Los hashes de commit anteriores al **2026-10-31** son los que se usaron de verdad en su momento. Al rehacer la historia para el recorrido guiado, esos commits ya no están en `main`. Se conservaron en la rama `historial-antes-de-recorrido` y la etiqueta `pre-recorrido` hasta el **2026-11-01**, cuando se borraron (ver bitácora de ese día). Los hashes se dejan como registro de lo ejecutado, aunque ya no se puedan visitar.
 
 ### 2026-10-20 — fase 8, pasos 8.1 y 8.2
 
@@ -348,21 +348,25 @@ A petición del alumno: poder empezar en el primer commit e ir viajando fase a f
 
 **Siguiente:** paso 11.2 (JPA en las clases del dominio, D-29).
 
+### 2026-11-01 — limpieza de las ramas de seguridad
+
+1. **Comprobado** que `main` contiene todo: `src/` idéntico al de la historia antigua.
+2. **Borradas** la rama `historial-antes-de-recorrido`, la etiqueta `pre-recorrido` y la rama local `backup/historial-original` (apuntaba a `b166f79`), en local y en GitHub.
+3. **Resultado:** `git branch -a` → solo `main` y `origin/main`; `git ls-remote --heads --tags origin` → `main` y las once etiquetas `fase-01`…`fase-15A`. `git lg --all` muestra una sola línea recta de 15 commits.
+4. **Documentos corregidos** para no hablar de ramas que ya no existen: nota del [diario 06](06-creacion-proyecto-spring-boot.md), D-30 en [decisiones-tecnicas.md](decisiones-tecnicas.md) y este archivo (aviso de la bitácora y §5). Las entradas del 2026-10-31 se dejan como estaban: son historia.
+5. **Commit suelto** `docs: remove references to deleted backup branches` (corrección de documentación, no pertenece a ninguna fase).
+
+**Siguiente:** paso 11.2 (sin cambios).
+
 ---
 
 ## 5. Trabajo sin commitear
 
-```
-docs/guia-estudio/11-fundamentos-jpa.md   (nuevo)
-docs/guia-estudio/ESTADO.md
-docs/guia-estudio/INDICE.md
-```
-
-Sin commit: la fase 11 sigue abierta (D-30). Se comiteará al cerrar el 11.6.
+Ninguno: los apuntes del 11.1 entraron en `0dea9c6` y la limpieza del 2026-11-01 en su propio commit. La fase 11 sigue abierta (D-30); su commit de cierre llegará al terminar el 11.6.
 
 **Cerrada la fase 10 el 2026-10-31.** Su commit es `feat(fase-10): add domain entities` (incluye la ampliación de los temas 10 y 11 hecha al final de la sesión) y la etiqueta `fase-10`, **publicada**.
 
-**El 2026-10-31 se rehízo la historia** para poder recorrerla fase a fase (D-30): las fases 1–5 se separaron en cinco commits, el 15A se movió detrás de la fase 10 y se renombraron las etiquetas a `fase-01`…`fase-09`. El árbol final es **idéntico** al anterior salvo las notas de la reescritura (mismo contenido, hashes nuevos). La historia antigua se conserva en la rama `historial-antes-de-recorrido` y en la etiqueta `pre-recorrido`, ambas **subidas a GitHub**. Todo quedó publicado ese mismo día: `main` con `--force-with-lease` y las etiquetas con `--force`.
+**El 2026-10-31 se rehízo la historia** para poder recorrerla fase a fase (D-30): las fases 1–5 se separaron en cinco commits, el 15A se movió detrás de la fase 10 y se renombraron las etiquetas a `fase-01`…`fase-09`. El árbol final es **idéntico** al anterior salvo las notas de la reescritura (mismo contenido, hashes nuevos). La historia antigua se conservó en la rama `historial-antes-de-recorrido` y en la etiqueta `pre-recorrido` hasta el **2026-11-01**, cuando se borraron de local y de GitHub tras comprobar que `main` lo contiene todo. Todo quedó publicado ese mismo día: `main` con `--force-with-lease` y las etiquetas con `--force`.
 
 | Commit | Frente | Contenido |
 |---|---|---|
