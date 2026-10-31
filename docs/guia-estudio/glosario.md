@@ -48,6 +48,14 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Entidad JPA**: clase Java anotada con `@Entity` que refleja una tabla; cada objeto corresponde a una fila. En este proyecto las entidades son las propias clases del dominio (`Movie`, `Director`, `Actor`), sin una `MovieEntity` separada (D-29). En otros proyectos sí se separan.
 
+**`AttributeConverter`**: interfaz de JPA que traduce un valor entre su forma Java y su forma en columna (`Title` ↔ `VARCHAR`). Es el "mapper" pequeño que se escribe **por *value object***, no por entidad (fase 11).
+
+**Persistence context (contexto de persistencia)**: conjunto de objetos que Hibernate mantiene durante una sesión o transacción. Dentro de él, una fila se representa por **un solo objeto**, y los cambios se detectan sin llamar a `save`.
+
+**Dirty checking**: mecanismo por el que Hibernate compara el estado actual de los objetos del *persistence context* con el que leyó y genera un `UPDATE` al cerrar la transacción si algo cambió.
+
+**Persistence ignorance**: principio de diseñar el dominio sin conocer la persistencia. Con D-29 se cumple **solo en parte**: las clases del dominio llevan anotaciones JPA. El diseño alternativo (entidad separada + mapper) sí lo cumple del todo.
+
 **Git**: sistema de control de versiones: guarda la historia del proyecto en *commits*. Ver [temario/06](temario/06-proyecto-spring-boot-y-git.md).
 
 **Commit**: "foto" de los archivos del proyecto en un momento, con un mensaje que explica qué cambió.
@@ -261,6 +269,8 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 **`record`**: clase inmutable de Java que genera constructor, accesores (`title.value()`), `equals`, `hashCode` y `toString`. No tiene setters. Su **constructor compacto** permite validar sin repetir la asignación de campos.
 
 **Constructor compacto**: forma de un `record` para validar o normalizar sus componentes sin escribir el constructor completo: `public Title { if (...) throw ...; value = value.trim(); }`. Se ejecuta en **toda** creación del objeto.
+
+**Reflexión (Java)**: capacidad de un programa para inspeccionar y modificar clases en **tiempo de ejecución**: crear objetos, leer y escribir campos privados o invocar métodos sin que el compilador los conozca. JPA la usa para rellenar una entidad desde una fila: crea el objeto con el constructor sin argumentos y escribe cada campo. Por eso las entidades necesitan ese constructor y campos no `final`, y por eso `Director()` es `protected`: lo usa la persistencia, no el código normal.
 
 **OpenAPI**: estándar para describir una API HTTP en YAML o JSON (rutas, parámetros, cuerpos, respuestas y esquemas). Antes se llamaba *Swagger Specification*. En este proyecto, `src/main/resources/static/openapi.yaml` (OAS 3.0.3) es el contrato de la v1 (D-47).
 

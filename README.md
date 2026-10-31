@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual:** fases 1–9 completadas (commits `3e38972` y `7bbb579`) y **fase 10 en curso** (pasos 10.1 a 10.3). El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`), levanta Tomcat en el 8080 y tiene **35 tests en verde**. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`; los datos de prueba (6 directores, 10 películas, 14 actores y 24 participaciones) se cargan aparte con `db/testdata/seed.sql`. El dominio ya tiene sus seis ***value objects*** (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography`), escritos con TDD y sin JPA todavía. Además, la **fase 15A (API First) está adelantada**: el contrato OpenAPI v1 se sirve en `/openapi.yaml` y **Swagger UI** lo muestra en `http://localhost:8080/swagger-ui.html`. Siguiente: fase 10, paso 10.4 (entidades `Director`, `Actor` y `Movie`).
+> **Estado actual:** fases 1–10 completadas (último commit de la fase 10: `feat(fase-10): add domain entities`) y **fase 15A adelantada**. El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`), levanta Tomcat en el 8080 y tiene **55 tests en verde**. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`; los datos de prueba (6 directores, 10 películas, 14 actores y 24 participaciones) se cargan aparte con `db/testdata/seed.sql`. El dominio está completo y **sin JPA todavía**: seis ***value objects*** (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography`) y las tres **entidades** (`Director`, `Actor` y `Movie`), escritos con TDD. Además, la **fase 15A (API First) está adelantada**: el contrato OpenAPI v1 se sirve en `/openapi.yaml` y **Swagger UI** lo muestra en `http://localhost:8080/swagger-ui.html`. Siguiente: fase 11, paso 11.1 (JPA y Hibernate), cuando el alumno lo pida.
 
 ---
 
@@ -158,16 +158,19 @@ Resultado esperado de `test`:
 
 ```
 [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.DatabaseConnectionTests
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.FlywayMigrationTests
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.OpenApiContractTests
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.ActorTest
 [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.BiographyTest
 [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.BirthDateTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.DirectorTest
 [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.DurationMinutesTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.MovieTest
 [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.PersonNameTest
 [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.ReleaseYearTest
 [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.TitleTest
-[INFO] Tests run: 35, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.FlywayMigrationTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.OpenApiContractTests
+[INFO] Tests run: 55, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
@@ -319,6 +322,10 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 8.5 | `V2`–`V4`: `actor`, `movie` (FK RESTRICT + 2 `CHECK`) y `movie_actor` (PK compuesta, CASCADE/RESTRICT); verificado en `information_schema` con esquema en v4 | [08](docs/guia-estudio/08-flyway-migraciones.md) |
 | 8.6 | Inmutabilidad: se editó a propósito una migración aplicada, se leyó el `checksum mismatch`, se revirtió y volvió el verde | [08](docs/guia-estudio/08-flyway-migraciones.md) |
 | 9.1–9.5 | Datos de prueba en `db/testdata/seed.sql` (fuera de Flyway, D-42): carga en orden director → película → actor → participación, errores provocados (`1452`, `1451`, `4025`, `1062`) y consultas con `JOIN`, `LEFT JOIN` y agregados | [09](docs/guia-estudio/09-datos-de-prueba.md) |
+| 10.1 | Modelo anémico frente a rico; se elige rico moderado con constructor que valida y sin setters (D-44) | [10](docs/guia-estudio/10-modelo-de-dominio.md) |
+| 10.2 | Diseño de los seis *value objects* a partir del esquema, no de la imaginación (D-46) | [10](docs/guia-estudio/10-modelo-de-dominio.md) |
+| 10.3 | Los seis `record` con TDD: 28 tests nuevos, rojo de compilación y verde con `Texts` (35 en total) | [10](docs/guia-estudio/10-modelo-de-dominio.md) |
+| 10.4 | `Director`, `Actor` y `Movie`: entidades con getters, `fullName()`, constructor protegido para JPA y relaciones unidireccionales; 20 tests nuevos (55 en total) | [10](docs/guia-estudio/10-modelo-de-dominio.md) |
 
 ---
 
@@ -502,7 +509,7 @@ daw-movies/
 ├── mvnw, mvnw.cmd, .mvn/  ← Maven Wrapper (Maven 3.10.0)
 ├── src/
 │   ├── main/java/com/daw/movies/MoviesApplication.java   ← clase de arranque
-│   ├── main/java/com/daw/movies/domain/model/            ← dominio en Java puro: seis value objects (10.3) y, en 10.4, las entidades
+│   ├── main/java/com/daw/movies/domain/model/            ← dominio en Java puro: seis value objects (10.3) y las tres entidades (10.4)
 │   ├── main/resources/application.yaml                    ← configuración (sin secretos: los lee de .env)
 │   ├── main/resources/static/openapi.yaml                 ← contrato OpenAPI v1, servido en /openapi.yaml (15A)
 │   ├── main/resources/db/migration/                       ← migraciones Flyway (V1–V4: las cuatro tablas)
@@ -511,7 +518,7 @@ daw-movies/
 │   ├── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB y ddl-auto
 │   ├── test/java/com/daw/movies/FlywayMigrationTests.java   ← Flyway crea flyway_schema_history
 │   ├── test/java/com/daw/movies/OpenApiContractTests.java   ← el contrato se sirve y es YAML válido
-│   └── test/java/com/daw/movies/domain/model/               ← 28 tests de los value objects (sin Spring ni base de datos)
+│   └── test/java/com/daw/movies/domain/model/               ← 48 tests del dominio: 28 de los value objects y 20 de las entidades (sin Spring ni base de datos)
 └── docs/
     └── guia-estudio/      ← plan, fases, temario, decisiones y glosario
 ```

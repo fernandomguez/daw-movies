@@ -2,7 +2,7 @@
 
 > **Fase del plan:** 10 (modelo de dominio). Diario: [10-modelo-de-dominio.md](../10-modelo-de-dominio.md).
 >
-> **En construcción:** este tema se completa con los pasos 10.2 (*value objects*), 10.3 (TDD de los tipos) y 10.4 (entidades y relaciones). Ahora mismo cubre los pasos 10.1 a 10.3.
+> **Completo:** cubre los pasos 10.1 (anémico frente a rico), 10.2 (*value objects*), 10.3 (TDD de los tipos) y 10.4 (entidades y relaciones).
 
 ## 1. Qué es el modelo de dominio
 
@@ -209,13 +209,157 @@ El diseño completo, con la justificación de cada decisión, está en el [diari
 
 La regla práctica: **cada pieza se añade cuando resuelve un problema real**, no porque suene a arquitectura avanzada. Los *value objects* entran ahora porque el profesor los pide y porque resuelven un problema concreto: que un título inválido no pueda existir en ningún sitio.
 
+### La alternativa: entidad JPA separada + mapper (D-29)
+
+D-29 descartó separar el dominio de la entidad JPA. Así sería el otro diseño:
+
+```java
+// Dominio: Java puro, sin jakarta.persistence
+public class Director {
+    private final PersonName name;
+    private final BirthDate birthDate;
+    private final Biography biography;
+
+    public Director(PersonName name, BirthDate birthDate, Biography biography) { ... }
+}
+
+// Persistencia: solo la forma de la tabla
+@Entity
+@Table(name = "director")
+class DirectorEntity {
+    @Id private Long id;
+    @Column(name = "first_name") private String firstName;
+    @Column(name = "last_name")  private String lastName;
+    @Column(name = "birth_date") private LocalDate birthDate;
+    @Column(name = "biography")  private String biography;
+
+    protected DirectorEntity() { }
+}
+
+// Mapper: traduce en los dos sentidos
+class DirectorMapper {
+    Director toDomain(DirectorEntity e) {
+        return new Director(
+                new PersonName(e.firstName, e.lastName),
+                new BirthDate(e.birthDate),
+                e.biography == null ? null : new Biography(e.biography));
+    }
+
+    DirectorEntity toEntity(Director d) { ... }
+}
+```
+
+| | Entidad = dominio (D-29, el proyecto) | Entidad separada + mapper |
+|---|---|---|
+| Clases por concepto | 1 | 3 (dominio + entidad + mapper) |
+| ¿El dominio importa JPA? | Sí | No: Java puro |
+| ¿El dominio se parece a la tabla? | Un poco (constructor vacío, campos no `final`) | No |
+| Duplicación de campos | No | Sí, dos veces |
+| Riesgo principal | JPA impone restricciones al dominio | Mapper desincronizado al añadir una columna |
+| Conversión de *value objects* | `AttributeConverter` / `@Embeddable` | Lo mismo, más el mapper |
+| Identidad | El objeto y la fila son "lo mismo" | Dos objetos para la misma fila |
+| Cuándo compensa | Dominio pequeño, una aplicación | Dominio grande, reutilizado, varios módulos |
+
+**Lo que no cambia:** el DTO de la API y su mapper (fase 15) existen en los dos diseños. La entidad **no es un DTO**: la entidad representa una fila; el DTO, el JSON. Con mappers hay tres capas (tabla → entidad → dominio → DTO); con D-29, dos (tabla → dominio → DTO).
+
 ## 6. Cómo sigue la fase
 
 | Paso | Qué añade |
 |---|---|
 | 10.2 | Qué es un *value object* y diseño de los seis del dominio (D-46) |
 | 10.3 | Los seis `record` con TDD: primero el test en rojo, después el constructor compacto. ✅ Hecho (35 tests en verde) |
-| 10.4 | `Director`, `Actor` y `Movie` con los *value objects*, getters, `fullName()` y constructor protegido para JPA; relaciones unidireccionales |
+| 10.4 | `Director`, `Actor` y `Movie` con los *value objects*, getters, `fullName()` y constructor protegido para JPA; relaciones unidireccionales. ✅ Hecho (20 tests nuevos; 55 en verde) |
+
+### Las entidades (paso 10.4)
+
+Las tres clases son **entidades**, no *value objects*: su identidad es el `id` que asigna la base de datos, no sus campos. Por eso son clases normales (no `record`) y todavía no tienen `equals`/`hashCode`.
+
+```java
+public class Director {
+	private Long id;
+	private PersonName name;
+	private BirthDate birthDate;
+	private Biography biography;
+
+	protected Director() { }   // solo para JPA (fase 11)
+
+	public Director(PersonName name, BirthDate birthDate, Biography biography) {
+		if (name == null) throw new IllegalArgumentException("El nombre del director es obligatorio");
+		// ... fecha obligatoria; biography puede ser null (D-37)
+	}
+
+	public String fullName() {
+		return name.fullName();   // delega: no se guarda repetido
+	}
+}
+```
+
+`Movie` añade las dos relaciones, **unidireccionales**:
+
+- `Director director` — muchas películas pueden tener el mismo director; la película conoce al director, no al revés.
+- `List<Actor> actors` — el reparto; `getActors()` devuelve una copia inmutable y solo se modifica con `addActor`.
+
+El constructor de la entidad **solo comprueba lo que cruza campos** (que las piezas no sean `null`). Las reglas de cada valor (255 caracteres, año ≥ 1888, duración > 0...) ya las garantiza su *value object*. Sin `equals` todavía, `addActor` no detecta duplicados: la garantía es la PK compuesta de `movie_actor` (D-14).
+
+#### Un ejemplo completo: crear *Inception*
+
+```java
+Director nolan = new Director(
+        new PersonName("Christopher", "Nolan"),
+        new BirthDate(LocalDate.of(1970, 7, 30)),
+        new Biography("Director, guionista y productor británico-estadounidense."));
+
+Actor dicaprio = new Actor(
+        new PersonName("Leonardo", "DiCaprio"),
+        new BirthDate(LocalDate.of(1974, 11, 11)),
+        null);                       // sin biografía: es válido
+
+Movie inception = new Movie(
+        new Title("  Inception  "),  // se guarda como "Inception"
+        new ReleaseYear(2010),
+        new DurationMinutes(148),
+        nolan);
+
+inception.addActor(dicaprio);
+```
+
+- El **director es obligatorio**: el constructor de `Movie` lanza `IllegalArgumentException` si es `null`. No se crea uno nuevo por película: el mismo `nolan` puede dirigir varias.
+- Los **actores son opcionales**: una película puede empezar con el reparto vacío (`startsWithoutActors`).
+- "Creado antes" significa **existente en memoria**, no guardado en la base: en esta fase no hay persistencia. Que el director exista en la base lo comprobará el servicio (fase 16) y lo garantiza la FK.
+
+#### `Value object` frente a entidad
+
+| | `Value object` (`Title`) | Entidad (`Movie`) |
+|---|---|---|
+| Representa | Un **valor** | Una **cosa con identidad** |
+| Identidad | Su propio texto | El `id` de la base |
+| Igualdad | Por valor (`record`) | Por `id` (aún sin implementar) |
+| ¿Mutable? | No | Sí: el reparto crece |
+| En Java | `record` | Clase con getters |
+| Ejemplo | Dos `Title("Alien")` son el mismo valor | Dos películas homónimas son dos películas |
+
+Por eso `Title` es `record` y `Movie` no: un `record` es `final`, sus campos son `final` y no tiene constructor vacío, así que no puede ser una entidad JPA.
+
+#### La reflexión y el `protected Director()`
+
+**Reflexión** es la capacidad de Java de inspeccionar y modificar clases en tiempo de ejecución: crear objetos, leer y escribir campos privados e invocar métodos sin que el compilador los conozca. JPA la usa para rellenar una entidad desde una fila:
+
+```java
+// Simplificación de lo que hace Hibernate al leer una fila
+Director director = Director.class.getDeclaredConstructor().newInstance(); // vacío
+Field name = Director.class.getDeclaredField("name");
+name.setAccessible(true);                                                  // salta "private"
+name.set(director, new PersonName("Christopher", "Nolan"));
+```
+
+De ahí las dos concesiones de D-29:
+
+- **Constructor sin argumentos**: Hibernate primero crea el objeto vacío, porque todavía no ha leído la fila.
+- **Campos no `final`**: los escribe después, por reflexión.
+
+Se declara `protected` porque la especificación JPA exige que ese constructor sea `public` o `protected`. `protected` permite usarlo a la persistencia (y al mismo paquete, donde están los tests) pero **no al código de otras capas**: un `new Director()` en el servicio no compila. Si fuera `public`, cualquiera podría crear un director vacío e inválido.
+
+> Al hidratar, Hibernate **no pasa por el constructor de `Director`**: usa el vacío y la reflexión. Las comprobaciones de la entidad no se ejecutan al leer; las de los *value objects* sí, porque el converter los construye. Lo que falte lo cubren `NOT NULL` y las FK.
 
 Después, la fase 11 añade JPA a estas mismas clases (D-29) y mapea los *value objects*; la fase 17 usará el constructor para crear películas desde la API.
 
@@ -299,4 +443,25 @@ Porque el `Title` es un **valor**: dos títulos con el mismo texto son intercamb
 <details><summary>Respuesta</summary>
 
 Obliga a decidir el comportamiento antes de la implementación y detecta fallos que el compilador no ve. En el paso 10.3, `BiographyTest.rejectsBlankText` falló con «La biografía no puede estar vacío»: el código compilaba y funcionaba, pero el mensaje tenía la concordancia rota. Como el test estaba escrito antes, el fallo salió en el primer verde; se corrigió el mensaje («no puede estar en blanco») y no la prueba.
+</details>
+
+**11. ¿Cuándo un concepto es un *value object* y cuándo una entidad? Pon un ejemplo del proyecto.**
+
+<details><summary>Respuesta</summary>
+
+Es un *value object* si se identifica por su **valor** y no cambia: `Title("Alien")`. Es una entidad si tiene **identidad propia** y su estado puede cambiar: `Movie`, cuya identidad es el `id` de la base y cuyo reparto crece. Por eso `Title` es un `record` (inmutable, igualdad por valor) y `Movie` es una clase con getters (mutable, igualdad por `id`, aún sin implementar).
+</details>
+
+**12. ¿Por qué el constructor vacío de `Director` es `protected` y qué papel juega la reflexión?**
+
+<details><summary>Respuesta</summary>
+
+JPA exige un constructor sin argumentos porque Hibernate crea primero el objeto **vacío** y después escribe los campos por **reflexión** (puede saltarse `private`). La especificación exige que sea `public` o `protected`; se elige `protected` para que la persistencia pueda usarlo pero el código de otras capas no pueda hacer `new Director()` y crear un director vacío e inválido. Al hidratar, Hibernate no pasa por el constructor que valida: las comprobaciones de la entidad no se ejecutan al leer; las de los *value objects* sí, porque el converter los construye.
+</details>
+
+**13. ¿Qué diferencia hay entre el diseño del proyecto (D-29) y el de entidad JPA separada + mapper?**
+
+<details><summary>Respuesta</summary>
+
+Con D-29, `Movie` es a la vez dominio y entidad: lleva las anotaciones JPA y el objeto que devuelve el repositorio ya es el del dominio. El coste es que el dominio importa `jakarta.persistence` y acepta constructor vacío y campos no `final`. Con entidad separada hay tres clases por concepto (`Movie`, `MovieEntity`, `MovieMapper`), el dominio queda en Java puro, pero hay que copiar los campos y un mapper desincronizado produce errores silenciosos. En los dos diseños el DTO de la API y su mapper (fase 15) siguen existiendo: la entidad no es un DTO.
 </details>

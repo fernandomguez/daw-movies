@@ -1,6 +1,6 @@
 # Fase 10 — Modelo de dominio
 
-> Estado: **en curso** (empezada el 2026-10-28). Conceptos: [temario/10-modelo-de-dominio.md](temario/10-modelo-de-dominio.md).
+> Estado: **completa** (2026-10-28 a 2026-10-31). Conceptos: [temario/10-modelo-de-dominio.md](temario/10-modelo-de-dominio.md).
 
 ## En pocas palabras
 
@@ -23,7 +23,7 @@ Hasta ahora todo era infraestructura: Docker, conexión, Flyway, datos. En esta 
 | 10.1 Modelo anémico vs. rico | ✅ Hecho (D-44: modelo rico moderado) |
 | 10.2 *Value objects*: qué son y cuáles necesitamos | ✅ Hecho (D-46: diseño de los seis tipos) |
 | 10.3 *Value objects* con TDD | ✅ Hecho (28 tests; 35 en verde) |
-| 10.4 Entidades y relaciones | ⏳ Pendiente |
+| 10.4 Entidades y relaciones | ✅ Hecho (20 tests; 55 en verde) |
 
 ## 10.1 Modelo anémico frente a modelo rico
 
@@ -261,6 +261,58 @@ El mensaje compartido decía «La biografía no puede estar **vacío**»: concor
 
 No saben de JPA, ni de la base, ni de HTTP: son Java. En la fase 11 se mapearán (`AttributeConverter` para los de un valor, `@Embeddable` para `PersonName`) y en el 10.4 pasarán a ser los tipos de los campos de `Movie`, `Director` y `Actor`.
 
+## 10.4 Las entidades y sus relaciones
+
+**Fecha:** 2026-10-31. **Tests:** 55 en verde (35 que había + 20 nuevos).
+
+### Primero el rojo
+
+Tres tests nuevos, en `src/test/java/com/daw/movies/domain/model/`:
+
+| Test | Qué comprueba |
+|---|---|
+| `DirectorTest` (5) | guarda nombre, fecha y biografía; `fullName()` delega en `PersonName`; acepta biografía `null`; rechaza nombre o fecha nulos |
+| `ActorTest` (5) | igual que `DirectorTest` (la tabla `actor` también tiene `biography`, D-37) |
+| `MovieTest` (10) | guarda título, año, duración y director; empieza sin actores; `addActor` añade y respeta el orden; la lista es inmutable desde fuera; rechaza `null` en actor, título, año, duración y director |
+
+`.\mvnw.cmd test-compile` → **32 errores** `cannot find symbol`: las tres clases no existen. Es el rojo esperado.
+
+### Después el verde
+
+```java
+public class Movie {
+	private Long id;
+	private Title title;
+	private ReleaseYear releaseYear;
+	private DurationMinutes duration;
+	private Director director;
+	private List<Actor> actors = new ArrayList<>();
+
+	protected Movie() { }   // solo para JPA (fase 11)
+
+	public Movie(Title title, ReleaseYear releaseYear, DurationMinutes duration, Director director) {
+		if (title == null) throw new IllegalArgumentException("El título es obligatorio");
+		// ... año, duración y director
+	}
+}
+```
+
+`.\mvnw.cmd clean test` → **55 en verde**.
+
+### Decisiones del paso
+
+- **Clases, no `record`.** JPA necesita constructor sin argumentos y campos no `final` (D-29); un `record` no los admite.
+- **El constructor solo comprueba `null`.** Las reglas de cada valor ya las garantiza su *value object*; repetirlas aquí sería duplicarlas.
+- **Relaciones unidireccionales.** `Movie` conoce a su director y a sus actores; al revés, no. Evita referencias circulares y consultas innecesarias (fase 14).
+- **El reparto no se expone mutable.** `getActors()` devuelve `List.copyOf(actors)`; el único camino para cambiarlo es `addActor`.
+- **Sin comprobar actores duplicados.** `Actor` no tiene igualdad por valor (su identidad es el `id`), así que comparar objetos daría falsos negativos; la garantía es la PK compuesta `(movie_id, actor_id)` (D-14).
+- **Sin `equals`/`hashCode`.** La identidad es el `id`, que todavía es `null` al crear el objeto (fase 11/14).
+- **`Director` y `Actor` duplican código a propósito.** Unificarlos con una clase base obligaría a JPA a elegir estrategia de herencia y mezclaría dos conceptos que el esquema separa (D-11).
+
+### Lo que todavía no hacen
+
+No se guardan en la base (fases 11 y 12), no comprueban que el director exista (fases 12/16) y no salen por HTTP (fase 16). `getId()` devuelve `null` hasta que JPA asigne el `id`.
+
 ## Siguiente paso
 
-**10.4 Entidades y relaciones**: crear `Director`, `Actor` y `Movie` con los *value objects* del 10.3, getters, `fullName()` y constructor protegido para JPA, y decidir las relaciones unidireccionales (`Movie` conoce a su director y a sus actores). Los tests de las entidades se escriben también antes, en el mismo paquete de dominio.
+**Fase 11, paso 11.1** (qué es JPA y qué es Hibernate), cuando el alumno lo pida. La fase 10 queda cerrada.
