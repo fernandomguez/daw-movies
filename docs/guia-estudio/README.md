@@ -7,6 +7,8 @@ Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el pr
 | Archivo | Contenido |
 |---|---|
 | [00-plan-de-aprendizaje.md](00-plan-de-aprendizaje.md) | Hoja de ruta completa: fases, pasos, conceptos, resultados y dependencias. |
+| [INDICE.md](INDICE.md) | **Mapa de toda la documentación**: cada fase y subfase con su estado y el archivo donde se explica. |
+| [RECORRIDO.md](RECORRIDO.md) | **Viaje por la historia**: qué commit visitar en cada fase, qué mirar y qué necesita para funcionar. |
 | `NN-nombre-de-la-fase.md` | Un archivo por fase, que se crea **cuando empezamos esa fase** (no antes). Cuenta **lo que hicimos**: pasos, comandos, errores y resultados. |
 | `temario/` | Temas explicativos: **los conceptos** con ejemplos de este proyecto. Cada archivo lleva el número de la fase del plan a la que pertenece, para leerlos en orden de aprendizaje. |
 | [decisiones-tecnicas.md](decisiones-tecnicas.md) | Registro de decisiones: alternativas, elección y motivo. |
@@ -32,8 +34,8 @@ Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el pr
 | 08 | [Diseño de los endpoints antes de crear las tablas](temario/08-diseno-de-endpoints.md) | Completo (paso 8.2) |
 | 08 | [Migraciones del esquema con Flyway](temario/08-migraciones-flyway.md) | Completo (incluye cómo se activa en Spring Boot) |
 | 09 | [Datos de prueba, `INSERT` y consultas con `JOIN`](temario/09-datos-de-prueba-y-consultas.md) | Completo |
-| 10 | [Modelo de dominio y *value objects*](temario/10-modelo-de-dominio.md) | En construcción (pasos 10.1 a 10.3) |
-| 11 | [Introducción a JPA](temario/11-introduccion-jpa.md) | Introducción conceptual, adaptada a D-29 (se ampliará en la fase 11) |
+| 10 | [Modelo de dominio y *value objects*](temario/10-modelo-de-dominio.md) | Completo (pasos 10.1 a 10.4) |
+| 11 | [Introducción a JPA](temario/11-introduccion-jpa.md) | Completo como introducción; se pondrá a prueba con el código real en la fase 11 |
 | 15A | [API First: el contrato antes del código](temario/15A-api-first.md) | Completo (fase 15A adelantada; falta 15A.3 en la fase 16) |
 
 Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conceptos, por qué los necesitamos, archivos implicados, código explicado, recorrido de los datos, comandos y comprobaciones, errores y soluciones, decisiones, resumen y preguntas de repaso.
@@ -49,10 +51,12 @@ Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conce
 | 5. Arquitectura en tres capas e inversión de dependencias | ✅ Completada (diseño revisado en la fase 6: D-19, D-29) | [05-arquitectura.md](05-arquitectura.md) |
 | 6. Creación del proyecto Spring Boot | ✅ Completada | [06-creacion-proyecto-spring-boot.md](06-creacion-proyecto-spring-boot.md) |
 | 7. Conexión entre Java y MariaDB | ✅ Completada | [07-conexion-java-mariadb.md](07-conexion-java-mariadb.md) |
-| 8. Flyway: migraciones del esquema | ✅ Completada (6 de 6 pasos; commit `3e38972`) | [08-flyway-migraciones.md](08-flyway-migraciones.md) |
-| 9. Datos de prueba y comprobación de relaciones | ✅ Completada (5 de 5 pasos; commit `7bbb579`) | [09-datos-de-prueba.md](09-datos-de-prueba.md) |
-| 10. Modelo de dominio | ⏳ En curso (3 de 4 pasos) | [10-modelo-de-dominio.md](10-modelo-de-dominio.md) |
+| 8. Flyway: migraciones del esquema | ✅ Completada (6 de 6 pasos; commit `f2ffe69`) | [08-flyway-migraciones.md](08-flyway-migraciones.md) |
+| 9. Datos de prueba y comprobación de relaciones | ✅ Completada (5 de 5 pasos; commit `9973cf8`) | [09-datos-de-prueba.md](09-datos-de-prueba.md) |
+| 10. Modelo de dominio | ✅ Completada (4 de 4 pasos; commit `aa0cef7`) | [10-modelo-de-dominio.md](10-modelo-de-dominio.md) |
 | 15A. API First: el contrato antes del código | 🟡 Adelantada (15A.1 y 15A.2 hechos; 15A.3 espera a la fase 16) | [15A-api-first.md](15A-api-first.md) |
 | 11 a 20 | Pendientes (la 13 se eliminó, D-29) | Ver el [plan](00-plan-de-aprendizaje.md) |
+
+> El detalle **paso a paso**, con el estado de cada subfase y el enlace directo a su documento, está en el [índice general](INDICE.md).
 
 > Normas del proyecto: [base-standards.md](../../base-standards.md). Código en inglés; documentación y comentarios en español.

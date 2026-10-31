@@ -80,8 +80,8 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | | 5. Arquitectura en tres capas e inversión de dependencias | ✅ |
 | | 6. Creación del proyecto Spring Boot | ✅ |
 | | 7. Conexión entre Java y MariaDB | ✅ |
-| | 8. Flyway: migraciones del esquema | ✅ Completada (commit `3e38972`) |
-| | 9. Datos de prueba y comprobación de relaciones | ✅ Completada (commit `7bbb579`) |
+| | 8. Flyway: migraciones del esquema | ✅ Completada (commit `f2ffe69`) |
+| | 9. Datos de prueba y comprobación de relaciones | ✅ Completada (commit `9973cf8`) |
 | C. Java y persistencia | 10. Modelo de dominio | ⏳ |
 | | 11. Fundamentos de JPA y entidades | ⏳ |
 | | 12. Repositorios y adaptadores de persistencia | ⏳ |

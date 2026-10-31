@@ -13,8 +13,8 @@
 | Fase del plan | **10 — Modelo de dominio → COMPLETA** (4 de 4 pasos) |
 | Paso en curso | ninguno: fase cerrada. La siguiente es la **11.1** (qué es JPA), cuando el alumno lo pida |
 | Último paso terminado | 10.4 — `Director`, `Actor` y `Movie` con sus *value objects* (20 tests nuevos) |
-| Último commit | `feat(fase-10): add domain entities` (etiqueta `fase-10`) |
-| Etiqueta más reciente | **`fase-10`** (anotada; push pendiente de confirmación del alumno) |
+| Último commit | `docs: add study guide index, guided tour and history notes` (sobre la etiqueta `fase-15A`) |
+| Etiqueta más reciente | **`fase-15A`** (anotada y publicada; la del plan es `fase-10`, también publicada) |
 | Tests | **55 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
 | Cambios sin commitear | ninguno (ver §5) |
@@ -24,6 +24,10 @@
 La **fase 10 está cerrada**. Lo siguiente es la **fase 11 (Fundamentos de JPA)**, paso **11.1** (qué es JPA y qué es Hibernate), pero **no se empieza sin que el alumno lo pida**: al terminar el 10.4 se decidió parar aquí para afianzar la creación de películas en memoria antes de añadir la persistencia.
 
 **Segundo frente abierto:** la **fase 15A** (API First) tiene hechos 15A.1 (contrato `openapi.yaml`) y 15A.2 (springdoc 3.2.0 + Swagger UI). El **15A.3** no se puede hacer hasta que existan los controladores (fase 16): compara el documento generado `/v3/api-docs` con el contrato. La UI está en `http://localhost:8080/swagger-ui.html` y **no ejecuta** nada todavía ("Try it out" → `404`).
+
+**Mapa de la documentación:** [INDICE.md](INDICE.md) lista todas las fases y subfases con su estado y el archivo donde se explican. Es el sitio al que ir para saber *qué leer* de cada fase.
+
+**Recorrido por la historia:** [RECORRIDO.md](RECORRIDO.md) explica qué etiqueta visitar en cada fase (`fase-01` a `fase-15A`), qué mirar y qué necesita cada parada para compilar o arrancar.
 
 Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` (los tests de integración lo necesitan; los unitarios de dominio, no). Los datos de prueba ya están cargados; si la base se recrea (`docker compose down -v`), hay que volver a cargarlos con la receta del [diario 09](09-datos-de-prueba.md#cómo-se-recarga-desde-cero).
 
@@ -89,6 +93,8 @@ Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` 
 ---
 
 ## 4. Bitácora por sesiones
+
+> Los hashes de commit anteriores al **2026-10-31** son los que se usaron de verdad en su momento. Al rehacer la historia para el recorrido guiado, esos commits ya no están en `main`: siguen accesibles desde la rama `historial-antes-de-recorrido` y la etiqueta `pre-recorrido`. Se conservan como registro de lo ejecutado.
 
 ### 2026-10-20 — fase 8, pasos 8.1 y 8.2
 
@@ -317,6 +323,18 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 
 7. **Ampliación posterior (misma sesión, a petición del alumno):** los temas 10 y 11 recogen las explicaciones de la sesión —ejemplo completo de creación, *value object* frente a entidad, reflexión y `protected`, alternativa con mappers, recorrido fila ↔ objeto, reparto JPA/Hibernate/Spring Boot/Spring Data, *dirty checking* y guía de búsquedas—; el glosario añade cuatro términos (`AttributeConverter`, *persistence context*, *dirty checking*, *persistence ignorance*).
 
+### 2026-10-31 (tercera parte) — historia rehecha para poder recorrerla
+
+A petición del alumno: poder empezar en el primer commit e ir viajando fase a fase. Se reescribió la historia (**sin tocar el contenido**: el árbol final es idéntico, `git diff` vacío contra el anterior).
+
+1. **Red de seguridad:** rama `historial-antes-de-recorrido` y etiqueta anotada `pre-recorrido` en `a2e44e3`.
+2. **Fases 1–5 separadas:** el commit raíz `d2a88c4` se dividió en cinco commits por fase, repartiendo sus archivos (`docs(fase-01)`…`docs(fase-05)`). Los transversales (plan, decisiones, glosario, README) quedan en la parada 1.
+3. **15A movido detrás de la fase 10:** en el commit de 10.3 y 10.4 se quitaron los artefactos del 15A (`openapi.yaml`, `OpenApiContractTests`, `pom.xml` y `application.yaml` con springdoc, diario/temario/captura), que se añaden en su propia parada. El código de las paradas 10.3 y 10.4 es el mismo de antes, sin Swagger.
+4. **Etiquetas:** borradas las antiguas `fase-05`…`fase-10` y creadas `fase-01`…`fase-09`, `fase-10` y `fase-15A`, todas anotadas. La numeración con dos cifras ordena bien.
+5. **Comprobado:** los 9 commits con `pom.xml` (fase 6 a índice) compilan con `.\mvnw.cmd -q -DskipTests compile`.
+6. **Documentado:** [RECORRIDO.md](RECORRIDO.md) (paradas, qué mirar, requisitos), [INDICE.md](INDICE.md), README de la guía y D-30.
+7. **Publicado** el mismo día: rama `historial-antes-de-recorrido`, etiqueta `pre-recorrido`, `main` con `--force-with-lease` y las once etiquetas `fase-01`…`fase-15A` (las cinco que ya existían, con `--force`). Comprobado con `git ls-remote` que cada etiqueta remota apunta al mismo commit que la local.
+
 ---
 
 ## 5. Trabajo sin commitear
@@ -325,16 +343,21 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 nada: el árbol está limpio.
 ```
 
-**Cerrada la fase 10 el 2026-10-31.** Su commit es `feat(fase-10): add domain entities` (incluye la ampliación de los temas 10 y 11 hecha al final de la sesión) y la etiqueta `fase-10`. **Sin push**: queda a la espera de confirmación del alumno.
+**Cerrada la fase 10 el 2026-10-31.** Su commit es `feat(fase-10): add domain entities` (incluye la ampliación de los temas 10 y 11 hecha al final de la sesión) y la etiqueta `fase-10`, **publicada**.
+
+**El 2026-10-31 se rehízo la historia** para poder recorrerla fase a fase (D-30): las fases 1–5 se separaron en cinco commits, el 15A se movió detrás de la fase 10 y se renombraron las etiquetas a `fase-01`…`fase-09`. El árbol final es **idéntico** al anterior salvo las notas de la reescritura (mismo contenido, hashes nuevos). La historia antigua se conserva en la rama `historial-antes-de-recorrido` y en la etiqueta `pre-recorrido`, ambas **subidas a GitHub**. Todo quedó publicado ese mismo día: `main` con `--force-with-lease` y las etiquetas con `--force`.
 
 | Commit | Frente | Contenido |
 |---|---|---|
-| `f2cf8cc` | **Fase 10** (documentación) | `docs(fase-10): design rich domain model and six value objects` — D-44, D-45, D-46 |
-| `3a41c15` | **Fase 10, paso 10.3** | `feat(fase-10): add six value objects with TDD` — seis `record` + `Texts` (35 tests) |
-| `d06943e` | **Fase 15A** | `feat(fase-15A): add OpenAPI contract and Swagger UI` — D-47 |
-| cierre de la fase 10 | **Fase 10, paso 10.4** | `feat(fase-10): add domain entities` — `Director`, `Actor`, `Movie` y 20 tests (55 en verde) |
+| `f2ffe69` | **Fase 8** | `feat(fase-08): create schema with Flyway migrations` |
+| `9973cf8` | **Fase 9** | `feat(fase-09): add test data seed and verify SQL relationships` |
+| `e82b78f` | **Fase 10** (documentación) | `docs(fase-10): design rich domain model and six value objects` — D-44, D-45, D-46 |
+| `450961f` | **Fase 10, paso 10.3** | `feat(fase-10): add six value objects with TDD` — seis `record` + `Texts` (35 tests) |
+| `aa0cef7` | **Fase 10, paso 10.4** | `feat(fase-10): add domain entities` — `Director`, `Actor`, `Movie` y 20 tests (55 en verde) |
+| `daf027e` | **Fase 15A** | `feat(fase-15A): add OpenAPI contract and Swagger UI` — D-47 |
+| `HEAD` | **Guía** | `docs: add study guide index, guided tour and history notes` — `INDICE.md`, `RECORRIDO.md` y notas de la reescritura |
 
-**Etiquetas:** `fase-10` se crea al cerrar el 10.4. La 15A sigue abierta (falta 15A.3, que necesita los controladores de la fase 16).
+**Etiquetas:** `fase-01` a `fase-10` y `fase-15A`. La 15A sigue abierta (falta 15A.3, que necesita los controladores de la fase 16).
 
 ---
 
@@ -342,6 +365,6 @@ nada: el árbol está limpio.
 
 1. **Al empezar una sesión:** leer `claude.md`, este archivo y [decisiones-tecnicas.md](decisiones-tecnicas.md). No preguntar "¿por dónde íbamos?" si está aquí.
 2. **Al terminar cada paso:** actualizar §1 (estado y siguiente acción), añadir la entrada del día en §4 con los **comandos y resultados reales**, y refrescar §5 si cambian los archivos pendientes.
-3. **Al cerrar una fase:** mover el resumen a §4, actualizar el `README.md` de la raíz y pedir permiso para el commit + etiqueta.
+3. **Al cerrar una fase:** mover el resumen a §4, actualizar el `README.md` de la raíz, marcar la fase como ✅ en [INDICE.md](INDICE.md) (y sumar los pasos hechos) y pedir permiso para el commit + etiqueta.
 4. **Nunca** anotar un resultado que no se haya visto en pantalla. Si algo no se ejecutó, se escribe "no ejecutado".
 5. Este archivo se actualiza **antes** de responder "ya está": si no está aquí, no ha pasado.

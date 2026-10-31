@@ -107,6 +107,8 @@ Durante la fase 6 llegaron a hacerse 5 commits. El alumno decidió tener **un co
 
 Desde ahora, la fase 6 se confirmará en **un solo commit** (con la etiqueta `fase-06`) al terminar el paso 6.5.
 
+> **Nota (2026-10-31):** la historia se volvió a rehacer para poder recorrerla fase a fase. Ese commit raíz `d2a88c4` ya no está en `main`: se dividió en cinco commits (`docs(fase-01)`…`docs(fase-05)`) y sigue accesible desde la rama `historial-antes-de-recorrido`. Ver [RECORRIDO.md](RECORRIDO.md).
+
 ### Corrección: `core.autocrlf`
 
 Al reconstruir la fase 5, Git mostró avisos `LF will be replaced by CRLF` en un directorio sin `.gitattributes`. Al investigarlo:
