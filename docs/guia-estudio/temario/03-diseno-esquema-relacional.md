@@ -48,6 +48,7 @@ Cada columna necesita un **tipo** que diga qué valores admite.
 | `release_year` | `INT` | Ver la decisión de abajo. Se corresponde con `Integer` en Java. |
 | `duration_minutes` | `INT` | Número entero de minutos. `Integer` en Java. |
 | `birth_date` | `DATE` | Solo fecha, sin hora. Se corresponde con `LocalDate` en Java. |
+| `biography` | `TEXT` | Texto largo (varios párrafos), sin un límite pequeño como el de `VARCHAR(n)`. `String` en Java. *Añadida en la fase 8, D-37.* |
 
 **¿Por qué `INT` y no `YEAR` o `SMALLINT` para el año?**
 - `YEAR` es un tipo propio de MariaDB/MySQL con un rango limitado (1901–2155) y no tiene un equivalente directo y cómodo en Java.
@@ -148,7 +149,7 @@ Una **restricción** (*constraint*) es una regla que la base de datos **comprueb
 | Restricción | Qué garantiza | Uso en nuestro esquema |
 |---|---|---|
 | `PRIMARY KEY` | Identificador único y no vacío | `id` en las tres tablas principales; `(movie_id, actor_id)` en `movie_actor` |
-| `NOT NULL` | La columna no puede quedar vacía | Todas las columnas (los datos son obligatorios, ver decisión D-10) |
+| `NOT NULL` | La columna no puede quedar vacía | Todas las columnas (los datos son obligatorios, ver decisión D-10), **menos `biography`**: se puede dar de alta un director o un actor sin tener aún su biografía (D-37, fase 8) |
 | `FOREIGN KEY` | El valor existe en la tabla referenciada | `director_id`, `movie_id`, `actor_id` |
 | `CHECK` | El valor cumple una condición | Duración mayor que 0; año de estreno razonable |
 
@@ -220,6 +221,7 @@ erDiagram
         VARCHAR first_name
         VARCHAR last_name
         DATE birth_date
+        TEXT biography "NULL"
     }
     MOVIE {
         BIGINT id PK
@@ -233,6 +235,7 @@ erDiagram
         VARCHAR first_name
         VARCHAR last_name
         DATE birth_date
+        TEXT biography "NULL"
     }
     MOVIE_ACTOR {
         BIGINT movie_id PK, FK
@@ -245,7 +248,7 @@ Cómo leer los símbolos: `||` = exactamente uno; `o{` = cero o muchos. Por ejem
 Versión en texto (por si el visor no muestra Mermaid):
 
 ```
-director (id PK, first_name, last_name, birth_date)
+director (id PK, first_name, last_name, birth_date, biography NULL)
     1
     │
     N
@@ -257,7 +260,7 @@ movie_actor (movie_id PK/FK → movie.id, actor_id PK/FK → actor.id)
     N
     │
     1
-actor (id PK, first_name, last_name, birth_date)
+actor (id PK, first_name, last_name, birth_date, biography NULL)
 ```
 
 ## 10. Borrador del SQL (no se ejecuta todavía)
@@ -268,6 +271,7 @@ CREATE TABLE director (
     first_name VARCHAR(100) NOT NULL,
     last_name  VARCHAR(100) NOT NULL,
     birth_date DATE         NOT NULL,
+    biography  TEXT         NULL,   -- opcional (D-37, fase 8)
     CONSTRAINT pk_director PRIMARY KEY (id)
 );
 
@@ -276,6 +280,7 @@ CREATE TABLE actor (
     first_name VARCHAR(100) NOT NULL,
     last_name  VARCHAR(100) NOT NULL,
     birth_date DATE         NOT NULL,
+    biography  TEXT         NULL,   -- opcional (D-37, fase 8)
     CONSTRAINT pk_actor PRIMARY KEY (id)
 );
 

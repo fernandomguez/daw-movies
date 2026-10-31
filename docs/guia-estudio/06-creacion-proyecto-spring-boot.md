@@ -2,6 +2,15 @@
 
 > Estado: **completada** (2026-10-20). Conceptos: [temario/06-proyecto-spring-boot-y-git.md](temario/06-proyecto-spring-boot-y-git.md).
 
+## En pocas palabras
+
+> Este archivo es el **diario** de la fase: comandos y salidas reales. Para **entender** los conceptos, lee primero el [tema 06](temario/06-proyecto-spring-boot-y-git.md), que tiene también las preguntas de repaso.
+
+1. **Git:** el proyecto pasó a guardarse con Git y se subió a GitHub. Se decidió hacer **un commit por fase**, con una etiqueta `fase-NN`.
+2. **Proyecto:** se generó el esqueleto con Spring Initializr: Java 25, Spring Boot 4.1.1 y el paquete `com.daw.movies`.
+3. **Dependencias:** solo las mínimas (el núcleo de Spring Boot y las herramientas de test). Las demás entran en la fase que las necesita.
+4. **Primer test:** `contextLoads` comprueba que la aplicación arranca. Resultado: **verde** (`Tests run: 1, Failures: 0, Errors: 0`).
+
 ## Objetivo
 
 Tener un proyecto Spring Boot 4.1.1 con Java 25, bajo control de versiones con Git, que arranque y pase un primer test.
@@ -162,7 +171,7 @@ Solo las dos que trae Initializr por defecto:
 | `spring-boot-starter` | compile |
 | `spring-boot-starter-test` | test |
 
-El resto se añadirá en la fase que la necesite ([D-26](decisiones-tecnicas.md)). La lista completa, con los nombres reales de Boot 4.1.1 y las dependencias descartadas, está en el [temario, sección 6](temario/06-proyecto-spring-boot-y-git.md#6-dependencias-cuáles-y-por-qué). Los nombres se comprobaron generando un `pom.xml` de prueba con Initializr que incluía todas las dependencias del plan.
+El resto se añadirá en la fase que la necesite ([D-26](decisiones-tecnicas.md)). La lista completa, con los nombres reales de Boot 4.1.1 y las dependencias descartadas, está en el [temario 06, «Referencia: plan de dependencias»](temario/06-proyecto-spring-boot-y-git.md#referencia-plan-de-dependencias). Los nombres se comprobaron generando un `pom.xml` de prueba con Initializr que incluía todas las dependencias del plan.
 
 ## 6.4 Estructura Maven
 
@@ -179,7 +188,7 @@ Paso explicativo: no cambia ningún archivo. Estructura real del proyecto (sin `
 
 `target/` todavía **no existe** (`ls target` → `No such file or directory`): aparecerá al compilar por primera vez en el paso 6.5.
 
-Explicación de cada carpeta, de `@SpringBootApplication` y del test `contextLoads`: [temario/06, sección 7](temario/06-proyecto-spring-boot-y-git.md#7-estructura-de-un-proyecto-maven).
+Explicación de cada carpeta, de `@SpringBootApplication` y del test `contextLoads`: [temario 06, secciones 5 a 7](temario/06-proyecto-spring-boot-y-git.md#5-las-carpetas-del-proyecto).
 
 ## 6.5 Primer arranque y primer test
 
@@ -225,7 +234,7 @@ WARNING: A Java agent has been loaded dynamically (...byte-buddy-agent-1.18.11.j
 
 - `release 25`: compila para Java 25, la versión del `pom.xml` (`<java.version>25</java.version>`).
 - `skip non existing resourceDirectory ...\src\test\resources`: esa carpeta no existe todavía. No es un error.
-- Los avisos de Mockito están explicados en el [temario, sección 8](temario/06-proyecto-spring-boot-y-git.md#8-el-ciclo-de-vida-de-maven-y-el-primer-test) (D-31).
+- Los avisos de Mockito están explicados en el [temario 06, sección 8](temario/06-proyecto-spring-boot-y-git.md#8-comandos-y-cómo-leer-lo-que-sale) (D-31).
 
 ### `.\mvnw.cmd spring-boot:run`
 

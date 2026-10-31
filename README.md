@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual:** fases 1–7 completadas. El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`) y tiene 3 tests en verde. Todavía no hay tablas ni lógica. Siguiente: fase 8, Flyway (migraciones del esquema).
+> **Estado actual:** fases 1–7 completadas y **fase 8 completada** (pendiente solo el commit). El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`) y tiene 4 tests en verde. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`, con claves foráneas y `CHECK` comprobados. Siguiente: fase 9, datos de prueba.
 
 ---
 
@@ -52,13 +52,13 @@ Versiones verificadas en fuentes oficiales en la fase 1 ([detalle](docs/guia-est
 |---|---|---|---|
 | 6 | `spring-boot-starter`, `spring-boot-starter-test` | Núcleo de Spring Boot; JUnit 5, AssertJ y Mockito | ✅ |
 | 7 | `mariadb-java-client`, `spring-boot-starter-data-jpa` (+ `-test`) | Driver JDBC; JPA, Hibernate, Spring Data y pool de conexiones | ✅ |
-| 8 | `spring-boot-starter-flyway`, `flyway-mysql` | Migraciones; módulo de Flyway para MySQL/MariaDB | ⏳ |
+| 8 | `spring-boot-starter-flyway`, `flyway-mysql` (12.4.0, versión gestionada por Boot) | Migraciones; módulo de Flyway para MySQL/MariaDB | ✅ |
 | 16 | `spring-boot-starter-webmvc` (+ `-test`) | Controladores REST, Tomcat embebido, JSON | ⏳ |
 | 18 | `spring-boot-starter-validation` | Bean Validation (`@NotBlank`, `@Valid`) | ⏳ |
 | 19 | `spring-boot-testcontainers`, `testcontainers-junit-jupiter`, `testcontainers-mariadb` | Tests de integración con un MariaDB real y desechable | ⏳ |
 | 24 (opc.) | `spring-boot-starter-security` + librería JWT | Seguridad | ⚪ |
 
-**Descartadas** (D-27): Lombok (oculta el código que queremos aprender; usaremos `record`), DevTools, Docker Compose Support (haría sola la configuración que se aprende en la fase 7), H2 (su SQL no es el de MariaDB), Actuator. Explicación completa: [temario/06, sección 6](docs/guia-estudio/temario/06-proyecto-spring-boot-y-git.md).
+**Descartadas** (D-27): Lombok (oculta el código que queremos aprender; usaremos `record`), DevTools, Docker Compose Support (haría sola la configuración que se aprende en la fase 7), H2 (su SQL no es el de MariaDB), Actuator. Explicación completa: [temario 06, «Referencia: plan de dependencias»](docs/guia-estudio/temario/06-proyecto-spring-boot-y-git.md#referencia-plan-de-dependencias).
 
 ---
 
@@ -75,7 +75,7 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | | 5. Arquitectura en tres capas e inversión de dependencias | ✅ |
 | | 6. Creación del proyecto Spring Boot | ✅ |
 | | 7. Conexión entre Java y MariaDB | ✅ |
-| | 8. Flyway: migraciones del esquema | ⏳ Siguiente |
+| | 8. Flyway: migraciones del esquema | ✅ Completada (pendiente el commit de la fase) |
 | | 9. Datos de prueba y comprobación de relaciones | ⏳ |
 | C. Java y persistencia | 10. Modelo de dominio | ⏳ |
 | | 11. Fundamentos de JPA y entidades | ⏳ |
@@ -150,12 +150,15 @@ Resultado esperado de `test`:
 
 ```
 [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.DatabaseConnectionTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.FlywayMigrationTests
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
-Si MariaDB no está arrancado, los 3 tests fallan con `Connection refused` en `localhost:3307`.
+Si MariaDB no está arrancado, los 4 tests fallan con `Connection refused` en `localhost:3307`.
+
+Dos `WARN` de Flyway son esperados (fase 8): `Using MariaDB 12.3 which is newer than the version Flyway has been verified with. The latest verified version of MariaDB is 11.7` ([D-04](docs/guia-estudio/decisiones-tecnicas.md)) y `No migrations found` mientras no existan archivos en `src/main/resources/db/migration`.
 
 Los avisos `WARNING` de Mockito ("self-attaching", "Dynamic loading of agents") son conocidos y no rompen nada (D-31).
 
@@ -262,6 +265,11 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 7.2 | `application.yaml` con la URL y las credenciales leídas de `.env` (`spring.config.import`); contraseña fuera del log | [07](docs/guia-estudio/07-conexion-java-mariadb.md) |
 | 7.3 | `ddl-auto: validate` con TDD (rojo → verde): Hibernate no toca el esquema | [07](docs/guia-estudio/07-conexion-java-mariadb.md) |
 | 7.4 | Test de conexión (MariaDB, base `movies`, usuario `movies_app`) y comprobación de que puede fallar | [07](docs/guia-estudio/07-conexion-java-mariadb.md) |
+| 8.1–8.2 | Teoría de migraciones; diseño de los 4 endpoints de la v1 y revisión del esquema (nace la columna `biography`, D-37) | [08](docs/guia-estudio/08-flyway-migraciones.md) |
+| 8.3 | Test del rojo, dependencias `spring-boot-starter-flyway` + `flyway-mysql` (resuelven 12.4.0) y verde: Flyway crea `flyway_schema_history`; se cierra el riesgo de D-04 | [08](docs/guia-estudio/08-flyway-migraciones.md) |
+| 8.4 | Primera migración `V1__create_director_table.sql`: tabla `director` creada, apuntada en el historial y con `utf8mb4_uca1400_ai_ci` heredado de la base | [08](docs/guia-estudio/08-flyway-migraciones.md) |
+| 8.5 | `V2`–`V4`: `actor`, `movie` (FK RESTRICT + 2 `CHECK`) y `movie_actor` (PK compuesta, CASCADE/RESTRICT); verificado en `information_schema` con esquema en v4 | [08](docs/guia-estudio/08-flyway-migraciones.md) |
+| 8.6 | Inmutabilidad: se editó a propósito una migración aplicada, se leyó el `checksum mismatch`, se revirtió y volvió el verde | [08](docs/guia-estudio/08-flyway-migraciones.md) |
 
 ---
 
@@ -278,6 +286,12 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 7 | 7 | `Failed to configure a DataSource: 'url' attribute is not specified` | Spring Data JPA en el proyecto sin URL de conexión | Configurar `spring.datasource.url` en `application.yaml`. Se provocó a propósito para verlo |
 | 8 | 7 | `Socket fail to connect to localhost:3307. Connection refused` y `Unable to determine Dialect` | Docker Desktop apagado: nadie escucha en el 3307 | Abrir Docker Desktop y `docker compose up -d --wait` |
 | 9 | 7 | La contraseña de la base de datos aparecía en claro en el log de arranque | Hibernate (`HHH10001005: Database info`) escribe la URL que devuelve el driver, con las credenciales | Subir el logger `org.hibernate.orm.connections.pooling` a `WARN` ([D-33](docs/guia-estudio/decisiones-tecnicas.md)) |
+| 10 | 8 | `failed to connect to the docker API` otra vez, y el test de Flyway sin ejecutar | Docker Desktop cerrado (la sesión anterior se cortó ahí) | Abrirlo; `docker info` responde en segundos y `docker compose up -d --wait` deja MariaDB `healthy` |
+| 11 | 8 | `Could not transfer metadata ... HTTP Status: 401` de `flyway-community-db-support` y `MavenFeed` | Los `pom.xml` de Flyway declaran repositorios extra (GitHub Packages, Azure) que Maven consulta; sin credenciales responden 401 | Ninguna: es un `WARNING` de Maven, `BUILD SUCCESS` |
+| 12 | 8 | `ERROR 1142 ... SELECT command denied ... 'mysql'.'user'` | `movies_app` no puede leer la tabla de usuarios | Es correcto (mínimo privilegio, D-17): para ver usuarios, usar `root` |
+| 13 | 8 | `DB: Name 'pk_director' ignored for PRIMARY key. (Error Code: 1280)` al aplicar la `V1` | MariaDB no admite nombre para la clave primaria: siempre se llama `PRIMARY` | Ninguna: aviso único, la tabla se crea. Decisión en D-41 |
+| 14 | 8 | `Validate failed: Migrations have failed validation` / `Migration checksum mismatch for migration version 1` | Se añadió un comentario a una migración ya aplicada: el checksum cambia aunque el esquema no | Revertir el archivo. `flyway repair` lo taparía; solo para cambios inofensivos y coordinados |
+| 15 | 8 | Un `.sql` con tildes quedó con caracteres rotos y BOM (`EF BB BF`) al editarlo | `Get-Content`/`Set-Content` de PowerShell 5.1 leen UTF-8 como ANSI y escriben con BOM | Editar con el editor. Por consola: `[System.IO.File]::ReadAllText` + `WriteAllText(..., UTF8Encoding($false))` |
 
 ---
 
@@ -380,6 +394,12 @@ Resumen. Cada decisión, con sus alternativas y su motivo, está en [decisiones-
 | D-33 | Logger `org.hibernate.orm.connections.pooling` a `WARN` para que la contraseña no salga en el log | ✅ |
 | D-34 | `ddl-auto: validate`: el esquema es de Flyway; Hibernate solo lo comprueba | ✅ |
 | D-35 | Los tests necesitan MariaDB arrancado (hasta Testcontainers, fase 19) | ✅ Provisional |
+| D-36 | Endpoints de la v1: `GET /movies`, `/movies/{id}`, `/directors/{id}`, `/directors/{id}/movies` | ✅ |
+| D-37 | `biography TEXT NULL` en `director` y `actor` | ✅ |
+| D-38 | Orden por defecto de las listas (título; año y título; apellido y nombre) | ✅ |
+| D-39 | Una lista vacía es `200 []`, no un error | ✅ |
+| D-40 | Flyway con la versión que gestiona Spring Boot (12.4.0), no la última | ✅ |
+| D-41 | Nombre `pk_...` en la clave primaria: MariaDB lo ignora (aviso 1280), se conserva en el SQL | ✅ |
 
 ---
 
@@ -394,6 +414,7 @@ Todo está en [`docs/guia-estudio/`](docs/guia-estudio/README.md):
 | [temario/](docs/guia-estudio/temario/) | Los conceptos explicados con ejemplos de este proyecto, con preguntas de repaso |
 | [decisiones-tecnicas.md](docs/guia-estudio/decisiones-tecnicas.md) | Cada decisión con sus alternativas y su motivo |
 | [glosario.md](docs/guia-estudio/glosario.md) | Términos explicados con lenguaje sencillo |
+| [ESTADO.md](docs/guia-estudio/ESTADO.md) | Parte de situación y bitácora: dónde estamos, qué toca ahora, entorno real y qué se hizo en cada sesión |
 
 Temas disponibles:
 
@@ -425,8 +446,10 @@ daw-movies/
 ├── src/
 │   ├── main/java/com/daw/movies/MoviesApplication.java   ← clase de arranque
 │   ├── main/resources/application.yaml                    ← configuración (sin secretos: los lee de .env)
+│   ├── main/resources/db/migration/                       ← migraciones Flyway (V1–V4: las cuatro tablas)
 │   ├── test/java/com/daw/movies/MoviesApplicationTests.java
-│   └── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB y ddl-auto
+│   ├── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB y ddl-auto
+│   └── test/java/com/daw/movies/FlywayMigrationTests.java   ← Flyway crea flyway_schema_history
 └── docs/
     └── guia-estudio/      ← plan, fases, temario, decisiones y glosario
 ```

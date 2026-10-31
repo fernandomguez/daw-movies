@@ -11,7 +11,7 @@ Dejar cerrado, **con palabras y sin código**, qué vamos a guardar y con qué d
 | Paso | Resultado |
 |---|---|
 | 2.1 Identificar entidades | Película, director y actor. La participación película–actor es una relación (sin datos propios). |
-| 2.2 Identificar atributos | Película: título, año de estreno, duración en minutos. Director y actor: nombre, apellidos, fecha de nacimiento. |
+| 2.2 Identificar atributos | Película: título, año de estreno, duración en minutos. Director y actor: nombre, apellidos, fecha de nacimiento. *Añadido en la fase 8 (D-37): biografía opcional en director y actor.* |
 | 2.3 Identificar relaciones | Director–película 1:N (película con director obligatorio). Película–actor N:M. |
 | 2.4 Elegir los datos de prueba | 10 películas, 5 directores, 14 actores y 24 participaciones (abajo). |
 
@@ -28,6 +28,18 @@ Datos reales y públicamente conocidos. Usamos el **título original** de cada p
 | Martin | Scorsese | 1942-11-17 |
 | Guillermo | del Toro | 1964-10-09 |
 | Alejandro | Amenábar | 1972-03-31 |
+
+#### Biografías de los directores
+
+Añadidas en la fase 8, paso 8.2 ([D-37](decisiones-tecnicas.md)). Son cortas y solo llevan datos públicos y comprobables. Los actores tienen la columna `biography`, pero vacía (`NULL`) por ahora.
+
+| Director | Biografía |
+|---|---|
+| Christopher Nolan | Director, guionista y productor británico-estadounidense nacido en Londres. Es conocido por sus narraciones complejas y no lineales, como *Memento*, y por la trilogía de *El caballero oscuro*. Ganó el Óscar a la mejor dirección por *Oppenheimer*. |
+| Quentin Tarantino | Director y guionista estadounidense nacido en Knoxville (Tennessee). Trabajó en un videoclub antes de debutar con *Reservoir Dogs* (1992). *Pulp Fiction* ganó la Palma de Oro en Cannes y el Óscar al mejor guion original. |
+| Martin Scorsese | Director estadounidense nacido en Nueva York, ciudad que aparece en buena parte de su obra. Dirigió *Taxi Driver*, *Toro salvaje* y *Uno de los nuestros*. Ganó el Óscar a la mejor dirección por *Infiltrados*. |
+| Guillermo del Toro | Director, guionista y productor mexicano nacido en Guadalajara. Su cine mezcla la fantasía, el terror y las criaturas. *El laberinto del fauno* ganó tres Óscar, y *La forma del agua*, los de mejor película y mejor dirección. |
+| Alejandro Amenábar | Director, guionista y compositor nacido en Santiago de Chile y criado en Madrid. Debutó con *Tesis* (1996) y dirigió *Abre los ojos* y *Los otros*. *Mar adentro* ganó el Óscar a la mejor película de habla no inglesa. |
 
 ### Películas (10)
 
@@ -97,7 +109,7 @@ Ver [decisiones-tecnicas.md](decisiones-tecnicas.md): D-09 (atributos) y D-10 (o
 El modelo conceptual queda así:
 
 ```
-DIRECTOR (nombre, apellidos, fecha de nacimiento)
+DIRECTOR (nombre, apellidos, fecha de nacimiento, biografía opcional*)
    │ 1
    │ dirige
    │ N
@@ -105,5 +117,7 @@ PELÍCULA (título, año de estreno, duración en minutos)
    │ N
    │ participa
    │ M
-ACTOR (nombre, apellidos, fecha de nacimiento)
+ACTOR (nombre, apellidos, fecha de nacimiento, biografía opcional*)
 ```
+
+\* Añadida en la fase 8 (D-37).

@@ -12,10 +12,16 @@ Código, nombres de tablas y columnas, tests y commits en inglés. Comentarios, 
 - **Contexto:** `base-standards.md` exige TDD; el plan original situaba las pruebas al final.
 - **Decisión:** pruebas unitarias desde la fase 6 (test primero cuando haya lógica Java) y pruebas de integración en la fase 19. Lo que no es código Java (Docker, SQL) se comprueba con comandos y consultas documentados.
 
-## D-04 Versión de MariaDB — ✅ Decidida: `mariadb:12.3`
+## D-04 Versión de MariaDB — ✅ Decidida: `mariadb:12.3` (riesgo cerrado en la fase 8)
 - **Alternativas:** 11.4 LTS, 11.8 LTS, 12.3 LTS.
 - **Decisión:** 12.3, la LTS más reciente (soporte comunitario hasta junio de 2029).
-- **Riesgo conocido:** la documentación de Flyway verifica MariaDB hasta la 11.7. Es posible que Flyway muestre un aviso de versión no probada; si aparece, lo analizaremos en la fase 8 antes de decidir nada.
+- **Riesgo conocido:** la documentación de Flyway verifica MariaDB hasta la 11.7. Es posible que Flyway muestre un aviso de versión no probada.
+- **Comprobado en la fase 8 (paso 8.3), con la ejecución real:**
+  ```
+  WARN : Using MariaDB 12.3 which is newer than the version Flyway has been verified with.
+         The latest verified version of MariaDB is 11.7.
+  ```
+  El aviso aparece, pero **no bloquea**: Flyway crea `flyway_schema_history` y los tests pasan. Se mantiene la 12.3. Si en el futuro una migración fallara de forma rara, este aviso es la primera pista.
 
 ## D-05 Guía de estudio — ✅ Decidida
 - Un archivo por fase (lo que hicimos), creado al empezar la fase.
@@ -125,7 +131,7 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 ## D-26 Cada dependencia se añade en la fase que la necesita — ✅ Decidido (fase 6)
 - **Alternativas:** (A) marcar todas las dependencias en Initializr desde el principio; (B) empezar con `spring-boot-starter` + `spring-boot-starter-test` y añadir cada una en su fase.
 - **Decisión:** B.
-- **Motivo:** Spring Boot se autoconfigura según las dependencias presentes: JPA sin base de datos configurada impide arrancar, y Spring Web levanta un servidor que aún no usamos. Añadirlas una a una permite ver qué aporta cada una. Lista completa y nombres reales de Boot 4.1.1: [temario/06, sección 6](temario/06-proyecto-spring-boot-y-git.md).
+- **Motivo:** Spring Boot se autoconfigura según las dependencias presentes: JPA sin base de datos configurada impide arrancar, y Spring Web levanta un servidor que aún no usamos. Añadirlas una a una permite ver qué aporta cada una. Lista completa y nombres reales de Boot 4.1.1: [temario 06, «Referencia: plan de dependencias»](temario/06-proyecto-spring-boot-y-git.md#referencia-plan-de-dependencias).
 
 ## D-27 Dependencias descartadas — ✅ Decidido (fase 6, revisable)
 | Dependencia | Motivo |
@@ -185,3 +191,54 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Contexto:** desde la fase 7, `@SpringBootTest` se conecta a la base de datos al arrancar. Si Docker o el contenedor están apagados, todos los tests fallan (`Connection refused`).
 - **Elección provisional:** ejecutar `docker compose up -d` antes de `.\mvnw.cmd test`. Está anotado en `DatabaseConnectionTests` y en el README.
 - **Más adelante:** en la fase 19, Testcontainers arrancará un MariaDB desechable para los tests, sin depender del contenedor de desarrollo.
+
+## D-36 Endpoints de la versión 1 y forma de las respuestas — ✅ Decidido por el alumno (fase 8, paso 8.2)
+- **Contexto:** el profesor recomendó pensar los endpoints antes de empezar la aplicación. Se diseñaron desde las pantallas: inicio con todas las películas → ficha de la película → ficha del director con sus películas.
+- **Endpoints:** `GET /movies`, `GET /movies/{id}`, `GET /directors/{id}` y `GET /directors/{id}/movies`. Solo lectura; la escritura se diseñará en la fase 17.
+- **Ficha del director, alternativas:** (A) un solo endpoint con las películas dentro; (B) director y películas en endpoints separados. **Elección: B.** Cada endpoint hace una cosa, y la lista de películas tiene la misma forma que `GET /movies`.
+- **Forma de las respuestas:** las listas devuelven `id`, `title` y `releaseYear`; la ficha de la película añade `durationMinutes`, `director` y `actors`. El director y los actores dentro de otra respuesta van como `{ id, fullName }`; en su propia ficha, el director lleva `firstName` y `lastName` por separado.
+- **Por qué los actores llevan `id` aunque solo se muestre el nombre:** la respuesta es un contrato. Si más adelante se quieren enlaces a los actores, la forma no cambia y no se rompe ningún frontend.
+- **Errores:** `404` si el recurso no existe y `400` si el `id` no es un número, con cuerpo *Problem Details*. Se programará en la fase 18.
+- Detalle en [08-flyway-migraciones.md, paso 8.2](08-flyway-migraciones.md#82-diseño-de-los-endpoints-y-revisión-del-esquema) y [temario/08-diseno-de-endpoints.md](temario/08-diseno-de-endpoints.md).
+
+## D-37 Biografía opcional (`TEXT NULL`) en `director` y `actor` — ✅ Decidido por el alumno (fase 8, paso 8.2)
+- **Contexto:** al comprobar los endpoints contra el esquema de la fase 3, la ficha del director pedía una biografía que no tenía columna.
+- **Tipo, alternativas:** `VARCHAR(n)` (con un máximo de caracteres) o `TEXT` (texto largo). **Elección: `TEXT`**: una biografía puede ocupar varios párrafos.
+- **Obligatoriedad:** **opcional** (`NULL`). Se puede dar de alta un director sin tener aún su biografía. Es la primera excepción a "todas las columnas `NOT NULL`" de la fase 3.
+- **También en `actor`:** el alumno quiere biografías de actores en el futuro, pero no ahora. Se añade ya la columna (vacía) porque las tablas aún no existen: añadirla después costaría una migración nueva.
+- **Solo se devuelve en la ficha** (`GET /directors/{id}`), no en las listas.
+- **Datos de prueba:** biografías cortas de los 5 directores en [02-alcance-del-dominio.md](02-alcance-del-dominio.md).
+
+## D-38 Orden por defecto de las listas — ✅ Decidido por el alumno (fase 8, paso 8.2)
+- **Contexto:** una base de datos no garantiza el orden de las filas si no se le pide (`ORDER BY`). Sin decidirlo, la misma petición podría devolver otro orden cada vez.
+- **Decisión:**
+
+| Lista | Orden |
+|---|---|
+| `GET /movies` | Alfabético por título |
+| `GET /directors/{id}/movies` | Por año, del más antiguo al más reciente; si coincide el año, por título |
+| Actores de una película | Alfabético por apellido y, después, por nombre |
+
+- **Orden de reparto (aplazado):** el alumno quiere más adelante ordenar los actores por su orden en los créditos. Hoy no se tiene el dato. Cambiarlo después no rompe el contrato de la API (la forma de la respuesta es la misma). Hará falta una columna nueva en `movie_actor`, con una migración `V5`; encaja con la fase opcional 23 (personaje en `movie_actor`).
+- **Ordenaciones elegidas por el usuario** (`?sort=...`): las pedirá el frontend y las hará el back. Se dejan para más adelante.
+
+## D-39 Una lista vacía es `200 []`, no un error — ✅ Decidido (fase 8, paso 8.2)
+- **Contexto:** el alumno preguntó si, cuando un director no tiene películas, se podía lanzar una excepción con el mensaje "este director no tiene películas".
+- **Alternativas:** (A) `404` o una excepción propia con el mensaje; (B) `200` con `[]`, y que el frontend muestre el aviso.
+- **Elección: B.** La petición no ha fallado: la respuesta correcta es "ninguna". Con `404` en los dos casos, el frontend no podría distinguir "el director no existe" (`404`) de "existe, pero no tiene películas" (`200 []`).
+- **Regla:** el back devuelve datos y códigos; el front decide cómo contárselo al usuario (texto, idioma, diseño).
+- **Consecuencia en la fase 16:** `GET /directors/{id}/movies` primero comprueba que el director existe y después busca sus películas.
+
+## D-40 Versión de Flyway: la que gestiona Spring Boot (12.4.0), no la última (13.11.1) — ✅ Decidida (fase 8, paso 8.3)
+- **Contexto:** el alumno preguntó por la última versión de Flyway (13.11.1). Al añadir las dependencias sin versión, Spring Boot 4.1.1 resolvió `flyway-core` y `flyway-mysql` **12.4.0**.
+- **Alternativas:** (A) dejar la versión gestionada por el *parent*; (B) forzar la última con `<flyway.version>13.11.1</flyway.version>`.
+- **Elección: A**, confirmada por el alumno. El `spring-boot-starter-flyway` es código del propio Spring Boot: está compilado y probado contra la versión que su *parent* declara. Forzar una mayor puede romper la autoconfiguración sin avisar, y no aporta nada en este proyecto (no usamos funciones nuevas de Flyway).
+- **Cuándo se revisaría:** si una versión nueva corrige un fallo que nos afecte, o si Spring Boot actualiza su versión gestionada (`.\mvnw.cmd dependency:tree "-Dincludes=org.flywaydb:*"` lo dice en un segundo).
+- **Dato real:** `[INFO] \- org.flywaydb:flyway-mysql:jar:12.4.0:compile` (2026-10-28).
+
+## D-41 Nombre de la clave primaria: `CONSTRAINT pk_... PRIMARY KEY` (se conserva aunque MariaDB lo ignore) — ✅ Decidida (fase 8, paso 8.4)
+- **Contexto:** al aplicar la `V1`, MariaDB avisó: `Name 'pk_director' ignored for PRIMARY key. (SQL State: - Error Code: 1280)`. En MySQL/MariaDB la clave primaria se llama siempre `PRIMARY`: no admite nombre propio. Las claves foráneas y los `CHECK` **sí** admiten nombre y ese nombre sale en los mensajes de error (temario 03, sección 12).
+- **Alternativas:** (A) conservar `CONSTRAINT pk_director PRIMARY KEY (id)` en las cuatro migraciones; (B) escribir `PRIMARY KEY (id)` sin nombre.
+- **Elección: A**, confirmada por el alumno. El aviso sale **una sola vez** (al aplicar la migración) y no rompe nada; a cambio, el SQL queda autodocumentado y es portable (PostgreSQL sí respeta el nombre).
+- **Si se elige B:** hay que corregir el borrador de la [fase 3](temario/03-diseno-esquema-relacional.md), la convención de nombres del `README.md` (que hoy dice `pk_movie`, `fk_movie_director`...) y explicar que en MariaDB la PK se llama `PRIMARY`.
+- **Alcance:** afecta a `V1` (ya aplicada) y a las futuras `V2`, `V3` y `V4`. **Ventaja de decidirlo ahora:** la `V1` todavía **no está en Git**, así que se puede rehacer borrando la base de desarrollo y volviendo a arrancar (`docker compose down -v` + `up -d`), como permite el [temario 08, sección 4](temario/08-migraciones-flyway.md). Una vez comiteada, cambiarla exigiría una migración nueva.

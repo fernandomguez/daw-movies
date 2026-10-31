@@ -95,10 +95,11 @@ Depende de: 4, 6.
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 8.1 Qué es una migración | Versionar el esquema como el código | Explicación + tabla `flyway_schema_history` |
-| 8.2 Configurar Flyway | Dependencias Flyway + módulo MariaDB/MySQL | Flyway se ejecuta al arrancar |
-| 8.3 Primera migración | `V1__create_director_table.sql` | Tabla creada |
-| 8.4 Migraciones con FK | Orden de creación | `movie`, `actor`, `movie_actor` |
-| 8.5 Inmutabilidad de migraciones | Checksum, por qué no se edita una migración aplicada | Ejemplo de error controlado |
+| 8.2 Diseño de los endpoints y revisión del esquema | Pensar la API desde las pantallas antes de crear las tablas | Lista de endpoints de la v1; esquema revisado (`biography`) (D-36 a D-39) |
+| 8.3 Configurar Flyway | Dependencias Flyway + módulo MariaDB/MySQL | Flyway se ejecuta al arrancar |
+| 8.4 Primera migración | `V1__create_director_table.sql` | Tabla creada |
+| 8.5 Migraciones con FK | Orden de creación | `movie`, `actor`, `movie_actor` |
+| 8.6 Inmutabilidad de migraciones | Checksum, por qué no se edita una migración aplicada | Ejemplo de error controlado |
 
 Depende de: 3, 7.
 
@@ -179,7 +180,7 @@ Depende de: 12.
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 16.1 Servicio (caso de uso) | Quién coordina dominio y repositorio | `MovieService` |
-| 16.2 Controlador | `@RestController`, `@GetMapping`, códigos HTTP | `GET /movies`, `GET /movies/{id}` |
+| 16.2 Controlador | `@RestController`, `@GetMapping`, códigos HTTP | Los 4 endpoints de D-36: `GET /movies`, `GET /movies/{id}`, `GET /directors/{id}`, `GET /directors/{id}/movies` |
 | 16.3 Probar desde fuera | `curl` o cliente HTTP | Respuestas JSON |
 
 Depende de: 15.
