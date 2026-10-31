@@ -1,6 +1,7 @@
 # 00 — Plan de aprendizaje (hoja de ruta)
 
 > **Estado:** aprobado el 2026-10-19. Revisado el 2026-10-20: dominio con anotaciones JPA y `@Service` (D-19, D-29); la fase 13 se elimina.
+> **Revisado el 2026-10-28** tras leer el temario del profesor ([DWS](https://cesguiro.es/doku.php/clase/daw/dws/start)): se añade la fase 15A (API First), el paso 18.5 (`ProblemDetail`), el 14.6 (`open-in-view`) y el Bloque F (fases 25–29). El proyecto es un **monolito clásico en capas** y pasará a modular **solo si la aplicación lo requiere** (D-45). La fase 10 adopta *value objects* (D-46).
 > **Regla de trabajo:** solo trabajamos en el siguiente paso pendiente. No se avanza sin confirmación explícita.
 
 Leyenda: 🔴 imprescindible · 🟡 recomendable · ⚪ opcional
@@ -120,9 +121,9 @@ Depende de: 8.
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 10.1 Modelo anémico vs. rico | Datos frente a datos + comportamiento | Elección justificada para nuestro problema |
-| 10.2 Clases de dominio en Java | Diseñarlas pensando en el negocio (las anotaciones JPA se añaden en la fase 11, D-29) | `Movie`, `Director`, `Actor` |
-| 10.3 Representar relaciones en Java | Referencias y colecciones, dirección de la relación | `Movie` conoce a su `Director` y sus `Actor` |
-| 10.4 Reglas del dominio con TDD | Test primero | Tests unitarios de las reglas que existan |
+| 10.2 *Value objects*: qué son y cuáles necesitamos | Tipos propios frente a primitivos (*primitive obsession*); reglas alineadas con el esquema (D-46) | Diseño de `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` |
+| 10.3 *Value objects* con TDD | Test en rojo primero; constructor compacto que valida | Los seis `record` con sus tests |
+| 10.4 Entidades y relaciones | `Director`, `Actor` y `Movie` con los *value objects*, getters y constructor protegido para JPA (D-29); relaciones unidireccionales | Clases de dominio |
 
 Depende de: 5, 3.
 
@@ -162,6 +163,7 @@ Con las anotaciones JPA en las clases del dominio ya no existen `MovieEntity` ni
 | 14.3 Soluciones | `JOIN FETCH`, `@EntityGraph` | Una sola consulta |
 | 14.4 `LazyInitializationException` | Sesión cerrada | Entender el error |
 | 14.5 Referencias circulares | Relaciones bidireccionales y serialización | Por qué evitamos la bidireccionalidad innecesaria |
+| 14.6 `open-in-view` | Sesión abierta durante toda la petición (por defecto) | `spring.jpa.open-in-view=false` y por qué (recomendación del profesor, [tema 05](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jpa)) |
 
 Depende de: 12.
 
@@ -175,6 +177,18 @@ Depende de: 12.
 | 15.3 Mapper dominio → DTO | Campos copiados, calculados (p. ej., nombre completo) y omitidos | Recorrido completo MariaDB → `Movie` (dominio con JPA) → DTO |
 
 Depende de: 12.
+
+### Fase 15A 🟡 API First: el contrato antes del código
+Se inserta entre la 15 y la 16 sin renumerar el resto, para no invalidar las referencias a las fases 16–24.
+Planificada el 2026-10-28 tras leer el [tema 02](https://cesguiro.es/doku.php/clase/daw/dws/1eval/api_first) del profesor. Aún no se ha empezado.
+
+| Paso | Concepto | Resultado esperado |
+|---|---|---|
+| 15A.1 El contrato de la v1 ⏳ | Rutas, DTO, códigos y errores escritos antes de implementar ([tema 02](https://cesguiro.es/doku.php/clase/daw/dws/1eval/api_first)) | `src/main/resources/static/openapi.yaml`, servido en `/openapi.yaml` |
+| 15A.2 OpenAPI y Swagger UI ⏳ | `springdoc-openapi` 3.2.0 + Swagger UI; la UI carga el contrato estático | `http://localhost:8080/swagger-ui.html` |
+| 15A.3 Contrato frente a implementación ⏳ | Que el contrato no mienta: lo declarado es lo que responde | Comparar `/v3/api-docs` (generado) con el contrato, en la fase 16 |
+
+Depende de: D-36 a D-39 (ya decididos en la fase 8) y, para 15A.3, de la fase 16. Decisión: D-47.
 
 ### Fase 16 🔴 Servicio y controladores REST de lectura
 | Paso | Concepto | Resultado esperado |
@@ -201,6 +215,7 @@ Depende de: 16.
 | 18.2 Bean Validation | `@NotBlank`, `@Positive`, `@Valid` | Peticiones inválidas rechazadas |
 | 18.3 Excepciones propias (solo las necesarias) | `MovieNotFoundException` | 404 cuando no existe |
 | 18.4 `@RestControllerAdvice` | Gestión centralizada | Respuestas de error coherentes |
+| 18.5 `ProblemDetail` (RFC 9457) | Formato de error estándar, el mismo en todas las operaciones ([tema 03](https://cesguiro.es/doku.php/clase/daw/dws/1eval/validacion)) | Errores con `type`, `title`, `status` y `errors` |
 
 Depende de: 16 (17 recomendable).
 
@@ -224,11 +239,37 @@ Depende de: 12 (y 16 para 19.3). Las pruebas unitarias se hacen desde la fase 6.
 
 Depende de: todas las anteriores que hayamos hecho.
 
-### Fases opcionales ⚪
-- **21. Contenerizar la aplicación** (`Dockerfile` + servicio `app` en Compose). Depende de: 20.
-- **22. MapStruct**, solo si los mapeos manuales se vuelven repetitivos y lo justificamos. Depende de: 15.
-- **23. Ampliar la relación película–actor con datos propios** (por ejemplo, el nombre del personaje). Convierte la tabla intermedia en una entidad con identidad. Depende de: 14.
-- **24. Seguridad con Spring Security y JWT.** Login, token JWT que el cliente envía en cada petición y rutas protegidas (por ejemplo, solo usuarios autenticados pueden crear películas). Necesita una tabla de usuarios (migración Flyway) y contraseñas cifradas. Depende de: 18.
+### Fases opcionales y recomendables ⚪/🟡
+- **21. Contenerizar la aplicación** ⚪ (`Dockerfile` + servicio `app` en Compose). Depende de: 20.
+- **22. MapStruct** ⚪, solo si los mapeos manuales se vuelven repetitivos y lo justificamos. El profesor lo usa en el [tema 05](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jpa); nosotros no separamos entidad y modelo (D-29), así que hoy no hace falta. Depende de: 15.
+- **23. Ampliar la relación película–actor con datos propios** ⚪ (por ejemplo, el nombre del personaje). Convierte la tabla intermedia en una entidad con identidad. Depende de: 14.
+- **24. Seguridad con Spring Security y JWT** 🟡. Login, token JWT que el cliente envía en cada petición y rutas protegidas (por ejemplo, solo usuarios autenticados pueden crear películas). Necesita una tabla de usuarios (migración Flyway) y contraseñas cifradas. **El profesor lo imparte en la 1ª evaluación** ([tema 06](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jwt) y [tema 07](https://cesguiro.es/doku.php/clase/daw/dws/1eval/spring_security)); si su práctica lo exige, pasa a 🔴. Depende de: 18.
+
+## Bloque F — Temas del temario del profesor que faltaban
+
+Añadido el 2026-10-28 tras revisar [DWS](https://cesguiro.es/doku.php/clase/daw/dws/start) y [Programación](https://cesguiro.es/doku.php/clase/daw/prog/start). La fase 25 llega a la arquitectura de referencia de su [tema 04](https://cesguiro.es/doku.php/clase/daw/dws/1eval/modulith); las demás cubren temas que no estaban en el plan.
+
+### Fase 25 🟡 Monolito modular: paquetes por módulo, ArchUnit y Spring Modulith
+| Paso | Concepto | Resultado esperado |
+|---|---|---|
+| 25.1 De capas a módulos | Paquete por módulo con `api` e `internal`; raíz de composición `app`; decidir uno o dos módulos | Reorganización de paquetes |
+| 25.2 API pública del módulo | Interfaz y DTO que cruzan el límite; lo interno no se expone | Contrato interno documentado |
+| 25.3 ArchUnit | Sin ciclos, solo por la API pública, dominio sin frameworks | Tests de arquitectura |
+| 25.4 Spring Modulith | `ApplicationModules.of(...).verify()` y documentación generada | Verificación automática |
+
+Depende de: 20. **Decisión pendiente en 25.1:** con D-29 las entidades se referencian entre sí. Con **un** módulo (`catalog` con películas, directores y actores) no hay conflicto; con **dos** (`movies` y `people`) las relaciones tendrían que pasar a identificadores, como indica su tema 05.
+
+### Fase 26 ⚪ Eventos de aplicación y mensajería
+Publicar un evento al crear una película y escucharlo con `@TransactionalEventListener`; después, la diferencia con un intermediario real (RabbitMQ/Kafka). Depende de: 17.
+
+### Fase 27 ⚪ Logs e instrumentación
+Logs estructurados con SLF4J, niveles, correlación de peticiones y métricas con Actuator. Depende de: 16.
+
+### Fase 28 ⚪ Concurrencia: hilos de Tomcat y virtual threads
+Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende de: 16.
+
+### Fase 29 ⚪ Serverless: lambda local
+**No encaja en este proyecto**: nuestra API es un servidor HTTP permanente, no una función por evento. Se haría como ejercicio aparte con SAM o Docker, sin tocar el repositorio. Se anota para que la cobertura del temario quede completa, no para hacerlo aquí.
 
 ## Mapa de dependencias (resumen)
 
@@ -240,7 +281,31 @@ Depende de: todas las anteriores que hayamos hecho.
                            ↓
                   11 → 12 → 14
                               ↓
-                       15 → 16 → 17 → 18
+                       15 → 15A → 16 → 17 → 18
                               ↓
-                             19 → 20 → (21, 22, 23, 24 opcionales)
+                        19 → 20 → 25 (modular)
+                              │
+                   16 → 26 (eventos), 27 (logs), 28 (concurrencia)
 ```
+
+## Cobertura del temario del profesor (2026-10-28)
+
+| Tema del profesor | Fase nuestra | Estado |
+|---|---|---|
+| DWS 01 Arquitecturas | 5, 25 | 🟡 capas hechas; modular en 25 |
+| DWS 02 API First | 15A | ⏳ planificada |
+| DWS 03 Validación e invariancias | 10.2–10.3, 18.2, 18.5 | ✅ *value objects* adoptados (D-46) |
+| DWS 04 Monolito modular y Modulith | 25 | ⏳ añadida |
+| DWS 05 Persistencia JPA | 11–14, 19 | 🟡 entidad = dominio (D-29), sin MapStruct |
+| DWS 06 JWT y 07 Spring Security | 24 | ⏳ recomendable |
+| DWS 08 Eventos y mensajería | 26 | ⏳ añadida |
+| DWS 09 Logs e instrumentación | 27 | ⏳ añadida |
+| DWS 10 Serverless | 29 | ⚪ no encaja en esta API |
+| DWS 11 Concurrencia | 28 | ⏳ añadida |
+| Prog 08 Arquitectura por capas | 5 | ✅ |
+| Prog 09 APIs REST y HTTP | 16 | ⏳ |
+| Prog 10 Spring Boot | 6, 7 | ✅ |
+| Prog 11 Hilos en Tomcat | 28 | ⏳ |
+| Prog 12 Login con tokens | 24 | ⏳ |
+
+**Nota sobre *value objects*:** el profesor los pide y se adoptan en la fase 10 (D-46): `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` son `record` con constructor compacto. El coste llega en la fase 11 (`AttributeConverter` y `@Embeddable`).

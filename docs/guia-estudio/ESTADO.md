@@ -10,20 +10,22 @@
 
 | Dato | Valor |
 |---|---|
-| Fase del plan | **9 — Datos de prueba y comprobación de relaciones → COMPLETA** (5 de 5 pasos). Pendiente solo el commit de la fase |
-| Paso en curso | **ninguno**: el siguiente es la **fase 10, paso 10.1** (modelo de dominio: anémico frente a rico), tras el commit de la fase 9 |
-| Último paso terminado | 9.5 — `LEFT JOIN` y agregados (Sofia Coppola sin películas, `COUNT`/`AVG`, `HAVING`) |
-| Último commit | **`3e38972`** — `feat(fase-08): create schema with Flyway migrations` |
-| Etiqueta más reciente | **`fase-08`** (anotada y subida a `origin`) |
-| Tests | **4 en verde** (2 conexión + 1 Flyway + 1 contexto); la fase 9 es SQL y no añadió tests |
+| Fase del plan | **10 — Modelo de dominio → EN CURSO** (2 de 4 pasos) |
+| Paso en curso | **10.2 terminado**; el siguiente es el **10.3** (*value objects* con TDD) |
+| Último paso terminado | 10.2 — diseño de los seis *value objects* (D-46) |
+| Último commit | **`7bbb579`** — `feat(fase-09): add test data seed and verify SQL relationships` |
+| Etiqueta más reciente | **`fase-09`** (anotada y subida a `origin`) |
+| Tests | **4 en verde** (2 conexión + 1 Flyway + 1 contexto) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
-| Cambios sin commitear | los de la fase 9 (ver §5) |
+| Cambios sin commitear | los de la fase 10 (ver §5) |
 
 ### La siguiente acción, exacta
 
-La **fase 9 está terminada** (pasos 9.1 a 9.5). Lo que toca es su **commit único** (D-30), con permiso del alumno, y después la **fase 10, paso 10.1**: decidir si el modelo de dominio es **anémico** (solo datos, la lógica fuera) o **rico** (datos + reglas) y justificarlo para este problema. En el 10.2 se escribirán `Movie`, `Director` y `Actor` **en Java puro**; las anotaciones JPA llegan en la fase 11 (D-29).
+La **fase 10 va por el paso 10.3**: escribir con TDD los seis *value objects* (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`) en `com.daw.movies.domain.model`: primero el test en rojo, después el `record` con constructor compacto. El diseño ya está cerrado en el 10.2 (D-46). El 10.4 creará `Director`, `Actor` y `Movie` con estos tipos, getters, `fullName()` y constructor protegido para JPA.
 
 Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` (los tests de integración lo necesitan; los unitarios de dominio, no). Los datos de prueba ya están cargados; si la base se recrea (`docker compose down -v`), hay que volver a cargarlos con la receta del [diario 09](09-datos-de-prueba.md#cómo-se-recarga-desde-cero).
+
+**Decidido:** se adoptan *value objects* como pide el profesor (D-46). El coste se paga en la fase 11, al mapearlos con `AttributeConverter`/`@Embeddable`.
 
 ---
 
@@ -204,23 +206,71 @@ Un único commit para toda la fase (D-30). No se comiteó `.env` (ignorado) ni `
 
 **Siguiente:** fase 10, paso 10.1 (modelo anémico frente a rico).
 
+### 2026-10-28 (séptima parte) — fase 10, paso 10.1 terminado
+
+1. Explicadas las dos opciones (anémico: campos + setters y reglas en el servicio; rico: constructor que valida y sin setters) y la intermedia (rico con setters). **El alumno eligió el modelo rico moderado** → D-44.
+2. Decidido qué incluye: constructor que valida, sin setters, `fullName()` calculado, biografía en blanco → `NULL`, constructor protegido para JPA y campos no `final` (coste de D-29). Qué queda fuera: `equals`/`hashCode`, Bean Validation en el dominio, servicios de dominio y setters.
+3. Aclarado en el temario qué sería un modelo rico "completo" (*value objects*, factorías, eventos, agregados, dominio separado de JPA) y por qué no se hace ahora; también que el modelo de dominio no decide la forma del proyecto (una sola aplicación Spring Boot, paquetes por capa, D-18).
+4. **No se tocó código**: los 4 tests siguen en verde.
+5. Documentado: [diario 10](10-modelo-de-dominio.md#101-modelo-anémico-frente-a-modelo-rico), [temario 10](temario/10-modelo-de-dominio.md), D-44 y este archivo.
+6. **El alumno aclara que el profesor pide un monolito normal** → D-45: el proyecto es un monolito **clásico en capas** (un `.jar`, un módulo Maven, una base de datos, paquetes por capa) y **no** un monolito modular. Comprobado en el `pom.xml` (ningún `<module>`) y en `src/main/java` (una sola clase, `MoviesApplication`). No se añaden herramientas de fronteras. *(Corregido en la novena parte: la web del profesor sí plantea monolito modular; la modularización se planifica en la fase 25.)*
+
+**Siguiente:** fase 10, paso 10.2 (por entonces: clases de dominio; redefinido después a *value objects*).
+
+### 2026-10-28 (octava parte) — commit de la fase 9
+
+1. `.\mvnw.cmd clean test` → **4 en verde**, `Successfully validated 4 migrations`, `Schema movies is up to date`. (Sin `clean` quedaban informes viejos en `target/surefire-reports` de los tests de dominio borrados; el `clean` los elimina y deja el recuento real.)
+2. El commit de la fase 9 se hizo **seleccionando archivos**, porque `ESTADO.md` y `decisiones-tecnicas.md` ya mezclaban contenido de la fase 10. Para esos dos se preparó una versión "solo fase 9" en un archivo temporal y se metió en el índice con `git hash-object -w` + `git update-index --cacheinfo`, **sin tocar el árbol de trabajo**. El árbol siguió mostrando `MM` en los dos archivos (índice = fase 9, disco = fase 10).
+3. ```
+   git commit -m "feat(fase-09): add test data seed and verify SQL relationships"
+   # [main 7bbb579] 9 files changed, 1091 insertions(+), 49 deletions(-)
+   git tag -a fase-09 -m "Fase 9: datos de prueba y comprobación de relaciones SQL"
+   git push              # 3e38972..7bbb579  main -> main
+   git push origin fase-09   # [new tag] fase-09 -> fase-09
+   ```
+   La etiqueta se rehízo (`-f`) con la tilde correcta en "comprobación" y se volvió a subir.
+4. **Lo que queda sin comitear es solo fase 10**: `ESTADO.md`, `decisiones-tecnicas.md` (D-44, D-45) y los dos archivos nuevos de la fase 10.
+
+**Siguiente:** fase 10, paso 10.2 (por entonces: clases de dominio; redefinido después a *value objects*).
+
+### 2026-10-28 (novena parte) — el plan se contrasta con el temario del profesor
+
+1. Leídos [DWS](https://cesguiro.es/doku.php/clase/daw/dws/start) y [Programación](https://cesguiro.es/doku.php/clase/daw/prog/start), y de DWS: [01 arquitecturas](https://cesguiro.es/doku.php/clase/daw/dws/1eval/arquitecturas), [02 API First](https://cesguiro.es/doku.php/clase/daw/dws/1eval/api_first), [03 validación](https://cesguiro.es/doku.php/clase/daw/dws/1eval/validacion), [04 modulith](https://cesguiro.es/doku.php/clase/daw/dws/1eval/modulith) y [05 JPA](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jpa).
+2. **Hallazgo:** su tema 01 fija como referencia «una arquitectura por capas desplegada como **monolito modular**» y el tema 04 desarrolla módulos, ArchUnit y Spring Modulith. Eso contradice D-45 tal como estaba escrita ayer. Se avisa al alumno y se corrige.
+3. **Decisión del alumno:** monolito **normal ahora**, modular **en el futuro** → D-45 reescrita: monolito clásico en capas ahora y modularización en la **fase 25**. Se anota el riesgo: con D-29, partir en dos módulos obligaría a relacionar entidades por identificador (tema 05 del profesor); con un módulo `catalog` no hay conflicto.
+4. **Añadido al plan:** paso 14.6 (`open-in-view=false`), **fase 15A** (API First, sin renumerar 16–24), paso 18.5 (`ProblemDetail`), la fase 24 pasa a 🟡 con la nota de que el profesor la da en la 1ª evaluación, y el **Bloque F**: 25 modular, 26 eventos, 27 logs, 28 concurrencia y 29 serverless (marcada como «no encaja en esta API»). Añadida una tabla de cobertura del temario del profesor.
+5. **Diferencia que no se toca:** el profesor pone las invariantes en *value objects* (`record Iban`, tema 03); nosotros en el constructor de la entidad (D-44). Queda como decisión abierta **antes del paso 10.2**, porque adoptarlos obliga a `@Embeddable`/`AttributeConverter` en la fase 11.
+6. **No se tocó código**: los 4 tests siguen en verde (última ejecución: `.\mvnw.cmd clean test` antes del commit `7bbb579`).
+
+**Siguiente:** fase 10, paso 10.2.
+
+### 2026-10-28 (décima parte) — fase 10, paso 10.2 terminado
+
+1. **El alumno confirma dos cosas:** el proyecto no es una práctica evaluada (es un ejercicio para aplicar la clase), el profesor **pide *value objects*** y la versión de Java/Spring Boot no importa. Con eso se cierra la duda abierta en la novena parte.
+2. **D-46:** se adoptan seis *value objects* (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`) y se reescribe D-44: la validación de cada campo pasa al *value object*; el constructor de la entidad solo comprobará lo que cruza campos.
+3. **Leídas las cuatro migraciones** (`V1`–`V4`) para copiar las reglas reales, no inventarlas: `title VARCHAR(255)`, `first_name`/`last_name VARCHAR(100)`, `birth_date DATE NOT NULL`, `biography TEXT NULL`, `CHECK (release_year >= 1888)`, `CHECK (duration_minutes > 0)`.
+4. **Diseño cerrado:** `record` con constructor compacto, `IllegalArgumentException` para todo valor inválido (también `null`), `trim()` antes de medir, sin topes superiores que el esquema no tenga, `BirthDate` no futura como única regla añadida, `Biography` no admite blanco y la ausencia es `null` (la normalización blanco → `null` se hace al entrar: mapper de la 17 y DTO de la 18). Todo en `com.daw.movies.domain.model`.
+5. **Plan y temario corregidos** en consecuencia: el paso 10.2 pasa a ser «*value objects*: qué son y cuáles necesitamos», el 10.3 los escribe con TDD y el 10.4 crea las entidades; la cobertura del tema 03 del profesor pasa a ✅.
+6. **No se tocó código Java**: los 4 tests siguen en verde (última ejecución: `.\mvnw.cmd clean test` antes del commit `7bbb579`). Este paso es de diseño.
+
+**Siguiente:** fase 10, paso 10.3 (*value objects* con TDD: test en rojo y después el `record`).
+
 ---
 
 ## 5. Trabajo sin commitear
 
 ```
- M README.md
+ M docs/guia-estudio/00-plan-de-aprendizaje.md
+ M docs/guia-estudio/09-datos-de-prueba.md
  M docs/guia-estudio/ESTADO.md
  M docs/guia-estudio/README.md
- M docs/guia-estudio/02-alcance-del-dominio.md
  M docs/guia-estudio/decisiones-tecnicas.md
  M docs/guia-estudio/glosario.md
-?? docs/guia-estudio/09-datos-de-prueba.md
-?? docs/guia-estudio/temario/09-datos-de-prueba-y-consultas.md
-?? src/main/resources/db/testdata/seed.sql
+?? docs/guia-estudio/10-modelo-de-dominio.md
+?? docs/guia-estudio/temario/10-modelo-de-dominio.md
 ```
 
-Todo esto entra en el **único commit de la fase 9** (D-30): `feat(fase-09): ...`, etiqueta `fase-09`, `git push` y `git push origin fase-09`. **Solo con confirmación del alumno.** No hay cambios de código Java: la fase 9 es SQL.
+Todo esto entra en un **commit de la fase 10** (D-30): `docs(fase-10): design rich domain model and value objects`. **La etiqueta `fase-10` no se crea hasta cerrar la fase** (paso 10.4). `git push` solo con confirmación del alumno. La fase 10 es de documentación: no hay código Java.
 
 ---
 

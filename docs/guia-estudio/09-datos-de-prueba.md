@@ -428,4 +428,4 @@ ORDER BY release_year;
 
 ## Siguiente paso
 
-**Fase 10, paso 10.1**: modelo de dominio (anémico frente a rico). Las clases `Movie`, `Director` y `Actor` se escribirán en Java puro en el paso 10.2; las anotaciones JPA llegan en la fase 11 (D-29).
+**Fase 10, paso 10.1**: modelo de dominio (anémico frente a rico). Las clases `Movie`, `Director` y `Actor` se escribirán en Java puro en el paso 10.4, con los *value objects* creados en el 10.3; las anotaciones JPA llegan en la fase 11 (D-29).
