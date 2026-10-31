@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual:** fases 1–6 completadas. Hay un proyecto Spring Boot 4.1.1 que arranca y pasa su primer test, pero todavía no tiene lógica ni conexión a la base de datos. Siguiente: fase 7, conexión entre Java y MariaDB.
+> **Estado actual:** fases 1–7 completadas. El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`) y tiene 3 tests en verde. Todavía no hay tablas ni lógica. Siguiente: fase 8, Flyway (migraciones del esquema).
 
 ---
 
@@ -39,6 +39,7 @@ Versiones verificadas en fuentes oficiales en la fase 1 ([detalle](docs/guia-est
 | Flyway | 12.4.0 (+ `flyway-mysql`) | Migraciones versionadas del esquema |
 | MariaDB | 12.3 (LTS), imagen Docker `mariadb:12.3` | Base de datos |
 | Driver MariaDB | 3.5.10 (`mariadb-java-client`) | Conexión JDBC |
+| HikariCP | 7.0.2 | *Pool* de conexiones (`DataSource`) |
 | Maven (vía Maven Wrapper) | 3.10.0 | Compilación, dependencias y tests (no hace falta instalarlo) |
 | Docker + Docker Compose | — | Ejecutar MariaDB sin instalarla |
 | Git | 2.51 | Control de versiones |
@@ -50,7 +51,7 @@ Versiones verificadas en fuentes oficiales en la fase 1 ([detalle](docs/guia-est
 | Fase | Dependencias | Para qué | Estado |
 |---|---|---|---|
 | 6 | `spring-boot-starter`, `spring-boot-starter-test` | Núcleo de Spring Boot; JUnit 5, AssertJ y Mockito | ✅ |
-| 7 | `mariadb-java-client`, `spring-boot-starter-data-jpa` (+ `-test`) | Driver JDBC; JPA, Hibernate, Spring Data y pool de conexiones | ⏳ |
+| 7 | `mariadb-java-client`, `spring-boot-starter-data-jpa` (+ `-test`) | Driver JDBC; JPA, Hibernate, Spring Data y pool de conexiones | ✅ |
 | 8 | `spring-boot-starter-flyway`, `flyway-mysql` | Migraciones; módulo de Flyway para MySQL/MariaDB | ⏳ |
 | 16 | `spring-boot-starter-webmvc` (+ `-test`) | Controladores REST, Tomcat embebido, JSON | ⏳ |
 | 18 | `spring-boot-starter-validation` | Bean Validation (`@NotBlank`, `@Valid`) | ⏳ |
@@ -73,8 +74,8 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | B. Base de datos | 4. Docker, Docker Compose y MariaDB | ✅ |
 | | 5. Arquitectura en tres capas e inversión de dependencias | ✅ |
 | | 6. Creación del proyecto Spring Boot | ✅ |
-| | 7. Conexión entre Java y MariaDB | ⏳ Siguiente |
-| | 8. Flyway: migraciones del esquema | ⏳ |
+| | 7. Conexión entre Java y MariaDB | ✅ |
+| | 8. Flyway: migraciones del esquema | ⏳ Siguiente |
 | | 9. Datos de prueba y comprobación de relaciones | ⏳ |
 | C. Java y persistencia | 10. Modelo de dominio | ⏳ |
 | | 11. Fundamentos de JPA y entidades | ⏳ |
@@ -93,7 +94,7 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 
 ## 3. Cómo arrancar el proyecto
 
-La base de datos se arranca con Docker. La aplicación todavía no se conecta a ella (fase 7).
+La base de datos se arranca con Docker. La aplicación se conecta a ella leyendo las credenciales del mismo `.env` ([D-32](docs/guia-estudio/decisiones-tecnicas.md)), así que **MariaDB tiene que estar arrancado** antes de ejecutar los tests o la aplicación.
 
 ### Requisitos
 
@@ -139,17 +140,22 @@ movies-mariadb-1   mariadb:12.3   Up 10 seconds (healthy)   0.0.0.0:3307->3306/t
 ### Compilar, ejecutar los tests y arrancar la aplicación
 
 ```powershell
+docker compose up -d          # los tests se conectan a MariaDB: tiene que estar arrancado (D-35)
 .\mvnw.cmd test               # compila y ejecuta los tests
-.\mvnw.cmd spring-boot:run    # arranca la aplicación (de momento arranca y termina: aún no hay servidor web)
+.\mvnw.cmd spring-boot:run    # arranca la aplicación (se conecta y termina: aún no hay servidor web)
 .\mvnw.cmd clean              # borra target/
 ```
 
 Resultado esperado de `test`:
 
 ```
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.DatabaseConnectionTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
+
+Si MariaDB no está arrancado, los 3 tests fallan con `Connection refused` en `localhost:3307`.
 
 Los avisos `WARNING` de Mockito ("self-attaching", "Dynamic loading of agents") son conocidos y no rompen nada (D-31).
 
@@ -252,6 +258,10 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 6.1 | `git init`, `.gitignore` (secretos, `target/`, IDE), `.gitattributes` (finales de línea LF), subida a GitHub y reorganización del historial en un commit por fase | [06](docs/guia-estudio/06-creacion-proyecto-spring-boot.md) |
 | 6.2–6.3 | Generar el proyecto con Spring Initializr (Boot 4.1.1, Java 25, `com.daw.movies`) en una carpeta temporal, revisarlo y copiar solo lo útil; dependencias mínimas y plan del resto | [06](docs/guia-estudio/06-creacion-proyecto-spring-boot.md) |
 | 6.4–6.5 | Estructura Maven, ciclo de vida, primer `.\mvnw.cmd test` en verde y primer arranque con `spring-boot:run` | [06](docs/guia-estudio/06-creacion-proyecto-spring-boot.md) |
+| 7.1 | Añadir el driver de MariaDB y Spring Data JPA; el test se pone en rojo a propósito (`'url' attribute is not specified`) | [07](docs/guia-estudio/07-conexion-java-mariadb.md) |
+| 7.2 | `application.yaml` con la URL y las credenciales leídas de `.env` (`spring.config.import`); contraseña fuera del log | [07](docs/guia-estudio/07-conexion-java-mariadb.md) |
+| 7.3 | `ddl-auto: validate` con TDD (rojo → verde): Hibernate no toca el esquema | [07](docs/guia-estudio/07-conexion-java-mariadb.md) |
+| 7.4 | Test de conexión (MariaDB, base `movies`, usuario `movies_app`) y comprobación de que puede fallar | [07](docs/guia-estudio/07-conexion-java-mariadb.md) |
 
 ---
 
@@ -265,6 +275,9 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 4 | 4 | El asistente de IA no puede crear ni leer `.env*` | Regla de permisos que protege archivos con secretos | El alumno crea `.env` y `.env.example` a mano |
 | 5 | 6 | Aviso `CRLF will be replaced by LF` en `.env.example` al hacer commit | No es un error: `.gitattributes` normaliza a LF un archivo creado en Windows | Ninguna; es el comportamiento buscado ([D-24](docs/guia-estudio/decisiones-tecnicas.md)) |
 | 6 | 6 | Se documentó que `core.autocrlf` "no estaba configurado", pero Git avisaba de conversiones LF/CRLF | Solo se había consultado `git config --global`; el valor `true` venía del nivel de sistema (instalador de Git para Windows) | Consultar todos los niveles con `git config --show-origin --get-all core.autocrlf`. `.gitattributes` tiene prioridad, así que D-24 sigue siendo válida |
+| 7 | 7 | `Failed to configure a DataSource: 'url' attribute is not specified` | Spring Data JPA en el proyecto sin URL de conexión | Configurar `spring.datasource.url` en `application.yaml`. Se provocó a propósito para verlo |
+| 8 | 7 | `Socket fail to connect to localhost:3307. Connection refused` y `Unable to determine Dialect` | Docker Desktop apagado: nadie escucha en el 3307 | Abrir Docker Desktop y `docker compose up -d --wait` |
+| 9 | 7 | La contraseña de la base de datos aparecía en claro en el log de arranque | Hibernate (`HHH10001005: Database info`) escribe la URL que devuelve el driver, con las credenciales | Subir el logger `org.hibernate.orm.connections.pooling` a `WARN` ([D-33](docs/guia-estudio/decisiones-tecnicas.md)) |
 
 ---
 
@@ -363,6 +376,10 @@ Resumen. Cada decisión, con sus alternativas y su motivo, está en [decisiones-
 | D-29 | Anotaciones JPA en las clases del dominio (sin `MovieEntity` ni su mapper); la fase 13 se elimina | ✅ |
 | D-30 | Un commit y una etiqueta por fase; historial reescrito (fases 1–5 en un commit) | ✅ |
 | D-31 | Aviso de Mockito "self-attaching" con Java 25: se deja de momento | ⏳ Cuando usemos Mockito |
+| D-32 | Spring lee las credenciales de `.env` con `spring.config.import`; una variable de entorno real tiene prioridad | ✅ |
+| D-33 | Logger `org.hibernate.orm.connections.pooling` a `WARN` para que la contraseña no salga en el log | ✅ |
+| D-34 | `ddl-auto: validate`: el esquema es de Flyway; Hibernate solo lo comprueba | ✅ |
+| D-35 | Los tests necesitan MariaDB arrancado (hasta Testcontainers, fase 19) | ✅ Provisional |
 
 ---
 
@@ -387,6 +404,7 @@ Temas disponibles:
 | 04 | [Docker, Docker Compose y MariaDB](docs/guia-estudio/temario/04-docker-compose-mariadb.md) |
 | 05 | [Arquitectura en tres capas e inversión de dependencias](docs/guia-estudio/temario/05-arquitectura-tres-capas-dip.md) (incluye DAO vs. Repositorio, DTOs y mappers) |
 | 06 | [Proyecto Spring Boot y Git](docs/guia-estudio/temario/06-proyecto-spring-boot-y-git.md) |
+| 07 | [Conexión con la base de datos: JDBC, driver y `DataSource`](docs/guia-estudio/temario/07-conexion-jdbc-datasource.md) |
 | 11 | [Introducción a JPA](docs/guia-estudio/temario/11-introduccion-jpa.md) (adelanto) |
 
 ---
@@ -406,8 +424,9 @@ daw-movies/
 ├── mvnw, mvnw.cmd, .mvn/  ← Maven Wrapper (Maven 3.10.0)
 ├── src/
 │   ├── main/java/com/daw/movies/MoviesApplication.java   ← clase de arranque
-│   ├── main/resources/application.properties              ← configuración
-│   └── test/java/com/daw/movies/MoviesApplicationTests.java
+│   ├── main/resources/application.yaml                    ← configuración (sin secretos: los lee de .env)
+│   ├── test/java/com/daw/movies/MoviesApplicationTests.java
+│   └── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB y ddl-auto
 └── docs/
     └── guia-estudio/      ← plan, fases, temario, decisiones y glosario
 ```

@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: movies
+
+  # Lee el archivo .env de la raíz del proyecto (el mismo que usa Docker Compose).
+  # "optional:" = si no existe, no falla al leerlo.
+  # "[.properties]" = se interpreta con el formato CLAVE=valor.
+  # Una variable de entorno real del sistema tiene prioridad sobre .env.
+  config:
+    import: optional:file:.env[.properties]
+
+  # Conexión con MariaDB en Docker (puerto 3307 de Windows; ver compose.yaml).
+  # ${NOMBRE:valor} = usa la variable NOMBRE y, si no existe, el valor por defecto.
+  # El usuario y la contraseña no tienen valor por defecto: sin ellos, la aplicación no arranca.
+  datasource:
+    url: jdbc:mariadb://localhost:${MARIADB_PORT:3307}/${MARIADB_DATABASE:movies}
+    username: ${MARIADB_USER}
+    password: ${MARIADB_PASSWORD}
+
+  # El esquema lo crea y lo cambia Flyway (fase 8). Hibernate solo comprueba que
+  # las tablas encajan con las entidades; si no encajan, la aplicación no arranca (D-34).
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+logging:
+  level:
+    # Hibernate escribe en INFO la URL de conexión con el usuario y la contraseña en claro (D-33).
+    org.hibernate.orm.connections.pooling: WARN

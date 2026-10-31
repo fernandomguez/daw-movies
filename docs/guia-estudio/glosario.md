@@ -156,4 +156,34 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Volumen (Docker)**: almacenamiento gestionado por Docker fuera del contenedor. Los datos sobreviven aunque el contenedor se borre (salvo con `docker compose down -v`).
 
+**JDBC (*Java Database Connectivity*)**: API estándar de Java para hablar con bases de datos relacionales. Define interfaces (`Connection`, `ResultSet`...); cada base de datos aporta su implementación (el driver). Ver [temario/07](temario/07-conexion-jdbc-datasource.md).
+
+**Driver JDBC**: librería que implementa JDBC para una base de datos concreta. Para MariaDB, `mariadb-java-client`. Spring elige cuál usar a partir de la URL (`jdbc:mariadb://...`).
+
+**URL JDBC**: cadena que dice a qué base de datos conectarse: `jdbc:mariadb://localhost:3307/movies` (driver, máquina, puerto y base de datos).
+
+**`DataSource`**: interfaz estándar de Java para "algo que entrega conexiones a la base de datos". Spring Boot la crea sola si tiene la URL, el usuario y la contraseña.
+
+**Pool de conexiones / HikariCP**: grupo de conexiones abiertas que se reutilizan, porque abrir una conexión nueva es lento. HikariCP es la implementación que usa Spring Boot por defecto.
+
+**Error frente a fallo (JUnit)**: un *failure* es una aserción que no se cumple; un *error* es una excepción inesperada (por ejemplo, que el contexto de Spring no pueda arrancar).
+
+**Dialecto (Hibernate)**: clase que conoce las particularidades del SQL de una base de datos concreta. Hibernate lo elige solo al conectar (`MariaDBDialect`). Ver [temario/07](temario/07-conexion-jdbc-datasource.md), sección 8.
+
+**`spring.config.import`**: propiedad que añade otros archivos de configuración. La usamos para leer `.env`: `optional:file:.env[.properties]` (D-32).
+
+**Marcador (*placeholder*) `${...}`**: referencia a otra propiedad o variable de entorno dentro de la configuración. `${NOMBRE:valor}` incluye un valor por defecto.
+
+**YAML**: formato de configuración basado en la sangría (dos espacios, nunca tabuladores). `application.yaml` equivale a `application.properties` escrito de forma jerárquica.
+
+**Nivel de log (`logging.level`)**: cuánto detalle escribe un logger: `TRACE` < `DEBUG` < `INFO` < `WARN` < `ERROR`. Se configura por paquete en `application.yaml`.
+
+**`ddl-auto`**: propiedad (`spring.jpa.hibernate.ddl-auto`) que decide si Hibernate crea, cambia, valida o ignora las tablas al arrancar. Usamos `validate`: el esquema es de Flyway (D-34).
+
+**`@SpringBootTest`**: anotación de test que arranca la aplicación completa (con la conexión a la base de datos) para probar las piezas juntas.
+
+**Caché de contextos (tests)**: Spring reutiliza el contexto arrancado para otras clases de test con la misma configuración, así solo se arranca una vez.
+
+**try-with-resources**: `try (Recurso r = ...) { }`. Java cierra el recurso al salir del bloque, aunque haya una excepción. Con un pool, cerrar una conexión significa devolverla.
+
 **Uno a muchos (1:N)**: un elemento de un lado se relaciona con varios del otro, pero cada uno de esos solo con uno. Director–película.

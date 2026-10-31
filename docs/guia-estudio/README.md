@@ -21,6 +21,7 @@ Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el pr
 | 04 | [Docker, Docker Compose y MariaDB](temario/04-docker-compose-mariadb.md) | Completo |
 | 05 | [Arquitectura en tres capas e inversión de dependencias](temario/05-arquitectura-tres-capas-dip.md) | Completo (sección 11: diseño real con JPA en el dominio) |
 | 06 | [Proyecto Spring Boot y Git](temario/06-proyecto-spring-boot-y-git.md) | Completo |
+| 07 | [Conexión con la base de datos: JDBC, driver y `DataSource`](temario/07-conexion-jdbc-datasource.md) | Completo |
 | 11 | [Introducción a JPA](temario/11-introduccion-jpa.md) | Introducción conceptual, adaptada a D-29 (se ampliará en la fase 11) |
 
 Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conceptos, por qué los necesitamos, archivos implicados, código explicado, recorrido de los datos, comandos y comprobaciones, errores y soluciones, decisiones, resumen y preguntas de repaso.
@@ -35,7 +36,8 @@ Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conce
 | 4. Docker, Docker Compose y MariaDB | ✅ Completada | [04-docker-y-mariadb.md](04-docker-y-mariadb.md) |
 | 5. Arquitectura en tres capas e inversión de dependencias | ✅ Completada (diseño revisado en la fase 6: D-19, D-29) | [05-arquitectura.md](05-arquitectura.md) |
 | 6. Creación del proyecto Spring Boot | ✅ Completada | [06-creacion-proyecto-spring-boot.md](06-creacion-proyecto-spring-boot.md) |
-| 7. Conexión entre Java y MariaDB | ⏳ Siguiente | — |
-| 8 a 20 | Pendientes (la 13 se eliminó, D-29) | Ver el [plan](00-plan-de-aprendizaje.md) |
+| 7. Conexión entre Java y MariaDB | ✅ Completada | [07-conexion-java-mariadb.md](07-conexion-java-mariadb.md) |
+| 8. Flyway: migraciones del esquema | ⏳ Siguiente | — |
+| 9 a 20 | Pendientes (la 13 se eliminó, D-29) | Ver el [plan](00-plan-de-aprendizaje.md) |
 
 > Normas del proyecto: [base-standards.md](../../base-standards.md). Código en inglés; documentación y comentarios en español.
