@@ -249,3 +249,13 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 **`ERROR 4025`**: un `CHECK` con nombre ha fallado. El mensaje incluye el nombre (`chk_movie_duration_positive`).
 
 **Idempotente**: operación que se puede repetir sin cambiar el resultado. El script de datos **no** lo es (la segunda ejecución da `ERROR 1062`); por eso hay que vaciar antes las tablas.
+
+**Invariante**: condición que un objeto debe cumplir **siempre**, desde que se crea hasta que se destruye. Ejemplo: una duración de película siempre es mayor que cero. Si el objeto se puede construir violándola, no es una invariante, es una recomendación.
+
+**`Value object` (objeto de valor)**: tipo pequeño e **inmutable** que representa un concepto del negocio y se compara **por su valor**, no por identidad. Protege su invariante en el constructor, así que un `Title` vacío no puede existir. En este proyecto: `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` (D-46).
+
+**`Primitive obsession`**: usar tipos genéricos (`String`, `int`, `LocalDate`) para conceptos del dominio. El compilador no distingue un título de un nombre, y la regla ("no vacío", "mayor que 0") queda suelta en cada sitio que use el dato. Se corrige con *value objects*.
+
+**`record`**: clase inmutable de Java que genera constructor, accesores (`title.value()`), `equals`, `hashCode` y `toString`. No tiene setters. Su **constructor compacto** permite validar sin repetir la asignación de campos.
+
+**Constructor compacto**: forma de un `record` para validar o normalizar sus componentes sin escribir el constructor completo: `public Title { if (...) throw ...; value = value.trim(); }`. Se ejecuta en **toda** creación del objeto.

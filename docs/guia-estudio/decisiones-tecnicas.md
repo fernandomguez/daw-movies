@@ -272,3 +272,62 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Motivo:** permite comprobar en la misma consulta la diferencia entre `COUNT(*)` y `COUNT(m.id)` y el comportamiento de `AVG` con `NULL`. Es un dato real y verificable, como el resto.
 - **Consecuencia:** los recuentos de la semilla son **6 directores**, 10 películas, 14 actores y 24 participaciones. El director 6 aparece en las consultas con `LEFT JOIN` y desaparece con `INNER JOIN`.
 
+## D-44 Modelo de dominio rico (moderado), sin setters — ✅ Decidida por el alumno (fase 10, paso 10.1) · **ampliada por D-46**
+- **Contexto:** hay que decidir dónde viven las reglas de `Movie`, `Director` y `Actor` antes de escribirlas (fase 10). El esquema ya las impone en la base (`NOT NULL`, `CHECK`, FK), pero un objeto Java puede violarlas si la clase lo permite.
+- **Alternativas:**
+  - **(A) Anémico:** campos + getters + setters; la validación se hace en el servicio o el controlador. Es lo más habitual en muchos proyectos.
+  - **(B) Rico:** constructor que valida, **sin setters** y con lo derivado calculado (`fullName()`). Un objeto no puede existir inválido.
+  - **(C) Rico con setters:** el constructor valida y cada setter vuelve a validar. Permite cambiar el estado sin crear otro objeto.
+- **Elección: B**, confirmada por el alumno.
+- **Motivos:** el dominio es pequeño (tres clases) y las reglas ya están claras; concentrarlas en el constructor evita que cada capa las repita y que un objeto inválido circule hasta la base. Sin setters no hay forma de romper un invariante después de crear el objeto. La opción C multiplica los caminos de mutación para un beneficio que aún no necesitamos (la escritura llega en la fase 17).
+- **Qué incluye:**
+  - Constructor público que valida. **Desde D-46, la validación de cada campo vive en su *value object*** (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`); el constructor de la entidad recibe tipos ya válidos y solo comprueba lo que cruza campos (por ejemplo, que el director no sea `null`).
+  - Biografía opcional: `null` cuando no hay. `Biography` no admite texto en blanco; convertir un texto en blanco a `null` es normalización de entrada y se hace en el mapper (fase 17) y en el DTO (fase 18).
+  - `fullName()` calculado (nombre + apellidos), delegando en `PersonName`; no es una columna.
+  - Constructor sin argumentos **protegido** para JPA y campos **no `final`** (coste aceptado en D-29). Se añaden en el paso 10.4.
+- **Qué NO incluye (a propósito):**
+  - **Setters:** para cambiar un dato se crea otro objeto o se añade un método con nombre de negocio (fase 17).
+  - **`equals`/`hashCode`:** la identidad real es el `id` de la base, que aún no existe al crear el objeto. Se decidirá en la fase 11/14 si JPA lo exige; añadirlos con `id == null` es la trampa clásica.
+  - **Bean Validation** (`@NotBlank`, `@Positive`): D-29 la deja en los DTOs de entrada (fase 18).
+  - **Servicios de dominio:** las reglas que necesitan varios objetos o la base llegan con el repositorio (fase 12) y el servicio (fase 16).
+- **Consecuencia para la fase 11:** JPA exige un constructor sin argumentos y campos no `final`; por eso el constructor protegido se crea ya en el paso 10.4 aunque todavía no haya anotaciones.
+- **Consecuencia para la fase 17:** el mapper del DTO de entrada llamará al constructor; no habrá setters que rellenar.
+- **Documentación:** [diario 10](10-modelo-de-dominio.md#101-modelo-anémico-frente-a-modelo-rico) y [temario 10](temario/10-modelo-de-dominio.md).
+
+## D-45 Monolito clásico en capas ahora; modularización planificada en la fase 25 — ✅ Decidida por el alumno (fase 10)
+- **Contexto:** el profesor pide un **monolito** (no microservicios). Su web va más allá: el [tema 01](https://cesguiro.es/doku.php/clase/daw/dws/1eval/arquitecturas) toma como referencia «una arquitectura por capas desplegada como **monolito modular**» y el [tema 04](https://cesguiro.es/doku.php/clase/daw/dws/1eval/modulith) dedica un tema a módulos, ArchUnit y Spring Modulith.
+- **Decisión:** ahora el proyecto es un **monolito clásico en capas**: un `.jar` de Spring Boot, un módulo Maven, una base de datos y paquetes por **capa técnica** con DIP (D-18). La **modularización no es un objetivo**: se hará **solo si la aplicación lo requiere** (cuando exista un segundo módulo de negocio real). La **fase 25** documenta el camino y las condiciones.
+- **Por qué no modular ya:** con tres entidades y una relación principal, partir en módulos ahora añade estructura sin nada que aislar; primero se consolidan capas, dominio y persistencia, que es donde está el aprendizaje pendiente.
+- **Por qué queda escrita aunque no se haga:** la web del profesor toma el monolito modular como referencia y conviene tener el camino preparado y las condiciones escritas. Si al final la aplicación no lo requiere, no se hace: **no es un objetivo del proyecto**.
+- **Coste:** mover paquetes e imports (mecánico con el IDE) y añadir ArchUnit/Spring Modulith. Es barato **si no se rompen las reglas por el camino**: el dominio no importa web ni persistencia, el controlador no usa repositorios, los DTO no exponen entidades (D-18, D-20, D-29).
+- **Riesgo identificado:** con D-29, `Movie` referencia a `Director`. Su tema 05 dice que las entidades de un módulo no referencian entidades de otro. Con **un** módulo (`catalog`) no hay conflicto; con **dos** (`movies` y `people`) habría que pasar a relaciones por identificador. Se decide en el paso 25.1.
+- **Consecuencia:** no se añade Spring Modulith ni ArchUnit al `pom.xml` hasta la fase 25. La revisión de la fase 20.1 sigue siendo manual.
+- **Documentación:** [temario 10](temario/10-modelo-de-dominio.md#monolito-normal-o-monolito-modular) y [plan, Bloque F](00-plan-de-aprendizaje.md#bloque-f--temas-del-temario-del-profesor-que-faltaban).
+
+## D-46 *Value objects* en el dominio — ✅ Decidida por el alumno (fase 10, 2026-10-28)
+- **Contexto:** D-44 dejó fuera los *value objects*. El profesor los pide expresamente ([tema 03](https://cesguiro.es/doku.php/clase/daw/dws/1eval/validacion)) y el proyecto no es una práctica evaluada, sino un ejercicio para aplicar lo que se da en clase.
+- **Decisión:** el dominio usa **tipos propios** en lugar de primitivos: `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography`. Son `record` inmutables, comparados por valor, con **constructor compacto** que valida.
+- **Por qué:** *primitive obsession*: un `String` puede ser cualquier cosa y la regla queda dispersa. Con un tipo propio, el objeto inválido **no existe** por ninguna vía de creación (`new`, mapper, JPA, test). Las anotaciones de Jakarta Validation no dan esa garantía fuera de una petición HTTP.
+- **Reglas (tomadas del esquema, no inventadas):**
+
+  | *Value object* | Regla | Columna |
+  |---|---|---|
+  | `Title` | no vacío, ≤ 255, `trim` | `movie.title VARCHAR(255)` |
+  | `ReleaseYear` | ≥ 1888 | `movie.release_year` + `CHECK` |
+  | `DurationMinutes` | > 0 | `movie.duration_minutes` + `CHECK` |
+  | `PersonName` | nombre y apellidos no vacíos, ≤ 100; `fullName()` | `first_name`/`last_name VARCHAR(100)` |
+  | `BirthDate` | no nula, no futura | `birth_date DATE` |
+  | `Biography` | no vacía si existe; sin biografía = `null` | `biography TEXT NULL` (D-37) |
+
+- **Diseño cerrado en el paso 10.2:**
+  - `IllegalArgumentException` para todo valor inválido, también para `null`: un solo tipo predecible que la fase 18 traduce a `400`.
+  - `trim()` antes de medir la longitud.
+  - `ReleaseYear` y `DurationMinutes` sin tope superior: el esquema no lo tiene e inventarlo rechazaría datos válidos.
+  - `BirthDate` no futura es la única regla que no está en el esquema; usa `LocalDate.now()`, así que los tests trabajan con fechas relativas.
+  - Todos los tipos viven en `com.daw.movies.domain.model`, junto a las entidades.
+
+- **Alternativa descartada:** anotar los campos del DTO y validar en el constructor de la entidad (lo que decía D-44). Se descarta porque el profesor pide *value objects* y porque el tipo propio protege también las vías que no pasan por HTTP.
+- **Consecuencia para la fase 10:** el orden cambia. Primero los *value objects* (10.2, diseño, y 10.3, TDD) y después las entidades (10.4), que reciben tipos ya válidos.
+- **Consecuencia para la fase 11:** JPA no guarda un `Title` tal cual. `PersonName` se mapeará con `@Embeddable` (dos columnas) y los de un solo valor con `AttributeConverter`; se decide y se prueba allí, con el soporte real de Hibernate 7.
+- **Consecuencia para la fase 18:** la validación del DTO sigue existiendo, pero solo para dar un **400 con el campo culpable**; la garantía del dominio es el *value object*.
+- **Documentación:** [temario 10](temario/10-modelo-de-dominio.md#los-value-objects-d-46) y [plan, fase 10](00-plan-de-aprendizaje.md#fase-10--modelo-de-dominio).
