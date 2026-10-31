@@ -2,6 +2,8 @@
 
 > **Fase del plan:** 5. Tema **teórico**: el código que aparece es **ilustrativo** (todavía no existe en el proyecto). Las clases reales se crearán a partir de la fase 6, una a una.
 
+> ⚠️ **Cambio de diseño (2026-10-20).** Este tema explica la versión **estricta** de la arquitectura: dominio en Java puro, con `MovieEntity` y `MovieEntityMapper` separados. En la fase 6 se decidió una versión más práctica: **anotaciones JPA en las clases del dominio y `@Service` en los servicios** (D-19, D-29). Todo lo que se explica aquí sigue sirviendo para entender las capas, pero el proyecto real será como se describe en la [sección 11, "Cambio de diseño"](#11-cambio-de-diseño-dominio-con-jpa-y-service-d-19-y-d-29).
+
 ## Objetivo
 
 Entender:
@@ -32,8 +34,8 @@ Cada capa responde a una pregunta distinta:
 | Capa | Pregunta que responde | Qué contiene en nuestro proyecto | Qué NO debe hacer | Conceptos asociados (fase) |
 |---|---|---|---|---|
 | **Controlador** | ¿Cómo llega una petición desde fuera y cómo se responde? | Clases que reciben peticiones HTTP (`GET /movies/3`) y devuelven JSON. DTOs. | Contener reglas de negocio o SQL. | DTO de salida (15) y de entrada (17); mapper dominio ↔ DTO (15). |
-| **Dominio** | ¿Qué es una película y qué reglas cumple? ¿Qué operaciones ofrece la aplicación? | `Movie`, `Director`, `Actor`, sus reglas, los servicios (casos de uso) y las **interfaces** de repositorio. | Saber que existen HTTP, JSON, JPA, MariaDB o Spring. | Modelo anémico vs. rico (10); repositorio como puerto y diferencia con DAO (12); servicio o caso de uso (16). |
-| **Persistencia** | ¿Cómo se guarda y recupera la información? | Entidades JPA, repositorios de Spring Data, adaptadores y mappers entidad ↔ dominio. | Decidir reglas de negocio. | Entidad JPA ≠ objeto de dominio (11); Spring Data y adaptador (12); mappers entidad ↔ dominio (13). |
+| **Dominio** | ¿Qué es una película y qué reglas cumple? ¿Qué operaciones ofrece la aplicación? | `Movie`, `Director`, `Actor`, sus reglas, los servicios (casos de uso) y las **interfaces** de repositorio. | Saber que existen HTTP, JSON, JPA, MariaDB o Spring. | Modelo anémico vs. rico (10); anotaciones JPA en el dominio (11, D-29); repositorio como puerto y diferencia con DAO (12); servicio con `@Service` (12, 16). |
+| **Persistencia** | ¿Cómo se guarda y recupera la información? | Entidades JPA, repositorios de Spring Data, adaptadores y mappers entidad ↔ dominio. | Decidir reglas de negocio. | Anotaciones JPA (11); Spring Data y adaptador (12). *(En el diseño estricto también: entidad separada y mappers entidad ↔ dominio; con D-29 desaparecen.)* |
 
 La última columna se desarrolla en la [sección 10](#10-conceptos-relacionados-que-veremos-más-adelante).
 
@@ -54,6 +56,65 @@ En cambio, los **detalles técnicos** cambian con frecuencia: versión de Spring
 ```
 Controlador ──► Dominio ◄── Persistencia
 ```
+
+### ¿Qué significa que el dominio sea "Java puro"?
+
+Que sus clases **solo usan el lenguaje Java y su biblioteca estándar** (`java.util`, `java.time`...). No tienen anotaciones ni `import` de ningún framework.
+
+```java
+// ✅ Dominio en Java puro
+package com.daw.movies.domain.model;
+
+import java.util.List;   // biblioteca estándar: permitido
+
+public class Movie {
+    private final Long id;
+    private final String title;
+    private final int durationMinutes;
+
+    public Movie(Long id, String title, int durationMinutes) {
+        if (durationMinutes <= 0) {
+            throw new IllegalArgumentException("La duración debe ser positiva");
+        }
+        this.id = id;
+        this.title = title;
+        this.durationMinutes = durationMinutes;
+    }
+}
+```
+
+**Lo contrario** es una clase que mezcla el dominio con varios frameworks. Es muy habitual en tutoriales, porque así una sola clase hace de entidad, de modelo y de DTO:
+
+```java
+// ❌ Dominio "contaminado": una clase con tres trabajos
+@Entity                                   // JPA: "soy una tabla"
+@Table(name = "movie")
+public class Movie {
+    @Id @GeneratedValue                   // JPA: clave primaria
+    private Long id;
+
+    @NotBlank                             // Bean Validation: "formato de entrada"
+    private String title;
+
+    @Column(name = "duration_minutes")    // JPA: nombre de la columna
+    @JsonProperty("duration")             // Jackson: nombre en el JSON
+    private int durationMinutes;
+}
+```
+
+| Pregunta | Java puro | "Contaminado" |
+|---|---|---|
+| ¿Cuántas clases para una película? | Tres: `Movie`, `MovieEntity` y `MovieResponse` | Una |
+| ¿Se puede probar sin arrancar Spring ni la base de datos? | Sí: es un `new Movie(...)` | Casi siempre hace falta Spring o JPA |
+| Si renombras una columna... | Cambia solo `MovieEntity` | Cambia la clase del negocio, y quizá el JSON de la API |
+| Si cambias un campo del JSON... | Cambia solo `MovieResponse` | Cambia la clase del negocio, y quizá la tabla |
+| ¿Quién manda en la clase? | Las reglas del negocio | Las necesidades de JPA (constructor vacío, setters...), del JSON y de la validación |
+
+**"A propósito"** significa que es una **decisión**, no un descuido: aceptamos tener más clases (y mappers) a cambio de un dominio que se prueba solo y no cambia cuando cambia la tecnología (D-18, D-20). Las anotaciones de Spring en los servicios (`@Service`) son la última pieza de esta decisión (D-19).
+
+> **Qué se decidió al final:** el proyecto usa un término medio. Las clases del dominio llevan anotaciones **JPA** (`jakarta.persistence`), que es un estándar y no Spring, y los servicios llevan `@Service`. Siguen sin llevar Spring Web, Spring Data, Jackson ni Bean Validation. Ver la [sección 11](#11-cambio-de-diseño-dominio-con-jpa-y-service-d-19-y-d-29).
+
+**Forma rápida de comprobarlo:** en el paquete `domain` no puede haber ningún `import` que empiece por `org.springframework`, `jakarta.persistence`, `jakarta.validation`, `com.fasterxml.jackson` ni `tools.jackson` (sección 7).
 
 ## 4. El problema: la forma "ingenua"
 
@@ -195,7 +256,7 @@ En un proyecto pequeño "de verdad" podría ser excesivo, y muchos equipos usan 
 | **Dominio** | ❌ | — | ❌ | ❌ (solo Java estándar) |
 | **Persistencia** | ❌ | ✅ | — | ✅ (JPA, Spring Data) |
 
-Forma fácil de comprobarlo: **ningún archivo del paquete `domain` puede tener un `import` que empiece por `org.springframework`, `jakarta.persistence` ni por los paquetes `controller` o `persistence`**. En la fase 20 podremos comprobarlo automáticamente con un test.
+Forma fácil de comprobarlo: **ningún archivo del paquete `domain` puede tener un `import` que empiece por `org.springframework`, `jakarta.persistence`, `jakarta.validation`, `com.fasterxml.jackson`, `tools.jackson` (Jackson 3, el de Boot 4) ni por los paquetes `controller` o `persistence`**. En la fase 20 podremos comprobarlo automáticamente con un test.
 
 **¿Entonces no usamos Spring?** Sí, en todo el proyecto. Solo las clases del dominio quedan sin Spring, a propósito, para poder probarlas sin arrancar nada:
 
@@ -204,7 +265,7 @@ Forma fácil de comprobarlo: **ningún archivo del paquete `domain` puede tener 
 | Controlador | ✅ Sí | Spring Web: `@RestController`, `@GetMapping`, conversión a JSON |
 | Dominio | ❌ No (a propósito) | Ninguna: Java normal |
 | Persistencia | ✅ Sí | Spring Data JPA: `JpaRepository`, `@Entity` |
-| `config/` | ✅ Sí | `@Configuration` y `@Bean`: Spring crea las clases del dominio y las conecta |
+| `config/` | ✅ Sí | `@Configuration` y `@Bean`: Spring crea las clases del dominio y las conecta. *(Con D-19 los servicios usan `@Service` y `config/` solo se crea si hace falta.)* |
 | Todo el proyecto | ✅ Sí | Spring Boot lo arranca, configura la conexión a MariaDB, ejecuta Flyway... |
 
 ## 8. Recorrido completo de una petición (vista previa)
@@ -529,7 +590,7 @@ Las **capas** son una idea (responsabilidades). Los **paquetes** son carpetas de
 
 ### Estructura objetivo
 
-`com.example.movies` es provisional: el nombre base definitivo se decide en la fase 6.
+`com.example.movies` era provisional. En la fase 6 se decidió el nombre definitivo: **`com.daw.movies`** (D-25). Los ejemplos de este tema mantienen `com.example` porque son ilustrativos.
 
 ```
 com.example.movies
@@ -549,7 +610,24 @@ com.example.movies
 └── config/                             ← ENSAMBLAJE (no es una capa, ver abajo)
 ```
 
-**Importante:** esta es la estructura **a la que llegaremos**. Cada paquete se creará cuando metamos en él la primera clase que lo necesite, no antes.
+**Importante:** esta era la estructura del diseño estricto. Con D-19 y D-29 (sección 11), **la estructura real será esta**:
+
+```
+com.daw.movies
+├── MoviesApplication.java              ← clase de arranque (fase 6)
+├── controller/                         ← CONTROLADOR (fases 15-18)
+│   ├── dto/                              CreateMovieRequest, MovieResponse
+│   └── mapper/                           MovieDtoMapper (dominio ↔ DTO)
+├── domain/                             ← DOMINIO (fases 10-12, 16): JPA y @Service, sin Spring Web/Data
+│   ├── model/                            Movie, Director, Actor (con @Entity)
+│   ├── repository/                       puertos: MovieRepository...
+│   └── service/                          MovieService (@Service)
+└── persistence/                        ← PERSISTENCIA (fase 12)
+    ├── repository/                       MovieJpaRepository (Spring Data)
+    └── adapter/                          MovieRepositoryAdapter (implementa el puerto)
+```
+
+Cada paquete se creará cuando metamos en él la primera clase que lo necesite, no antes.
 
 ### El caso especial: `config/` y las anotaciones de Spring
 
@@ -563,6 +641,8 @@ Spring necesita saber qué clases debe crear y conectar. Lo habitual es anotarla
 `config/` **no es una cuarta capa**: no tiene lógica. Solo "monta" las piezas, como quien conecta los cables. Es el único paquete que conoce a todos los demás.
 
 Las **transacciones** (`@Transactional`) plantean el mismo dilema; lo resolveremos en la fase 17, cuando haya operaciones de escritura que las necesiten.
+
+> **Decisión final (D-19):** opción **B**, `@Service` en los servicios. `config/` no hará falta para los servicios; solo se creará si aparece otra configuración.
 
 ## 10. Conceptos relacionados que veremos más adelante
 
@@ -589,9 +669,68 @@ En la fase 10 elegiremos y justificaremos el modelo para nuestro problema.
 
 ### Otros conceptos
 
-- **Entidad JPA ≠ objeto de dominio (fase 11):** `MovieEntity` refleja la tabla; `Movie`, el negocio.
-- **Mappers (fases 13 y 15):** clases que copian datos entre entidad ↔ dominio y dominio ↔ DTO.
+- **Entidad JPA y objeto de dominio (fase 11):** en el diseño estricto eran dos clases (`MovieEntity` y `Movie`). En el proyecto real son la misma, `Movie` con anotaciones JPA (D-29). La comparación se ve en el paso 11.2.
+- **Mappers (fase 15):** clases que copian datos entre dominio ↔ DTO. El mapper entidad ↔ dominio del diseño estricto ya no existe.
 - **DTO (fases 15 y 17):** objeto que define la forma del JSON que entra o sale de la API.
+
+## 11. Cambio de diseño: dominio con JPA y `@Service` (D-19 y D-29)
+
+En la fase 6, el alumno eligió una versión más práctica del diseño, más parecida a la que se usa en clase:
+
+- Las clases del dominio (`Movie`, `Director`, `Actor`) llevan **anotaciones JPA** (`@Entity`, `@Id`, `@ManyToOne`...). Son a la vez el modelo de negocio y la entidad que se guarda en la tabla.
+- Los servicios llevan **`@Service`** de Spring.
+
+### Jakarta no es Spring (ni Java puro)
+
+| Paquete | Qué es | ¿Va en el dominio? |
+|---|---|---|
+| `java.*` | Java estándar (viene con el JDK) | ✅ |
+| `jakarta.persistence` | JPA: una **especificación estándar** de Jakarta EE, no de Spring | ✅ (D-29) |
+| `org.springframework.stereotype` (`@Service`) | Anotaciones de Spring | ✅ (D-19) |
+| `jakarta.validation` (`@NotBlank`...) | Bean Validation | ❌ Va en los DTOs. En el dominio no valida nada por sí sola: alguien tendría que ejecutar el validador |
+| `org.springframework.data` (Spring Data), `org.springframework.web`, Jackson | Frameworks de persistencia y web | ❌ |
+
+### Qué cambia respecto a las secciones anteriores
+
+| Pieza | Diseño estricto (secciones 1–10) | Proyecto real |
+|---|---|---|
+| `Movie` | Java puro | Java + anotaciones JPA |
+| `MovieEntity` | Entidad JPA separada | **Desaparece** |
+| `MovieEntityMapper` | Mapper entidad ↔ dominio | **Desaparece** |
+| `MovieService` | Clase sin anotaciones, creada con `@Bean` en `config/` | `@Service` |
+| `MovieRepository` (puerto) | Interfaz del dominio | **Igual** |
+| `MovieJpaRepository` | `JpaRepository<MovieEntity, Long>` | `JpaRepository<Movie, Long>` |
+| `MovieRepositoryAdapter` | Delega en Spring Data **y mapea** `MovieEntity` → `Movie` | Delega en Spring Data, **sin mapear** |
+| DTOs y `MovieDtoMapper` | Sí | **Igual**: la API sigue sin devolver entidades |
+| `config/` | Crea los servicios con `@Bean` | Solo si hace falta otra configuración |
+
+### Las formas de la película, ahora
+
+```
+fila de MariaDB ──Hibernate──► Movie (dominio + entidad JPA) ──MovieDtoMapper──► MovieResponse ──Spring──► JSON
+```
+
+Pasamos de **tres formas a dos**: `Movie`, que se parece al negocio **y** a la tabla, y `MovieResponse`, que se parece a lo que ve el cliente.
+
+### Las reglas de dependencia, ahora
+
+| Desde \ Hacia | Controlador | Dominio | Persistencia | Lo que puede usar |
+|---|---|---|---|---|
+| **Controlador** | — | ✅ | ❌ | Spring Web, Bean Validation (en DTOs), Jackson |
+| **Dominio** | ❌ | — | ❌ | Java estándar, JPA (`jakarta.persistence`), `@Service`/`@Transactional` |
+| **Persistencia** | ❌ | ✅ | — | Spring Data JPA |
+
+**Spring Web y Jackson sí están en el proyecto**, en el controlador. Jackson convierte los DTOs en JSON. Si el controlador devolviera entidades (algo muy habitual en tutoriales), harían falta anotaciones de Jackson en ellas (`@JsonIgnore`, `@JsonManagedReference`/`@JsonBackReference`) para evitar bucles infinitos `Movie` → `Actor` → `Movie`... Con DTOs no hace falta (paso 14.5).
+
+La regla de oro **se mantiene**: el dominio no importa nada de `controller` ni de `persistence`, y no conoce Spring Data. Por eso el puerto `MovieRepository` y su adaptador siguen teniendo sentido. Si mañana cambiáramos Spring Data por JDBC a mano, solo cambiaría el adaptador.
+
+### Qué ganamos y qué perdemos
+
+| Ganamos | Perdemos |
+|---|---|
+| Menos clases: sin `MovieEntity` ni su mapper | JPA impone condiciones a `Movie`: constructor sin argumentos (puede ser `protected`) y campos no `final` |
+| Estructura parecida a la de clase y a la mayoría de proyectos Spring | `Movie` refleja la tabla: si cambia una columna, puede cambiar la clase de negocio |
+| Los tests del dominio siguen funcionando con `new Movie(...)`: sin Hibernate, las anotaciones no hacen nada | Hay que vigilar problemas de JPA en el dominio (carga perezosa, `LazyInitializationException`; fase 14) |
 
 ## Resumen
 
@@ -600,7 +739,8 @@ En la fase 10 elegiremos y justificaremos el modelo para nuestro problema.
 - **DIP**: el dominio define una **interfaz** (puerto) con lo que necesita; la persistencia la **implementa** (adaptador). Así se invierte la flecha de dependencia.
 - **Inyección de dependencias**: Spring crea los objetos y se los pasa por constructor; en los tests podemos pasar implementaciones falsas.
 - Beneficio principal aquí: tests del dominio **sin base de datos**. Coste: más clases y mappers.
-- Paquetes **por capa**: `controller`, `domain`, `persistence`, más `config` para el ensamblaje.
+- Paquetes **por capa**: `controller`, `domain`, `persistence`.
+- **Proyecto real (sección 11):** el dominio lleva anotaciones JPA y `@Service`. Desaparecen `MovieEntity` y su mapper; se mantienen el puerto, el adaptador y los DTOs.
 
 ## Preguntas de repaso
 
@@ -623,4 +763,7 @@ No a las dos. El controlador **llama** a `movieService.findById(3)`, que es un m
 El dominio decide que es un error (*película no encontrada*). El controlador lo traduce a HTTP como 404 Not Found.
 
 **¿Es `config/` una capa?**
-No: no contiene lógica. Solo crea y conecta los objetos de las capas.
+No: no contiene lógica. Solo crea y conecta los objetos de las capas. (En el proyecto real no hará falta para los servicios, porque usan `@Service`.)
+
+**En el proyecto real, ¿por qué se mantiene `MovieRepositoryAdapter` si ya no tiene que mapear nada?**
+Para que el servicio dependa del puerto `MovieRepository` (dominio) y no de `MovieJpaRepository` (Spring Data). Si mañana cambiáramos Spring Data por JDBC, solo cambiaría el adaptador.

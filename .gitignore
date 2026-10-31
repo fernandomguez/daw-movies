@@ -1,2 +1,38 @@
 # Variables de entorno con secretos (la plantilla .env.example sí se versiona)
 .env
+
+# Maven: carpeta con el resultado de compilar (se regenera con mvn)
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+# Maven Wrapper: el .jar se descarga solo; se versionan mvnw, mvnw.cmd y .mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE: configuración personal de cada editor (IntelliJ, VS Code, Eclipse/STS, NetBeans)
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log

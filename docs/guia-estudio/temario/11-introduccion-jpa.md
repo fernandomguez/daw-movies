@@ -1,7 +1,7 @@
 # 11 — Introducción a JPA
 
 > **Fase del plan:** 11 (Fundamentos de JPA y entidades).
-> **Estado:** introducción conceptual, explicada por adelantado en la fase 1. El código de este tema es **ilustrativo**: todavía no existe en el proyecto. Se ampliará con el código real cuando lleguemos a la fase 11.
+> **Estado:** introducción conceptual, explicada por adelantado en la fase 1. Actualizada el 2026-10-20: las anotaciones JPA van en las clases del dominio (`Director`, `Movie`, `Actor`), sin entidades separadas (D-29). El código de este tema es **ilustrativo**: todavía no existe en el proyecto. Se ampliará con el código real cuando lleguemos a la fase 11.
 
 ## Objetivo
 
@@ -42,7 +42,7 @@ Con nuestras 4 tablas (`director`, `movie`, `actor`, `movie_actor`) ya sería mu
 ```java
 @Entity                     // "esta clase representa una tabla"
 @Table(name = "director")   // "en concreto, la tabla director"
-public class DirectorEntity {
+public class Director {
 
     @Id                     // "este campo es la clave primaria"
     private Long id;
@@ -58,7 +58,7 @@ public class DirectorEntity {
 }
 ```
 
-Al pedir "dame el director 1", JPA genera el `SELECT`, lee la fila y devuelve un objeto `DirectorEntity` relleno con los datos de Nolan.
+Al pedir "dame el director 1", JPA genera el `SELECT`, lee la fila y devuelve un objeto `Director` relleno con los datos de Nolan.
 
 A este tipo de herramienta se le llama **ORM** (*Object-Relational Mapping*): traduce entre **objetos** y tablas **relacionales**.
 
@@ -80,15 +80,15 @@ Las relaciones que diseñaremos en SQL (fase 3) tienen su equivalente en JPA (fa
 
 | En la base de datos | En JPA | Significado |
 |---|---|---|
-| `movie.director_id` es una clave foránea hacia `director.id` | `@ManyToOne` en `MovieEntity` | Muchas películas → un director |
-| Tabla intermedia `movie_actor (movie_id, actor_id)` | `@ManyToMany` + `@JoinTable` en `MovieEntity` | Muchas películas ↔ muchos actores |
+| `movie.director_id` es una clave foránea hacia `director.id` | `@ManyToOne` en `Movie` | Muchas películas → un director |
+| Tabla intermedia `movie_actor (movie_id, actor_id)` | `@ManyToMany` + `@JoinTable` en `Movie` | Muchas películas ↔ muchos actores |
 
 Vista previa (ilustrativa):
 
 ```java
 @Entity
 @Table(name = "movie")
-public class MovieEntity {
+public class Movie {
 
     @Id
     private Long id;
@@ -96,7 +96,7 @@ public class MovieEntity {
     // Muchas películas pueden tener el mismo director (columna director_id)
     @ManyToOne
     @JoinColumn(name = "director_id")
-    private DirectorEntity director;
+    private Director director;
 
     // Relación muchos a muchos a través de la tabla intermedia movie_actor
     @ManyToMany
@@ -105,21 +105,21 @@ public class MovieEntity {
         joinColumns = @JoinColumn(name = "movie_id"),
         inverseJoinColumns = @JoinColumn(name = "actor_id")
     )
-    private List<ActorEntity> actors;
+    private List<Actor> actors;
 }
 ```
 
-Por ejemplo, con estos datos, cargar *Inception* daría un `MovieEntity` cuyo `director` es Nolan y cuya lista `actors` contiene a DiCaprio y a Michael Caine.
+Por ejemplo, con estos datos, cargar *Inception* daría un `Movie` cuyo `director` es Nolan y cuya lista `actors` contiene a DiCaprio y a Michael Caine.
 
 ## 5. Dos reglas de este proyecto
 
 1. **JPA no crea nuestras tablas.** Las crea **Flyway** con SQL que escribimos nosotros. JPA solo lee y escribe datos. Por eso configuraremos Hibernate para que **no modifique el esquema** (`ddl-auto` en `none` o `validate`).
-2. **La entidad JPA no es el objeto de dominio.** `DirectorEntity` vive en la capa de persistencia y lleva anotaciones de base de datos. `Director` vive en el dominio y es Java puro, sin dependencias de JPA. Pasaremos de uno a otro con **mappers** (fase 13).
+2. **Las anotaciones JPA van en las clases del dominio** (D-29). `Director` es a la vez el modelo de negocio y la entidad JPA: no hay una `Director` separada ni un mapper entre las dos. Se diseña primero pensando en el negocio (fase 10) y en la fase 11 se le añaden las anotaciones. Lo que **no** sale nunca de la API es la entidad: el JSON se construye con DTOs (fase 15).
 
 ## 6. ¿Por qué JPA va en la fase 11 y no antes?
 
 - Primero entendemos las tablas y las relaciones con **SQL puro** (fases 3, 8 y 9). Así, JPA solo será aprender a *describir en Java* algo que ya conocemos, y no "magia".
-- Primero diseñamos el **dominio** (fase 10), para no acabar copiando la estructura de las tablas en nuestro modelo de negocio.
+- Primero diseñamos el **dominio** (fase 10), para no acabar copiando la estructura de las tablas en nuestro modelo de negocio. Después le añadimos las anotaciones JPA, adaptando lo mínimo.
 
 ## Resumen
 

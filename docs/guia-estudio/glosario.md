@@ -46,7 +46,17 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Entidad (modelo conceptual)**: "cosa" del problema con identidad propia, de la que guardamos varias y que tiene datos propios: película, director, actor. No confundir con la *entidad JPA* (una clase Java anotada con `@Entity`).
 
-**Entidad JPA**: clase Java anotada con `@Entity` que refleja una tabla; cada objeto corresponde a una fila. Ejemplo: `MovieEntity`. Vive en la persistencia y no es el modelo de dominio (`Movie`).
+**Entidad JPA**: clase Java anotada con `@Entity` que refleja una tabla; cada objeto corresponde a una fila. En este proyecto las entidades son las propias clases del dominio (`Movie`, `Director`, `Actor`), sin una `MovieEntity` separada (D-29). En otros proyectos sí se separan.
+
+**Git**: sistema de control de versiones: guarda la historia del proyecto en *commits*. Ver [temario/06](temario/06-proyecto-spring-boot-y-git.md).
+
+**Commit**: "foto" de los archivos del proyecto en un momento, con un mensaje que explica qué cambió.
+
+**`.gitignore`**: archivo con reglas de lo que Git no debe versionar (secretos como `.env`, archivos generados como `target/`). `git check-ignore -v <archivo>` dice qué regla ignora un archivo.
+
+**`.gitattributes`**: archivo que indica a Git cómo tratar ciertos archivos; aquí, qué final de línea usar (LF o CRLF).
+
+**LF / CRLF**: formas de marcar el final de línea. LF (`\n`) en Linux y macOS; CRLF (`\r\n`) en Windows.
 
 **Healthcheck**: comprobación periódica que Docker ejecuta para saber si el servicio de un contenedor funciona (`healthy`) o no (`unhealthy`).
 
@@ -68,11 +78,21 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **JPA (*Jakarta Persistence API*)**: especificación (conjunto de reglas y anotaciones) para traducir automáticamente entre filas de una tabla y objetos Java. Ejemplo: una clase `DirectorEntity` marcada con `@Entity` y `@Table(name = "director")` permite leer la fila de Nolan y obtener un objeto ya relleno, sin escribir el `SELECT` a mano. En este proyecto JPA **no crea las tablas** (eso lo hace Flyway): solo lee y escribe datos. Se estudia en la fase 11. Explicación completa: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.md).
 
+**Java puro (dominio)**: clases que solo usan Java y su biblioteca estándar, sin anotaciones ni `import` de frameworks (Spring, JPA, Jackson, Bean Validation). Se prueban con un simple `new`. En este proyecto el dominio **no** es Java puro estricto: lleva anotaciones JPA y `@Service` (D-19, D-29). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), secciones 3 y 11.
+
 **JWT (*JSON Web Token*)**: "pase" firmado que el servidor entrega al usuario tras hacer login. El cliente lo envía en cada petición para demostrar quién es, sin repetir la contraseña. Se usa con Spring Security (fase opcional 24).
 
 **LTS (*Long-Term Support*)**: versión con soporte durante varios años. Java 25 y MariaDB 12.3 son LTS.
 
-**Mapper**: clase que convierte un objeto de una capa en el de otra al cruzar una frontera. Hay dos: `MovieEntityMapper` (entidad ↔ dominio) y `MovieDtoMapper` (dominio ↔ DTO). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), sección 8.
+**Mapper**: clase que convierte un objeto de una capa en el de otra al cruzar una frontera. En este proyecto hay uno: `MovieDtoMapper` (dominio ↔ DTO). El `MovieEntityMapper` (entidad ↔ dominio) del diseño inicial desapareció al poner JPA en el dominio (D-29). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), secciones 8 y 11.
+
+**Ciclo de vida (Maven)**: lista ordenada de fases (`validate`, `compile`, `test`, `package`, `verify`, `install`). Al pedir una fase, Maven ejecuta antes todas las anteriores.
+
+**Surefire**: plugin de Maven que ejecuta los tests en la fase `test` y deja los informes en `target/surefire-reports`.
+
+**Mockito**: librería para crear objetos falsos (*mocks*) en los tests. Viene en `spring-boot-starter-test`.
+
+**Maven Wrapper (`mvnw` / `mvnw.cmd`)**: script que descarga y usa la versión de Maven fijada en `.mvn/wrapper/maven-wrapper.properties` (3.10.0). Así no hace falta instalar Maven. En Windows: `.\mvnw.cmd test`.
 
 **Maven**: herramienta que descarga dependencias, compila, ejecuta tests y empaqueta el proyecto a partir del `pom.xml`.
 
@@ -80,7 +100,7 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Migración (Flyway)**: archivo SQL versionado que cambia el esquema de la base de datos de forma ordenada y repetible.
 
-**Modelo de dominio**: clases en Java puro que representan el negocio y sus reglas (`Movie`, `Director`, `Actor`), sin Spring ni JPA.
+**Modelo de dominio**: clases que representan el negocio y sus reglas (`Movie`, `Director`, `Actor`). En este proyecto llevan anotaciones JPA (D-29), pero no Spring Web, Spring Data ni Jackson.
 
 **Muchos a muchos (N:M)**: cada elemento de un lado puede relacionarse con varios del otro, y viceversa. Película–actor. En una base de datos relacional necesita una tabla intermedia.
 
@@ -101,6 +121,28 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 **Restricción (*constraint*)**: regla que la base de datos comprueba siempre: `PRIMARY KEY`, `NOT NULL`, `FOREIGN KEY`, `CHECK`, `UNIQUE`.
 
 **Servicio (caso de uso)**: clase del dominio que coordina una operación de la aplicación y aplica sus reglas. Ejemplo: `MovieService.findById`.
+
+**`@SpringBootApplication`**: anotación de la clase de arranque. Agrupa `@SpringBootConfiguration`, `@EnableAutoConfiguration` y `@ComponentScan`. Ver [temario/06](temario/06-proyecto-spring-boot-y-git.md), sección 7.
+
+**Autoconfiguración**: Spring Boot se configura solo según las dependencias que encuentra (por ejemplo, con el driver de MariaDB y JPA intenta crear la conexión).
+
+**Component scan (escaneo de componentes)**: búsqueda de clases anotadas (`@Service`, `@RestController`...) que hace Spring en el paquete de la clase de arranque (`com.daw.movies`) y sus subpaquetes.
+
+**Contexto de Spring (*ApplicationContext*)**: el "contenedor" donde Spring crea y guarda los objetos de la aplicación (*beans*) y los conecta entre sí.
+
+**Convención sobre configuración**: principio de Maven y Spring Boot: si sigues la estructura esperada (`src/main/java`...), no hace falta configurarla.
+
+**Spring Initializr**: generador oficial de proyectos Spring Boot (https://start.spring.io). Devuelve un `.zip` con `pom.xml`, Maven Wrapper y la clase de arranque.
+
+**Starter (Spring Boot)**: dependencia "paquete" que trae todo lo necesario para una tecnología, con versiones compatibles. Ejemplo: `spring-boot-starter-data-jpa` trae JPA, Hibernate y Spring Data. En Boot 4 cada starter tiene su pareja de test (`...-test`).
+
+**BOM (*Bill of Materials*)**: lista de versiones probadas juntas. La trae `spring-boot-starter-parent`; por eso las dependencias del `pom.xml` no llevan versión.
+
+**`pom.xml`**: archivo que describe el proyecto para Maven: groupId, artifactId, versión de Java, padre de Spring Boot, dependencias y plugins.
+
+**groupId / artifactId**: identificadores de un proyecto Maven. groupId = quién lo hace (`com.daw`); artifactId = nombre del proyecto (`movies`).
+
+**Scope (Maven)**: cuándo está disponible una dependencia. `compile`: siempre; `runtime`: solo al ejecutar (el driver JDBC); `test`: solo en los tests.
 
 **Spring Security**: módulo de Spring que controla quién puede entrar a la aplicación (autenticación) y qué puede hacer (autorización). Fase opcional 24.
 
