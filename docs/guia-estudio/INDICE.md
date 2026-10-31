@@ -32,15 +32,17 @@ Si un paso no indica otro archivo, lo documenta el diario de su fase.
 
 ## Resumen
 
+Aquí se lleva el **progreso acumulado**: cuántas fases hay, cuántos pasos y en qué estado está cada uno. El parte del día —paso en curso, entorno, siguiente acción— está en [ESTADO.md](ESTADO.md).
+
 | Métrica | Valor |
 |---|---|
 | Unidades de fase en el plan | **29** (1–20 sin la 13, más 15A y 21–29) |
 | Fases completadas | **10** (1–10) |
 | Fase adelantada | **15A** parcial: 15A.1 y 15A.2 hechos; falta 15A.3 |
 | Pasos numerados | **92** |
-| Pasos hechos | **50** (los 48 de las fases 1–10 + 15A.1 y 15A.2) |
-| Pasos pendientes | **42** |
-| Siguiente paso | **11.1** — qué es JPA y qué es Hibernate |
+| Pasos hechos | **51** (los 48 de las fases 1–10 + 15A.1, 15A.2 y 11.1) |
+| Pasos pendientes | **41** |
+| Siguiente paso | **11.2** — JPA en las clases del dominio (D-29) |
 | Objetivo del alumno | **`POST /movies`** (fase 17) |
 | Ruta mínima hasta el POST | **28 pasos**, con la fase 14 incluida |
 
@@ -175,14 +177,14 @@ Si un paso no indica otro archivo, lo documenta el diario de su fase.
 | 10.3 | *Value objects* con TDD | ✅ |
 | 10.4 | Entidades y relaciones | ✅ |
 
-### Fase 11 · Fundamentos de JPA y entidades · ⏳ siguiente
+### Fase 11 · Fundamentos de JPA y entidades · ⏳ en curso
 
-📓 Diario: — (se crea al empezar) · 📚 Temario: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.md)
+📓 Diario: [11-fundamentos-jpa.md](11-fundamentos-jpa.md) · 📚 Temario: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.md)
 
 | Paso | Concepto | Estado |
 |---|---|---|
-| 11.1 | Qué es JPA y qué es Hibernate | ⏳ |
-| 11.2 | JPA en las clases del dominio (D-29) | 🔒 |
+| 11.1 | Qué es JPA y qué es Hibernate | ✅ |
+| 11.2 | JPA en las clases del dominio (D-29) | ⏳ |
 | 11.3 | Entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`) | 🔒 |
 | 11.4 | `@ManyToOne` | 🔒 |
 | 11.5 | `@ManyToMany` + `@JoinTable` | 🔒 |
@@ -369,6 +371,7 @@ Después, muy recomendable: **fase 18** (+5 → 33), para que un título vacío 
 | [08-flyway-migraciones.md](08-flyway-migraciones.md) | Migraciones `V1`–`V4`, checksum y endpoints de la v1 | 8 |
 | [09-datos-de-prueba.md](09-datos-de-prueba.md) | `seed.sql`, errores de FK y consultas `JOIN` | 9 |
 | [10-modelo-de-dominio.md](10-modelo-de-dominio.md) | *Value objects* y entidades con TDD | 10 |
+| [11-fundamentos-jpa.md](11-fundamentos-jpa.md) | JPA, Hibernate y el camino hacia las entidades anotadas | 11 |
 | [15A-api-first.md](15A-api-first.md) | Contrato OpenAPI, springdoc y Swagger UI | 15A.1–15A.2 |
 
 ### Temario
@@ -418,7 +421,6 @@ La guía crea los archivos **cuando empieza la fase**, así que esto no es un ol
 
 | Falta | Cuándo se crea |
 |---|---|
-| Diario de la fase 11 | Al empezar el paso 11.1 |
 | Diarios y temarios de 12, 14, 15, 16, 17, 18, 19 y 20 | Al empezar cada fase |
 | Diarios/temarios de 21–29 | Solo si se hacen |
 | Temario de la fase 1 | No hace falta: la fase es de inspección |

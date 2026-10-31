@@ -10,18 +10,20 @@
 
 | Dato | Valor |
 |---|---|
-| Fase del plan | **10 — Modelo de dominio → COMPLETA** (4 de 4 pasos) |
-| Paso en curso | ninguno: fase cerrada. La siguiente es la **11.1** (qué es JPA), cuando el alumno lo pida |
-| Último paso terminado | 10.4 — `Director`, `Actor` y `Movie` con sus *value objects* (20 tests nuevos) |
+| Fase del plan | **11 — Fundamentos de JPA → EN CURSO** (1 de 6 pasos) |
+| Paso en curso | **11.2** — JPA en las clases del dominio (D-29), cuando el alumno lo pida |
+| Último paso terminado | 11.1 — qué es JPA y qué es Hibernate |
 | Último commit | `docs: add study guide index, guided tour and history notes` (sobre la etiqueta `fase-15A`) |
 | Etiqueta más reciente | **`fase-15A`** (anotada y publicada; la del plan es `fase-10`, también publicada) |
 | Tests | **55 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
-| Cambios sin commitear | ninguno (ver §5) |
+| Cambios sin commitear | los documentos del 11.1 (ver §5) |
 
 ### La siguiente acción, exacta
 
-La **fase 10 está cerrada**. Lo siguiente es la **fase 11 (Fundamentos de JPA)**, paso **11.1** (qué es JPA y qué es Hibernate), pero **no se empieza sin que el alumno lo pida**: al terminar el 10.4 se decidió parar aquí para afianzar la creación de películas en memoria antes de añadir la persistencia.
+La **fase 11 está en curso** (1 de 6 pasos). Lo siguiente es el **11.2**: justificar por escrito JPA en las clases del dominio (D-29), qué impone y qué se gana, sin tocar código todavía. Después, el 11.3 anotará `Director` y `Actor`.
+
+El **11.1** dejó explicado el reparto de piezas (JPA / Hibernate / Spring Data / Spring Boot) y comprobado en el `pom.xml`: `hibernate-core 7.4.5.Final` y `jakarta.persistence-api 3.2.0` llegan con `spring-boot-starter-data-jpa`, sin declararlos nosotros. Ver [diario 11](11-fundamentos-jpa.md).
 
 **Segundo frente abierto:** la **fase 15A** (API First) tiene hechos 15A.1 (contrato `openapi.yaml`) y 15A.2 (springdoc 3.2.0 + Swagger UI). El **15A.3** no se puede hacer hasta que existan los controladores (fase 16): compara el documento generado `/v3/api-docs` con el contrato. La UI está en `http://localhost:8080/swagger-ui.html` y **no ejecuta** nada todavía ("Try it out" → `404`).
 
@@ -335,13 +337,28 @@ A petición del alumno: poder empezar en el primer commit e ir viajando fase a f
 6. **Documentado:** [RECORRIDO.md](RECORRIDO.md) (paradas, qué mirar, requisitos), [INDICE.md](INDICE.md), README de la guía y D-30.
 7. **Publicado** el mismo día: rama `historial-antes-de-recorrido`, etiqueta `pre-recorrido`, `main` con `--force-with-lease` y las once etiquetas `fase-01`…`fase-15A` (las cinco que ya existían, con `--force`). Comprobado con `git ls-remote` que cada etiqueta remota apunta al mismo commit que la local.
 
+### 2026-10-31 (cuarta parte) — fase 11, paso 11.1
+
+1. **Teoría, sin código:** qué es un ORM, qué problema resuelve y por qué hay cuatro piezas distintas (JPA, Hibernate, Spring Data JPA y Spring Boot). Explicado en la conversación y escrito en el [diario 11](11-fundamentos-jpa.md).
+2. **Comprobado en el proyecto**, no supuesto: `.\mvnw.cmd dependency:tree "-Dincludes=org.hibernate.orm:*,jakarta.persistence:*"` → `spring-boot-hibernate 4.1.1` trae `hibernate-core 7.4.5.Final` y `jakarta.persistence-api 3.2.0`. El `pom.xml` solo declara `spring-boot-starter-data-jpa`.
+3. **Decisiones que se recalcan:** nuestro código importará `jakarta.persistence`, nunca `org.hibernate`; Hibernate no crea tablas (`ddl-auto: validate`, D-34); los repositorios no son JPA, son Spring Data (fase 12).
+4. **Sin tocar código:** 55 tests siguen en verde y no hay ninguna entidad mapeada todavía.
+5. **Documentado:** [diario 11](11-fundamentos-jpa.md) (nuevo), [INDICE.md](INDICE.md) (11.1 ✅, 11.2 ⏳, contadores) y este archivo.
+6. **Sin commit:** la fase 11 se cierra al terminar el 11.6 (D-30).
+
+**Siguiente:** paso 11.2 (JPA en las clases del dominio, D-29).
+
 ---
 
 ## 5. Trabajo sin commitear
 
 ```
-nada: el árbol está limpio.
+docs/guia-estudio/11-fundamentos-jpa.md   (nuevo)
+docs/guia-estudio/ESTADO.md
+docs/guia-estudio/INDICE.md
 ```
+
+Sin commit: la fase 11 sigue abierta (D-30). Se comiteará al cerrar el 11.6.
 
 **Cerrada la fase 10 el 2026-10-31.** Su commit es `feat(fase-10): add domain entities` (incluye la ampliación de los temas 10 y 11 hecha al final de la sesión) y la etiqueta `fase-10`, **publicada**.
 

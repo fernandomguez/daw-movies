@@ -40,23 +40,14 @@ Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el pr
 
 Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conceptos, por qué los necesitamos, archivos implicados, código explicado, recorrido de los datos, comandos y comprobaciones, errores y soluciones, decisiones, resumen y preguntas de repaso.
 
-## Progreso
+## Estado y progreso
 
-| Fase | Estado | Documento |
-|---|---|---|
-| 1. Inspección inicial y herramientas | ✅ Completada | [01-inspeccion-inicial.md](01-inspeccion-inicial.md) |
-| 2. Alcance del dominio y datos de prueba | ✅ Completada | [02-alcance-del-dominio.md](02-alcance-del-dominio.md) |
-| 3. Diseño del esquema relacional | ✅ Completada | [03-diseno-del-esquema.md](03-diseno-del-esquema.md) |
-| 4. Docker, Docker Compose y MariaDB | ✅ Completada | [04-docker-y-mariadb.md](04-docker-y-mariadb.md) |
-| 5. Arquitectura en tres capas e inversión de dependencias | ✅ Completada (diseño revisado en la fase 6: D-19, D-29) | [05-arquitectura.md](05-arquitectura.md) |
-| 6. Creación del proyecto Spring Boot | ✅ Completada | [06-creacion-proyecto-spring-boot.md](06-creacion-proyecto-spring-boot.md) |
-| 7. Conexión entre Java y MariaDB | ✅ Completada | [07-conexion-java-mariadb.md](07-conexion-java-mariadb.md) |
-| 8. Flyway: migraciones del esquema | ✅ Completada (6 de 6 pasos; commit `f2ffe69`) | [08-flyway-migraciones.md](08-flyway-migraciones.md) |
-| 9. Datos de prueba y comprobación de relaciones | ✅ Completada (5 de 5 pasos; commit `9973cf8`) | [09-datos-de-prueba.md](09-datos-de-prueba.md) |
-| 10. Modelo de dominio | ✅ Completada (4 de 4 pasos; commit `aa0cef7`) | [10-modelo-de-dominio.md](10-modelo-de-dominio.md) |
-| 15A. API First: el contrato antes del código | 🟡 Adelantada (15A.1 y 15A.2 hechos; 15A.3 espera a la fase 16) | [15A-api-first.md](15A-api-first.md) |
-| 11 a 20 | Pendientes (la 13 se eliminó, D-29) | Ver el [plan](00-plan-de-aprendizaje.md) |
+| Para saber… | Abres |
+|---|---|
+| **Dónde estamos ahora** y qué toca después | [ESTADO.md](ESTADO.md) |
+| El progreso **detallado, paso a paso**: cada fase, cada subfase y su estado | [INDICE.md](INDICE.md) |
+| Qué commit visitar para ver una fase terminada | [RECORRIDO.md](RECORRIDO.md) |
 
-> El detalle **paso a paso**, con el estado de cada subfase y el enlace directo a su documento, está en el [índice general](INDICE.md).
+El README **no guarda el progreso a propósito**: se quedaría desfasado cada sesión. La única fuente del estado es [ESTADO.md](ESTADO.md); el detalle acumulado de fases y subfases, el [índice](INDICE.md).
 
 > Normas del proyecto: [base-standards.md](../../base-standards.md). Código en inglés; documentación y comentarios en español.
