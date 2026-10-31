@@ -2,7 +2,7 @@
 
 > **Fase del plan:** 10 (modelo de dominio). Diario: [10-modelo-de-dominio.md](../10-modelo-de-dominio.md).
 >
-> **En construcción:** este tema se completa con los pasos 10.2 (*value objects*), 10.3 (TDD de los tipos) y 10.4 (entidades y relaciones). Ahora mismo cubre los pasos 10.1 y 10.2.
+> **En construcción:** este tema se completa con los pasos 10.2 (*value objects*), 10.3 (TDD de los tipos) y 10.4 (entidades y relaciones). Ahora mismo cubre los pasos 10.1 a 10.3.
 
 ## 1. Qué es el modelo de dominio
 
@@ -160,17 +160,15 @@ Un **value object** es un tipo pequeño, inmutable y comparado por valor, que re
 
 ```java
 public record Title(String value) {
-    public Title {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("El título no puede estar vacío");
-        }
-        value = value.trim();
-        if (value.length() > 255) {
-            throw new IllegalArgumentException("El título no puede superar 255 caracteres");
-        }
-    }
+
+	public Title {
+		value = Texts.requireText(value, "El título", 255);
+	}
+
 }
 ```
+
+`Texts` es un auxiliar **de paquete** que recorta, comprueba que no quede en blanco y mide; así los tres tipos de texto (`Title`, cada parte de `PersonName` y `Biography`) comparten las mismas reglas sin copiarlas. El mensaje es «no puede estar en blanco», que concuerda con cualquier sustantivo (el título, la biografía); «vacío» habría dejado mal una de las dos frases.
 
 El cuerpo del constructor compacto se ejecuta en **toda** vía de creación: `new`, un mapper, JPA al hidratar, un test. Eso es lo que las anotaciones de Jakarta Validation **no** hacen fuera de una petición HTTP.
 
@@ -191,6 +189,8 @@ Dos detalles del diseño que se deciden en el paso 10.2 y conviene tener present
 - **`trim()` antes de medir**: `"  Alien  "` tiene 5 letras, no 9. `ReleaseYear` y `DurationMinutes` no tienen tope superior porque el esquema no lo pone; inventarlo rechazaría datos válidos.
 
 El diseño completo, con la justificación de cada decisión, está en el [diario 10, paso 10.2](../10-modelo-de-dominio.md#102-value-objects-qué-son-y-cuáles-necesitamos).
+
+**Cómo se escribió (paso 10.3):** con TDD. Primero los seis tests en `src/test/java/com/daw/movies/domain/model/` (28 tests), que no compilaron porque los tipos no existían —el rojo esperado—; después los `record` y la clase `Texts` hasta dejar los **35 tests** del proyecto en verde. El primer intento dejó un test rojo por la concordancia del mensaje («La biografía no puede estar vacío»), y se corrigió el mensaje, no el test. El detalle está en el [diario 10, paso 10.3](../10-modelo-de-dominio.md#103-los-seis-value-objects-con-tdd).
 
 **Coste en la fase 11:** JPA no guarda un `Title` tal cual. Habrá que mapearlo con un `AttributeConverter` (un valor → una columna) o, en `PersonName`, con `@Embeddable` (dos columnas). Ese es el precio de tener tipos propios; se paga una vez, en la capa de persistencia.
 
@@ -214,7 +214,7 @@ La regla práctica: **cada pieza se añade cuando resuelve un problema real**, n
 | Paso | Qué añade |
 |---|---|
 | 10.2 | Qué es un *value object* y diseño de los seis del dominio (D-46) |
-| 10.3 | Los seis `record` con TDD: primero el test en rojo, después el constructor compacto |
+| 10.3 | Los seis `record` con TDD: primero el test en rojo, después el constructor compacto. ✅ Hecho (35 tests en verde) |
 | 10.4 | `Director`, `Actor` y `Movie` con los *value objects*, getters, `fullName()` y constructor protegido para JPA; relaciones unidireccionales |
 
 Después, la fase 11 añade JPA a estas mismas clases (D-29) y mapea los *value objects*; la fase 17 usará el constructor para crear películas desde la API.
@@ -292,4 +292,11 @@ Porque el constructor compacto del `record` lanza `IllegalArgumentException` si 
 <details><summary>Respuesta</summary>
 
 Porque el `Title` es un **valor**: dos títulos con el mismo texto son intercambiables, y `equals` lo refleja. La `Movie` es una **entidad**: su identidad es el `id` que asigna la base, no sus campos; dos películas con el mismo título y el mismo director siguen siendo dos filas distintas. Por eso `equals`/`hashCode` de la entidad se deciden en la fase 11/14 y no ahora.
+</details>
+
+**10. ¿Qué ventaja tiene escribir el test antes que el `record`? Pon un ejemplo real del paso 10.3.**
+
+<details><summary>Respuesta</summary>
+
+Obliga a decidir el comportamiento antes de la implementación y detecta fallos que el compilador no ve. En el paso 10.3, `BiographyTest.rejectsBlankText` falló con «La biografía no puede estar vacío»: el código compilaba y funcionaba, pero el mensaje tenía la concordancia rota. Como el test estaba escrito antes, el fallo salió en el primer verde; se corrigió el mensaje («no puede estar en blanco») y no la prueba.
 </details>
