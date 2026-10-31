@@ -154,6 +154,8 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **TDD (*Test-Driven Development*)**: escribir primero un test que falla, después el código mínimo que lo hace pasar y, por último, mejorar el código.
 
+**Rojo / verde**: los dos estados del ciclo de TDD. En **rojo**, el test falla porque el comportamiento aún no existe (en el paso 10.3, ni siquiera compilaba: los `record` no estaban escritos). En **verde**, el test pasa con el código nuevo. Si un test no se ha visto fallar, no se sabe si prueba algo.
+
 **Volumen (Docker)**: almacenamiento gestionado por Docker fuera del contenedor. Los datos sobreviven aunque el contenedor se borre (salvo con `docker compose down -v`).
 
 **JDBC (*Java Database Connectivity*)**: API estándar de Java para hablar con bases de datos relacionales. Define interfaces (`Connection`, `ResultSet`...); cada base de datos aporta su implementación (el driver). Ver [temario/07](temario/07-conexion-jdbc-datasource.md).

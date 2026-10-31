@@ -22,7 +22,7 @@ Hasta ahora todo era infraestructura: Docker, conexión, Flyway, datos. En esta 
 |---|---|
 | 10.1 Modelo anémico vs. rico | ✅ Hecho (D-44: modelo rico moderado) |
 | 10.2 *Value objects*: qué son y cuáles necesitamos | ✅ Hecho (D-46: diseño de los seis tipos) |
-| 10.3 *Value objects* con TDD | ⏳ Pendiente |
+| 10.3 *Value objects* con TDD | ✅ Hecho (28 tests; 35 en verde) |
 | 10.4 Entidades y relaciones | ⏳ Pendiente |
 
 ## 10.1 Modelo anémico frente a modelo rico
@@ -175,6 +175,92 @@ JPA no guarda un `Title` tal cual. Habrá que decirle cómo convertirlo:
 
 Es el precio de tener tipos propios y se paga **una vez**, en la capa de persistencia. La alternativa (volver a `String`/`int` en la entidad) dejaría el dominio protegido solo a medias.
 
+## 10.3 Los seis *value objects* con TDD
+
+**Fecha:** 2026-10-31. **Tests:** 35 en verde (7 que había + 28 nuevos). **No hizo falta tocar la base**: los tests de dominio son unitarios y no arrancan Spring.
+
+### Primero el rojo
+
+Se escribieron los seis tests antes que el código, en `src/test/java/com/daw/movies/domain/model/`, uno por tipo:
+
+| Test | Qué comprueba |
+|---|---|
+| `TitleTest` (6) | recorta espacios, compara por valor, rechaza `null`, blanco y más de 255; acepta exactamente 255 |
+| `ReleaseYearTest` (3) | acepta 1888 y un año futuro; rechaza 1887 |
+| `DurationMinutesTest` (4) | acepta 1 y 600 minutos; rechaza 0 y negativos |
+| `PersonNameTest` (6) | `fullName()`, recorte de las dos partes, acepta 100 y rechaza 101, `null` en el nombre y blanco en el apellido |
+| `BirthDateTest` (4) | acepta una fecha pasada y hoy; rechaza mañana y `null` |
+| `BiographyTest` (5) | guarda y recorta el texto, acepta 5000 caracteres, rechaza `null` y blanco |
+
+`.\mvnw.cmd test` → **rojo** de compilación, que es el rojo esperado en TDD cuando el tipo aún no existe:
+
+```
+[ERROR] .../TitleTest.java:[12,32] cannot find symbol
+[ERROR] .../PersonNameTest.java:[12,32] cannot find symbol
+...
+[INFO] BUILD FAILURE
+```
+
+### Después el verde
+
+Los seis `record` y una clase auxiliar viven en `src/main/java/com/daw/movies/domain/model/`:
+
+| Archivo | Regla que garantiza |
+|---|---|
+| `Title.java` | no nulo, no blanco, ≤ 255 tras `trim` (`movie.title`) |
+| `ReleaseYear.java` | ≥ 1888 (`chk_movie_release_year`); sin tope superior |
+| `DurationMinutes.java` | > 0 (`chk_movie_duration_positive`); sin tope superior |
+| `PersonName.java` | nombre y apellido no nulos ni blancos, ≤ 100; `fullName()` |
+| `BirthDate.java` | no `null` y no futura (`LocalDate.now()` en la regla) |
+| `Biography.java` | no `null` y no vacía; la ausencia se representa con `null` en la entidad |
+| `Texts.java` | auxiliar **de paquete**: `requireText(...)` para no repetir el trío «no nulo / no blanco / longitud máxima» |
+
+```java
+public record Title(String value) {
+
+	public Title {
+		value = Texts.requireText(value, "El título", 255);
+	}
+
+}
+```
+
+Los tests van en inglés y los mensajes de error en español, como piden las [normas](../../base-standards.md): `new Title("")` lanza `IllegalArgumentException("El título no puede estar en blanco")`.
+
+`.\mvnw.cmd clean test` → **verde**: 
+
+```
+[INFO] Tests run: 5 ... BiographyTest
+[INFO] Tests run: 4 ... BirthDateTest
+[INFO] Tests run: 4 ... DurationMinutesTest
+[INFO] Tests run: 6 ... PersonNameTest
+[INFO] Tests run: 3 ... ReleaseYearTest
+[INFO] Tests run: 6 ... TitleTest
+[INFO] Tests run: 35, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
+
+### Lo que enseñó el primer verde
+
+El primer intento dejó **un test en rojo**, y no era un fallo del test:
+
+```
+[ERROR] BiographyTest.rejectsBlankText:39
+```
+
+El mensaje compartido decía «La biografía no puede estar **vacío**»: concordancia rota. Se cambió a una fórmula invariable, «no puede estar **en blanco**», que vale igual para «el título» y «la biografía». Es el ejemplo de por qué el test se escribe antes: el compilador no ve la gramática, el test sí.
+
+### Decisiones que se tomaron al escribir el código
+
+- **`Texts` en vez de copiar el `if` en cada `record`.** Los tres tipos de texto tienen las mismas tres reglas; un método de paquete (no público) evita repetirlas sin sacarlas del dominio. `PersonName` lo usa dos veces.
+- **`Biography` sin longitud máxima.** La columna es `TEXT`; inventar un tope rechazaría datos válidos. Tiene su propio test con 5000 caracteres.
+- **`BirthDate` con fechas relativas en los tests** (`now()`, `now().plusDays(1)`), porque la regla usa `LocalDate.now()`; una fecha fija caducaría con el tiempo.
+- **Sin dependencias nuevas.** JUnit 5 y AssertJ ya estaban; no hace falta nada más para tests unitarios de Java puro.
+
+### Lo que todavía no hacen
+
+No saben de JPA, ni de la base, ni de HTTP: son Java. En la fase 11 se mapearán (`AttributeConverter` para los de un valor, `@Embeddable` para `PersonName`) y en el 10.4 pasarán a ser los tipos de los campos de `Movie`, `Director` y `Actor`.
+
 ## Siguiente paso
 
-**10.3 *Value objects* con TDD**: escribir primero los tests de los seis tipos (en rojo) y después los `record` con su constructor compacto hasta ponerlos en verde. Los tests van en inglés; los mensajes de error, en español. Después, el 10.4 crea `Director`, `Actor` y `Movie` con estos tipos, getters, `fullName()` y constructor protegido para JPA, y decide las relaciones.
+**10.4 Entidades y relaciones**: crear `Director`, `Actor` y `Movie` con los *value objects* del 10.3, getters, `fullName()` y constructor protegido para JPA, y decidir las relaciones unidireccionales (`Movie` conoce a su director y a sus actores). Los tests de las entidades se escriben también antes, en el mismo paquete de dominio.

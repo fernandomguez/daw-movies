@@ -10,18 +10,18 @@
 
 | Dato | Valor |
 |---|---|
-| Fase del plan | **10 — Modelo de dominio → EN CURSO** (2 de 4 pasos) |
-| Paso en curso | **10.2 terminado**; el siguiente es el **10.3** (*value objects* con TDD) |
-| Último paso terminado | 10.2 — diseño de los seis *value objects* (D-46). Además, **15A.1 y 15A.2 adelantados** el 2026-10-28 |
-| Último commit | **`7bbb579`** — `feat(fase-09): add test data seed and verify SQL relationships` |
+| Fase del plan | **10 — Modelo de dominio → EN CURSO** (3 de 4 pasos) |
+| Paso en curso | **10.3 terminado**; el siguiente es el **10.4** (`Director`, `Actor` y `Movie`) |
+| Último paso terminado | 10.3 — los seis *value objects* con TDD (28 tests nuevos) |
+| Último commit | **`d06943e`** — `feat(fase-15A): add OpenAPI contract and Swagger UI` |
 | Etiqueta más reciente | **`fase-09`** (anotada y subida a `origin`) |
-| Tests | **7 en verde** (2 conexión + 1 Flyway + 1 contexto + 3 del contrato OpenAPI) |
+| Tests | **35 en verde** (2 conexión + 1 Flyway + 1 contexto + 3 del contrato OpenAPI + 28 de los *value objects*) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
-| Cambios sin commitear | **ninguno**: los dos frentes se han comiteado (fase 10 → `f2cf8cc`; fase 15A → el commit que contiene esta línea) |
+| Cambios sin commitear | el paso 10.3 y su documentación (ver §5) |
 
 ### La siguiente acción, exacta
 
-La **fase 10 va por el paso 10.3**: escribir con TDD los seis *value objects* (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`) en `com.daw.movies.domain.model`: primero el test en rojo, después el `record` con constructor compacto. El diseño ya está cerrado en el 10.2 (D-46). El 10.4 creará `Director`, `Actor` y `Movie` con estos tipos, getters, `fullName()` y constructor protegido para JPA.
+La **fase 10 va por el paso 10.4**: crear `Director`, `Actor` y `Movie` en `com.daw.movies.domain.model` con los seis *value objects* del 10.3, getters, `fullName()` delegando en `PersonName` y constructor protegido para JPA (campos no `final`, D-29). Relaciones **unidireccionales**: `Movie` conoce a su `Director` y a sus `Actor`. TDD: tests primero, en el mismo paquete de dominio.
 
 **Segundo frente abierto:** la **fase 15A** (API First) tiene hechos 15A.1 (contrato `openapi.yaml`) y 15A.2 (springdoc 3.2.0 + Swagger UI). El **15A.3** no se puede hacer hasta que existan los controladores (fase 16): compara el documento generado `/v3/api-docs` con el contrato. La UI está en `http://localhost:8080/swagger-ui.html` y **no ejecuta** nada todavía ("Try it out" → `404`).
 
@@ -287,24 +287,44 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 8. **Detalles anotados:** Spring sirve `.yaml` como `application/octet-stream` (Swagger UI lo parsea igual; se corregiría con un `ResourceHandler`); springdoc avisa de que sus endpoints están activos "by default" (aquí es el objetivo); aparece el aviso de `spring.jpa.open-in-view` (paso 14.6, pendiente).
 9. Documentado: [diario 15A](15A-api-first.md), [temario 15A](temario/15A-api-first.md), **D-47**, glosario (OpenAPI, Swagger UI, springdoc, API First, `operationId`), plan (fase 15A con ✅/✅/⏳ y fila de cobertura), `README.md` de la raíz (estado, dependencias, 7 tests, sección Swagger, estructura) y el README de esta guía.
 
-**Estado del árbol:** los dos frentes se comitearon por separado el **2026-10-31** (ver §5). **Siguiente:** fase 10, paso 10.3 (TDD de los *value objects*).
+### 2026-10-31 — los dos frentes se comitean y fase 10, paso 10.3 terminado
+
+**Primera parte: los commits pendientes.** Con permiso del alumno se separaron los dos frentes:
+
+1. `f2cf8cc` — `docs(fase-10): design rich domain model and six value objects` (8 archivos, 689 inserciones). Solo documentación: diario y temario 10, D-44/D-45/D-46, plan, glosario, README de la guía y `ESTADO.md`.
+2. `d06943e` — `feat(fase-15A): add OpenAPI contract and Swagger UI` (13 archivos, 844 inserciones). Código: `openapi.yaml`, springdoc 3.2.0, `OpenApiContractTests`, D-47 y README de la raíz.
+3. Para separarlos se prepararon versiones parciales de los cinco archivos compartidos (`ESTADO.md`, `decisiones-tecnicas.md`, `glosario.md`, `README.md` de la guía y plan) sobre el árbol de trabajo, se comiteó la fase 10 y se restauraron. Sin `git hash-object` esta vez. **Ninguna etiqueta y ningún `push`**: ninguna de las dos está cerrada.
+
+**Segunda parte: paso 10.3 (TDD).**
+
+1. Docker Desktop estaba cerrado: `Start-Process` sobre `Docker Desktop.exe`; `docker info` → `29.8.0`; `docker compose up -d --wait` → `movies-mariadb-1` **healthy** en el 3307.
+2. Línea base: `.\mvnw.cmd clean test` → **7 en verde**.
+3. **Rojo:** creados los seis tests en `src/test/java/com/daw/movies/domain/model/` (28 tests). `.\mvnw.cmd test` → fallo de compilación (`cannot find symbol` en las seis clases), el rojo esperado.
+4. **Verde:** creados los seis `record` y `Texts` en `src/main/java/com/daw/movies/domain/model/`. Primer intento: **34 de 35**, con `BiographyTest.rejectsBlankText` en rojo por el mensaje «La biografía no puede estar **vacío**» (concordancia). Se cambió el mensaje a «no puede estar **en blanco**» (invariable) y se ajustaron los dos tests que lo comprueban.
+5. `.\mvnw.cmd clean test` → **35 en verde** (7 anteriores + 28 nuevos), `BUILD SUCCESS`. Los tests de dominio no arrancan Spring ni tocan la base.
+6. Documentado: [diario 10, §10.3](10-modelo-de-dominio.md#103-los-seis-value-objects-con-tdd) (rojo, verde, el fallo de concordancia y las decisiones), [temario 10](temario/10-modelo-de-dominio.md) (código real y pregunta 10), D-46 (nota de implementación), glosario («rojo/verde») y este archivo.
+
+**Siguiente:** fase 10, paso 10.4 (entidades `Director`, `Actor` y `Movie`).
 
 ---
 
 ## 5. Trabajo sin commitear
 
 ```
-nada: el árbol está limpio.
+nada: el árbol está limpio y todo está subido a origin/main.
 ```
 
-**Cerrado el 2026-10-31:** los dos frentes pendientes se han comiteado por separado, como estaba previsto:
+**Cerrado el 2026-10-31.** Al salir de la sesión se comiteó también el paso 10.3 y se subió todo:
 
 | Commit | Frente | Contenido |
 |---|---|---|
 | `f2cf8cc` | **Fase 10** (solo documentación) | `docs(fase-10): design rich domain model and six value objects` — D-44, D-45, D-46, diario y temario 10. **Sin código Java** |
-| el commit que contiene esta línea | **Fase 15A** (código) | `feat(fase-15A): add OpenAPI contract and Swagger UI` — `openapi.yaml`, springdoc 3.2.0, `OpenApiContractTests`, D-47. 7 tests en verde |
+| `d06943e` | **Fase 15A** (código) | `feat(fase-15A): add OpenAPI contract and Swagger UI` — `openapi.yaml`, springdoc 3.2.0, `OpenApiContractTests`, D-47. 7 tests en verde |
+| el commit `feat(fase-10): add six value objects with TDD` | **Fase 10, paso 10.3** (código) | Los seis `record` + `Texts`, 28 tests nuevos (35 en verde) y su documentación |
 
-No se ha creado ninguna etiqueta: ni la fase 10 ni la 15A están cerradas (faltan 10.3–10.4 y 15A.3). No se ha hecho `git push`. Para separarlos se prepararon versiones parciales de los archivos compartidos (`ESTADO.md`, `decisiones-tecnicas.md`, `glosario.md`, `README.md` de la guía y el plan) y se restauraron después; esta vez se hizo sobre el árbol de trabajo, no con `git hash-object`.
+Los tres commits están subidos a `origin/main`.
+
+**No se ha creado ninguna etiqueta nueva**: ni la fase 10 ni la 15A están cerradas (faltan 10.4 y 15A.3); la etiqueta `fase-10` llega al terminar el 10.4. Para separar los dos primeros se prepararon versiones parciales de los archivos compartidos (`ESTADO.md`, `decisiones-tecnicas.md`, `glosario.md`, `README.md` de la guía y el plan) y se restauraron después; esta vez se hizo sobre el árbol de trabajo, no con `git hash-object`.
 
 ---
 

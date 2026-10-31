@@ -326,6 +326,8 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
   - `BirthDate` no futura es la única regla que no está en el esquema; usa `LocalDate.now()`, así que los tests trabajan con fechas relativas.
   - Todos los tipos viven en `com.daw.movies.domain.model`, junto a las entidades.
 
+- **Implementación (paso 10.3, 2026-10-31):** los seis `record` están en `com.daw.movies.domain.model` con su constructor compacto y 28 tests unitarios (35 en verde con los 7 anteriores). Las reglas de texto (no nulo, no blanco, longitud máxima) no se copian: viven en `Texts`, un auxiliar **de paquete**. Los mensajes usan «no puede estar en blanco», que concuerda con cualquier sustantivo. No se añadieron dependencias.
+
 - **Alternativa descartada:** anotar los campos del DTO y validar en el constructor de la entidad (lo que decía D-44). Se descarta porque el profesor pide *value objects* y porque el tipo propio protege también las vías que no pasan por HTTP.
 - **Consecuencia para la fase 10:** el orden cambia. Primero los *value objects* (10.2, diseño, y 10.3, TDD) y después las entidades (10.4), que reciben tipos ya válidos.
 - **Consecuencia para la fase 11:** JPA no guarda un `Title` tal cual. `PersonName` se mapeará con `@Embeddable` (dos columnas) y los de un solo valor con `AttributeConverter`; se decide y se prueba allí, con el soporte real de Hibernate 7.
