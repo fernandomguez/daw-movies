@@ -242,3 +242,33 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Elección: A**, confirmada por el alumno. El aviso sale **una sola vez** (al aplicar la migración) y no rompe nada; a cambio, el SQL queda autodocumentado y es portable (PostgreSQL sí respeta el nombre).
 - **Si se elige B:** hay que corregir el borrador de la [fase 3](temario/03-diseno-esquema-relacional.md), la convención de nombres del `README.md` (que hoy dice `pk_movie`, `fk_movie_director`...) y explicar que en MariaDB la PK se llama `PRIMARY`.
 - **Alcance:** afecta a `V1` (ya aplicada) y a las futuras `V2`, `V3` y `V4`. **Ventaja de decidirlo ahora:** la `V1` todavía **no está en Git**, así que se puede rehacer borrando la base de desarrollo y volviendo a arrancar (`docker compose down -v` + `up -d`), como permite el [temario 08, sección 4](temario/08-migraciones-flyway.md). Una vez comiteada, cambiarla exigiría una migración nueva.
+
+## D-42 Los datos de prueba viven en `db/testdata/seed.sql`, fuera de Flyway — ✅ Decidida (fase 9, paso 9.1)
+- **Contexto:** el esquema lo crea Flyway (fase 8), pero en la fase 9 hay que cargar 6 directores, 10 películas, 14 actores y 24 participaciones. ¿Dónde viven esos datos?
+- **Alternativas:**
+  - **(A)** Una migración `V100__insert_test_data.sql` en `db/testdata`, añadida a `spring.flyway.locations` solo con un perfil `dev`. Automático y versionado.
+  - **(B)** Un `data.sql` con la inicialización de Spring (`spring.sql.init`). Sencillo, pero se ejecuta en cada arranque (o nunca), choca con el orden de Flyway y no es idempotente por defecto.
+  - **(C)** Un script SQL normal en `db/testdata`, cargado a mano con un comando documentado.
+- **Elección: C**, confirmada con la ejecución real. Los datos ficticios son **contenido recargable**, no estructura.
+- **Por qué se descartó A (probado antes de decidir):** el historial de `flyway_schema_history` es único. Al aplicar la semilla como migración, la base quedó en la versión 100 y, al ejecutar los tests sin el perfil `dev`, salió:
+  ```
+  Current version of schema `movies`: 100
+  WARN : Schema `movies` has a version (100) that is newer than the latest available migration (4) !
+  ```
+  Peor que el aviso: la siguiente migración de esquema (`V5`) habría quedado **fuera de orden** y Flyway no la aplicaría sin activar `outOfOrder`. Además, dos programadores tendrían historiales distintos según hubieran cargado o no los datos. Se deshizo el experimento (filas borradas, fila `version = 100` eliminada del historial y `AUTO_INCREMENT` reiniciados).
+- **Cómo se carga:**
+  ```powershell
+  docker compose cp src/main/resources/db/testdata/seed.sql mariadb:/tmp/seed.sql
+  docker compose exec -T mariadb sh -c 'mariadb -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" movies < /tmp/seed.sql'
+  ```
+  `docker compose cp` evita que PowerShell reescriba el archivo y rompa las tildes (el problema del paso 8.6).
+- **Consecuencia:** no es automático; hay que cargarlo tras un `docker compose down -v`. La receta de recarga (borrar en orden inverso y reiniciar los `AUTO_INCREMENT`) está en el [diario 09](09-datos-de-prueba.md#cómo-se-recarga-desde-cero).
+- **Por qué no molesta a Flyway:** `db/testdata` no está en `spring.flyway.locations`, así que Flyway no lo ve. Los tests siguen validando 4 migraciones.
+- **Ventaja para la fase 19:** el mismo archivo podrá cargarse en el MariaDB desechable de Testcontainers (`withInitScript`).
+
+## D-43 Sexto director sin películas (Sofia Coppola) para practicar `LEFT JOIN` — ✅ Decidida (fase 9)
+- **Contexto:** la [fase 2](02-alcance-del-dominio.md) dejó anotado que no había ningún director sin películas y que se añadiría en la fase 9 para practicar `LEFT JOIN`. Sin ese caso, un `INNER` y un `LEFT` devuelven lo mismo y la diferencia no se ve.
+- **Decisión:** añadir a **Sofia Coppola** (1971-05-14) a la semilla, con biografía, y **sin** películas. Los datos de la fase 2 (5 directores con películas) no cambian: es un caso didáctico adicional.
+- **Motivo:** permite comprobar en la misma consulta la diferencia entre `COUNT(*)` y `COUNT(m.id)` y el comportamiento de `AVG` con `NULL`. Es un dato real y verificable, como el resto.
+- **Consecuencia:** los recuentos de la semilla son **6 directores**, 10 películas, 14 actores y 24 participaciones. El director 6 aparece en las consultas con `LEFT JOIN` y desaparece con `INNER JOIN`.
+

@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual:** fases 1–7 completadas y **fase 8 completada** (pendiente solo el commit). El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`) y tiene 4 tests en verde. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`, con claves foráneas y `CHECK` comprobados. Siguiente: fase 9, datos de prueba.
+> **Estado actual:** fases 1–8 completadas (fase 8 con commit `3e38972`) y **fase 9 completada** (pendiente solo el commit). El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`) y tiene 4 tests en verde. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`; los datos de prueba (6 directores, 10 películas, 14 actores y 24 participaciones) se cargan aparte con `db/testdata/seed.sql` y se han comprobado con `JOIN`, `LEFT JOIN` y agregados. Siguiente: fase 10, modelo de dominio.
 
 ---
 
@@ -28,16 +28,17 @@ El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión
 
 ## 1. Tecnologías y versiones
 
-Versiones verificadas en fuentes oficiales en la fase 1 ([detalle](docs/guia-estudio/01-inspeccion-inicial.md)).
+Versiones elegidas y verificadas en fuentes oficiales en la fase 1 ([detalle](docs/guia-estudio/01-inspeccion-inicial.md)) y **comprobadas de nuevo en el proyecto el 2026-10-28** con `.\mvnw.cmd dependency:tree` y `SELECT @@version` (fase 8): las de las dependencias Java las fija el *parent* de Spring Boot.
 
 | Componente | Versión | Para qué |
 |---|---|---|
 | Java (Temurin) | 25 (LTS) | Lenguaje |
 | Spring Boot | 4.1.1 | Framework: arranque, configuración, web, datos |
 | Spring Framework | 7.0.9 | Lo gestiona Spring Boot |
+| Spring Data JPA | 4.1.1 | Repositorios (`JpaRepository`) sobre JPA |
 | Hibernate | 7.4.5.Final | Implementación de JPA (traduce objetos ↔ filas) |
-| Flyway | 12.4.0 (+ `flyway-mysql`) | Migraciones versionadas del esquema |
-| MariaDB | 12.3 (LTS), imagen Docker `mariadb:12.3` | Base de datos |
+| Flyway | 12.4.0 (+ `flyway-mysql` 12.4.0) | Migraciones versionadas del esquema |
+| MariaDB | 12.3 (LTS), imagen Docker `mariadb:12.3` → **12.3.3** | Base de datos |
 | Driver MariaDB | 3.5.10 (`mariadb-java-client`) | Conexión JDBC |
 | HikariCP | 7.0.2 | *Pool* de conexiones (`DataSource`) |
 | Maven (vía Maven Wrapper) | 3.10.0 | Compilación, dependencias y tests (no hace falta instalarlo) |
@@ -75,8 +76,8 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | | 5. Arquitectura en tres capas e inversión de dependencias | ✅ |
 | | 6. Creación del proyecto Spring Boot | ✅ |
 | | 7. Conexión entre Java y MariaDB | ✅ |
-| | 8. Flyway: migraciones del esquema | ✅ Completada (pendiente el commit de la fase) |
-| | 9. Datos de prueba y comprobación de relaciones | ⏳ |
+| | 8. Flyway: migraciones del esquema | ✅ Completada (commit `3e38972`) |
+| | 9. Datos de prueba y comprobación de relaciones | ✅ Completada (pendiente el commit de la fase) |
 | C. Java y persistencia | 10. Modelo de dominio | ⏳ |
 | | 11. Fundamentos de JPA y entidades | ⏳ |
 | | 12. Repositorios y adaptadores de persistencia | ⏳ |
@@ -162,6 +163,23 @@ Dos `WARN` de Flyway son esperados (fase 8): `Using MariaDB 12.3 which is newer 
 
 Los avisos `WARNING` de Mockito ("self-attaching", "Dynamic loading of agents") son conocidos y no rompen nada (D-31).
 
+### Cargar los datos de prueba (fase 9)
+
+Los datos ficticios **no** los carga Flyway: viven en `src/main/resources/db/testdata/seed.sql` y se cargan a mano (D-42). Hace falta una vez, o cada vez que se recree el volumen (`docker compose down -v`):
+
+```powershell
+docker compose cp src/main/resources/db/testdata/seed.sql mariadb:/tmp/seed.sql
+docker compose exec -T mariadb sh -c 'mariadb -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" movies < /tmp/seed.sql'
+```
+
+Resultado: **6 directores** (los 5 de la fase 2 + Sofia Coppola, D-43), **10 películas**, **14 actores** y **24 participaciones**. Comprobación rápida:
+
+```powershell
+"SELECT (SELECT COUNT(*) FROM director) AS directores, (SELECT COUNT(*) FROM movie) AS peliculas;" | docker compose exec -T mariadb sh -c 'mariadb -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" -t movies'
+```
+
+No se usa `Get-Content seed.sql | docker compose exec ...`: PowerShell 5.1 reescribe el texto y rompe las tildes. `docker compose cp` copia el archivo byte a byte. Si el script se ejecuta dos veces, MariaDB responde `ERROR 1062` (los datos ya están); la receta para vaciar y recargar está en el [diario 09](docs/guia-estudio/09-datos-de-prueba.md#cómo-se-recarga-desde-cero).
+
 ### Comandos útiles
 
 ```powershell
@@ -182,12 +200,12 @@ docker compose down -v     # ⚠️ borra también el volumen: se pierden los da
 | Película | título, año de estreno, duración en minutos | Tiene **un** director y **varios** actores |
 | Actor | nombre, apellidos, fecha de nacimiento | Participa en **varias** películas (N:M) |
 
-Datos de prueba: 10 películas reales, 5 directores y 14 actores, con actores compartidos entre películas para que las relaciones N:M se vean de verdad.
+Datos de prueba: 10 películas reales, 6 directores y 14 actores, con actores compartidos entre películas para que las relaciones N:M se vean de verdad. El sexto director, Sofia Coppola, no tiene películas a propósito: sirve para practicar `LEFT JOIN` (D-43).
 
 ### Esquema relacional (diseñado en la fase 3; se creará con Flyway en la fase 8)
 
 ```
-director (id PK, first_name, last_name, birth_date)
+director (id PK, first_name, last_name, birth_date, biography NULL)
     1
     │
     N
@@ -199,13 +217,13 @@ movie_actor (movie_id PK/FK → movie.id, actor_id PK/FK → actor.id)
     N
     │
     1
-actor (id PK, first_name, last_name, birth_date)
+actor (id PK, first_name, last_name, birth_date, biography NULL)
 ```
 
 Reglas que protege la base de datos:
 
 - Claves primarias `BIGINT AUTO_INCREMENT` (claves sustitutas).
-- Todas las columnas obligatorias (`NOT NULL`).
+- Todas las columnas obligatorias (`NOT NULL`) salvo `biography`, que es opcional (D-37).
 - `CHECK (duration_minutes > 0)` y `CHECK (release_year >= 1888)`.
 - No se puede borrar un director con películas (`ON DELETE RESTRICT`); al borrar una película se borran sus participaciones (`CASCADE`).
 - `utf8mb4` con `utf8mb4_uca1400_ai_ci` (tildes y eñes: *Amenábar*, *Verdú*).
@@ -270,6 +288,7 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 8.4 | Primera migración `V1__create_director_table.sql`: tabla `director` creada, apuntada en el historial y con `utf8mb4_uca1400_ai_ci` heredado de la base | [08](docs/guia-estudio/08-flyway-migraciones.md) |
 | 8.5 | `V2`–`V4`: `actor`, `movie` (FK RESTRICT + 2 `CHECK`) y `movie_actor` (PK compuesta, CASCADE/RESTRICT); verificado en `information_schema` con esquema en v4 | [08](docs/guia-estudio/08-flyway-migraciones.md) |
 | 8.6 | Inmutabilidad: se editó a propósito una migración aplicada, se leyó el `checksum mismatch`, se revirtió y volvió el verde | [08](docs/guia-estudio/08-flyway-migraciones.md) |
+| 9.1–9.5 | Datos de prueba en `db/testdata/seed.sql` (fuera de Flyway, D-42): carga en orden director → película → actor → participación, errores provocados (`1452`, `1451`, `4025`, `1062`) y consultas con `JOIN`, `LEFT JOIN` y agregados | [09](docs/guia-estudio/09-datos-de-prueba.md) |
 
 ---
 
@@ -292,6 +311,10 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 13 | 8 | `DB: Name 'pk_director' ignored for PRIMARY key. (Error Code: 1280)` al aplicar la `V1` | MariaDB no admite nombre para la clave primaria: siempre se llama `PRIMARY` | Ninguna: aviso único, la tabla se crea. Decisión en D-41 |
 | 14 | 8 | `Validate failed: Migrations have failed validation` / `Migration checksum mismatch for migration version 1` | Se añadió un comentario a una migración ya aplicada: el checksum cambia aunque el esquema no | Revertir el archivo. `flyway repair` lo taparía; solo para cambios inofensivos y coordinados |
 | 15 | 8 | Un `.sql` con tildes quedó con caracteres rotos y BOM (`EF BB BF`) al editarlo | `Get-Content`/`Set-Content` de PowerShell 5.1 leen UTF-8 como ANSI y escriben con BOM | Editar con el editor. Por consola: `[System.IO.File]::ReadAllText` + `WriteAllText(..., UTF8Encoding($false))` |
+| 16 | 9 | `Schema movies has a version (100) that is newer than the latest available migration (4) !` | Se probó cargar los datos como migración `V100` en una carpeta aparte; el historial de Flyway es único | No usar migraciones para datos de prueba (D-42): script aparte. Se borró la fila 100 del historial y sus datos |
+| 17 | 9 | `NativeCommandError` y `CategoryInfo : NotSpecified` al provocar errores SQL | PowerShell interpreta como error propio la salida de error de `mariadb` | Es ruido: el mensaje real es la línea `ERROR 1452` / `4025` / `1062` |
+| 18 | 9 | `ERROR 1062 ... Duplicate entry '1' for key 'PRIMARY'` al cargar `seed.sql` | El script solo inserta y los datos ya existen | Vaciar las tablas en orden inverso y reiniciar los `AUTO_INCREMENT` |
+| 19 | 9 | `ERROR 1452 ... foreign key constraint fails` al insertar una película con `director_id` inexistente | La FK no encuentra el director | Es el comportamiento correcto (provocado a propósito en el paso 9.3): la base protege la integridad |
 
 ---
 
@@ -400,6 +423,8 @@ Resumen. Cada decisión, con sus alternativas y su motivo, está en [decisiones-
 | D-39 | Una lista vacía es `200 []`, no un error | ✅ |
 | D-40 | Flyway con la versión que gestiona Spring Boot (12.4.0), no la última | ✅ |
 | D-41 | Nombre `pk_...` en la clave primaria: MariaDB lo ignora (aviso 1280), se conserva en el SQL | ✅ |
+| D-42 | Datos de prueba en `db/testdata/seed.sql`, fuera de Flyway | ✅ |
+| D-43 | Sofia Coppola (6.º director) sin películas para practicar `LEFT JOIN` | ✅ |
 
 ---
 
@@ -426,6 +451,8 @@ Temas disponibles:
 | 05 | [Arquitectura en tres capas e inversión de dependencias](docs/guia-estudio/temario/05-arquitectura-tres-capas-dip.md) (incluye DAO vs. Repositorio, DTOs y mappers) |
 | 06 | [Proyecto Spring Boot y Git](docs/guia-estudio/temario/06-proyecto-spring-boot-y-git.md) |
 | 07 | [Conexión con la base de datos: JDBC, driver y `DataSource`](docs/guia-estudio/temario/07-conexion-jdbc-datasource.md) |
+| 08 | [Migraciones del esquema con Flyway](docs/guia-estudio/temario/08-migraciones-flyway.md) |
+| 09 | [Datos de prueba, `INSERT` y consultas con `JOIN`](docs/guia-estudio/temario/09-datos-de-prueba-y-consultas.md) |
 | 11 | [Introducción a JPA](docs/guia-estudio/temario/11-introduccion-jpa.md) (adelanto) |
 
 ---
@@ -447,6 +474,7 @@ daw-movies/
 │   ├── main/java/com/daw/movies/MoviesApplication.java   ← clase de arranque
 │   ├── main/resources/application.yaml                    ← configuración (sin secretos: los lee de .env)
 │   ├── main/resources/db/migration/                       ← migraciones Flyway (V1–V4: las cuatro tablas)
+│   ├── main/resources/db/testdata/seed.sql                ← datos de prueba (no lo ejecuta Flyway, D-42)
 │   ├── test/java/com/daw/movies/MoviesApplicationTests.java
 │   ├── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB y ddl-auto
 │   └── test/java/com/daw/movies/FlywayMigrationTests.java   ← Flyway crea flyway_schema_history

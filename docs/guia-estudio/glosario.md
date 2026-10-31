@@ -215,3 +215,37 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 **Contrato de la API**: la forma acordada de peticiones y respuestas. Quien usa la API depende de ella, así que no se cambia a la ligera. Por eso los actores se devuelven con su `id` aunque hoy solo se muestre el nombre (D-36).
 
 **`TEXT` (MariaDB)**: tipo de columna para texto largo, sin el límite pequeño de `VARCHAR(n)`. Lo usa `biography` (D-37).
+
+**Datos de prueba (semilla, *seed data*)**: filas ficticias para desarrollar y probar. No son esquema: se borran y se recargan cuando hace falta. En el proyecto viven en `db/testdata/seed.sql`, fuera de Flyway (D-42).
+
+**`INSERT`**: sentencia SQL que añade filas a una tabla. `INSERT INTO tabla (columnas) VALUES (...)`.
+
+**`SELECT`**: sentencia SQL que lee datos. `SELECT columnas FROM tabla WHERE condición ORDER BY ...`.
+
+**`JOIN` / `INNER JOIN`**: une filas de dos tablas que cumplen una condición (`ON`). Si una fila no encuentra pareja, **desaparece** del resultado. Ejemplo: película + su director.
+
+**`LEFT JOIN`**: como `INNER JOIN`, pero conserva **todas** las filas de la tabla de la izquierda y rellena con `NULL` la parte derecha cuando no hay pareja. Ejemplo: directores + sus películas, incluido el director que no tiene ninguna.
+
+**`ON`**: condición que empareja las filas de un `JOIN`: `ON d.id = m.director_id`. Sin `ON` se obtiene el producto cartesiano.
+
+**Producto cartesiano**: resultado de unir dos tablas sin condición: cada fila con todas las de la otra (10 × 6 = 60). Casi siempre es un `ON` olvidado.
+
+**`GROUP BY`**: agrupa filas que comparten un valor para resumirlas con agregados (`COUNT`, `SUM`, `AVG`...). Una fila de resultado por grupo.
+
+**Agregado**: función que resume muchas filas en un valor: `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`. Ignoran los `NULL` (salvo `COUNT(*)`, que cuenta filas).
+
+**`COUNT(*)` frente a `COUNT(columna)`**: `COUNT(*)` cuenta filas; `COUNT(columna)` cuenta valores no nulos. Con `LEFT JOIN`, el director sin películas da 1 con `COUNT(*)` y 0 con `COUNT(m.id)`.
+
+**`HAVING`**: filtra **grupos** después de `GROUP BY`; `WHERE` filtra **filas** antes. `HAVING COUNT(*) > 1` es válido; `WHERE COUNT(*) > 1`, no.
+
+**`GROUP_CONCAT`**: une en un texto los valores de un grupo. Útil para comprobar datos; no para el contrato de la API, que devuelve listas.
+
+**`IFNULL` / `COALESCE`**: devuelven un valor alternativo cuando el primero es `NULL`. `IFNULL` es de MySQL/MariaDB; `COALESCE` es estándar y admite varios argumentos.
+
+**SQLSTATE**: código estándar de error de SQL. `23000` significa "violación de restricción de integridad" (FK, PK, `CHECK`). El número concreto que va después (`1452`, `1062`...) es del motor.
+
+**`ERROR 1452` / `ERROR 1451`**: `1452` = se intenta insertar un hijo con una FK que no existe; `1451` = se intenta borrar un padre que tiene hijos con FK `RESTRICT`.
+
+**`ERROR 4025`**: un `CHECK` con nombre ha fallado. El mensaje incluye el nombre (`chk_movie_duration_positive`).
+
+**Idempotente**: operación que se puede repetir sin cambiar el resultado. El script de datos **no** lo es (la segunda ejecución da `ERROR 1062`); por eso hay que vaciar antes las tablas.
