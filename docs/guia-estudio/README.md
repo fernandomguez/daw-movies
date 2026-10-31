@@ -1,4 +1,4 @@
-# Guía de estudio — Proyecto Películas (Java 25 + Spring Boot 4.1.1 + MariaDB + Flyway + Docker)
+# Guía de estudio — Proyecto Películas (Java 25 + Spring Boot 4.1.1 + MariaDB + Flyway + Docker + springdoc)
 
 Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el proyecto real** que estamos construyendo, paso a paso, con los motivos de cada decisión.
 
@@ -34,6 +34,7 @@ Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el pr
 | 09 | [Datos de prueba, `INSERT` y consultas con `JOIN`](temario/09-datos-de-prueba-y-consultas.md) | Completo |
 | 10 | [Modelo de dominio y *value objects*](temario/10-modelo-de-dominio.md) | En construcción (pasos 10.1 y 10.2) |
 | 11 | [Introducción a JPA](temario/11-introduccion-jpa.md) | Introducción conceptual, adaptada a D-29 (se ampliará en la fase 11) |
+| 15A | [API First: el contrato antes del código](temario/15A-api-first.md) | Completo (fase 15A adelantada; falta 15A.3 en la fase 16) |
 
 Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conceptos, por qué los necesitamos, archivos implicados, código explicado, recorrido de los datos, comandos y comprobaciones, errores y soluciones, decisiones, resumen y preguntas de repaso.
 
@@ -51,6 +52,7 @@ Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conce
 | 8. Flyway: migraciones del esquema | ✅ Completada (6 de 6 pasos; commit `3e38972`) | [08-flyway-migraciones.md](08-flyway-migraciones.md) |
 | 9. Datos de prueba y comprobación de relaciones | ✅ Completada (5 de 5 pasos; commit `7bbb579`) | [09-datos-de-prueba.md](09-datos-de-prueba.md) |
 | 10. Modelo de dominio | ⏳ En curso (2 de 4 pasos) | [10-modelo-de-dominio.md](10-modelo-de-dominio.md) |
+| 15A. API First: el contrato antes del código | 🟡 Adelantada (15A.1 y 15A.2 hechos; 15A.3 espera a la fase 16) | [15A-api-first.md](15A-api-first.md) |
 | 11 a 20 | Pendientes (la 13 se eliminó, D-29) | Ver el [plan](00-plan-de-aprendizaje.md) |
 
 > Normas del proyecto: [base-standards.md](../../base-standards.md). Código en inglés; documentación y comentarios en español.

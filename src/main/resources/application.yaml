@@ -23,6 +23,15 @@ spring:
     hibernate:
       ddl-auto: validate
 
+# Documentación de la API (fase 15A). Swagger UI carga el contrato versionado
+# en src/main/resources/static/openapi.yaml (servido en /openapi.yaml), no lo
+# que springdoc deduzca del código: todavía no hay controladores (fase 16).
+springdoc:
+  swagger-ui:
+    url: /openapi.yaml
+    operations-sorter: method
+    tags-sorter: alpha
+
 logging:
   level:
     # Hibernate escribe en INFO la URL de conexión con el usuario y la contraseña en claro (D-33).

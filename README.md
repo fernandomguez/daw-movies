@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual:** fases 1–8 completadas (fase 8 con commit `3e38972`) y **fase 9 completada** (pendiente solo el commit). El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`) y tiene 4 tests en verde. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`; los datos de prueba (6 directores, 10 películas, 14 actores y 24 participaciones) se cargan aparte con `db/testdata/seed.sql` y se han comprobado con `JOIN`, `LEFT JOIN` y agregados. Siguiente: fase 10, modelo de dominio.
+> **Estado actual:** fases 1–9 completadas (commits `3e38972` y `7bbb579`) y **fase 10 en curso** (pasos 10.1 y 10.2). El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`), levanta Tomcat en el 8080 y tiene **7 tests en verde**. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`; los datos de prueba (6 directores, 10 películas, 14 actores y 24 participaciones) se cargan aparte con `db/testdata/seed.sql`. Además, la **fase 15A (API First) está adelantada**: el contrato OpenAPI v1 se sirve en `/openapi.yaml` y **Swagger UI** lo muestra en `http://localhost:8080/swagger-ui.html`. Siguiente: fase 10, paso 10.3 (*value objects* con TDD).
 
 ---
 
@@ -41,6 +41,7 @@ Versiones elegidas y verificadas en fuentes oficiales en la fase 1 ([detalle](do
 | MariaDB | 12.3 (LTS), imagen Docker `mariadb:12.3` → **12.3.3** | Base de datos |
 | Driver MariaDB | 3.5.10 (`mariadb-java-client`) | Conexión JDBC |
 | HikariCP | 7.0.2 | *Pool* de conexiones (`DataSource`) |
+| springdoc-openapi | 3.2.0 (versión explícita: Boot no la gestiona) | Swagger UI y generación de OpenAPI (fase 15A) |
 | Maven (vía Maven Wrapper) | 3.10.0 | Compilación, dependencias y tests (no hace falta instalarlo) |
 | Docker + Docker Compose | — | Ejecutar MariaDB sin instalarla |
 | Git | 2.51 | Control de versiones |
@@ -54,12 +55,15 @@ Versiones elegidas y verificadas en fuentes oficiales en la fase 1 ([detalle](do
 | 6 | `spring-boot-starter`, `spring-boot-starter-test` | Núcleo de Spring Boot; JUnit 5, AssertJ y Mockito | ✅ |
 | 7 | `mariadb-java-client`, `spring-boot-starter-data-jpa` (+ `-test`) | Driver JDBC; JPA, Hibernate, Spring Data y pool de conexiones | ✅ |
 | 8 | `spring-boot-starter-flyway`, `flyway-mysql` (12.4.0, versión gestionada por Boot) | Migraciones; módulo de Flyway para MySQL/MariaDB | ✅ |
-| 16 | `spring-boot-starter-webmvc` (+ `-test`) | Controladores REST, Tomcat embebido, JSON | ⏳ |
+| 15A | `springdoc-openapi-starter-webmvc-ui` (3.2.0) | Contrato OpenAPI y Swagger UI | ✅ (15A.1 y 15A.2) |
+| 16 | `spring-boot-starter-webmvc` (+ `-test`) | Controladores REST, Tomcat embebido, JSON | 🟡 añadido en 15A (lo necesita springdoc); faltan los controladores |
 | 18 | `spring-boot-starter-validation` | Bean Validation (`@NotBlank`, `@Valid`) | ⏳ |
 | 19 | `spring-boot-testcontainers`, `testcontainers-junit-jupiter`, `testcontainers-mariadb` | Tests de integración con un MariaDB real y desechable | ⏳ |
-| 24 (opc.) | `spring-boot-starter-security` + librería JWT | Seguridad | ⚪ |
+| 24 | `spring-boot-starter-security` + librería JWT | Seguridad | 🟡 |
+| 25 | Spring Modulith (`spring-modulith-starter-*`) y `archunit-junit5` | Verificación de módulos y de dependencias (versiones por comprobar en la fase 25) | ⏳ |
+| 27 | `spring-boot-starter-actuator` | Métricas y salud | ⚪ (revisa D-27) |
 
-**Descartadas** (D-27): Lombok (oculta el código que queremos aprender; usaremos `record`), DevTools, Docker Compose Support (haría sola la configuración que se aprende en la fase 7), H2 (su SQL no es el de MariaDB), Actuator. Explicación completa: [temario 06, «Referencia: plan de dependencias»](docs/guia-estudio/temario/06-proyecto-spring-boot-y-git.md#referencia-plan-de-dependencias).
+**Descartadas** (D-27): Lombok (oculta el código que queremos aprender; usaremos `record`), DevTools, Docker Compose Support (haría sola la configuración que se aprende en la fase 7), H2 (su SQL no es el de MariaDB) y Actuator (se revisa en la fase 27). Explicación completa: [temario 06, «Referencia: plan de dependencias»](docs/guia-estudio/temario/06-proyecto-spring-boot-y-git.md#referencia-plan-de-dependencias).
 
 ---
 
@@ -77,19 +81,22 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | | 6. Creación del proyecto Spring Boot | ✅ |
 | | 7. Conexión entre Java y MariaDB | ✅ |
 | | 8. Flyway: migraciones del esquema | ✅ Completada (commit `3e38972`) |
-| | 9. Datos de prueba y comprobación de relaciones | ✅ Completada (pendiente el commit de la fase) |
+| | 9. Datos de prueba y comprobación de relaciones | ✅ Completada (commit `7bbb579`) |
 | C. Java y persistencia | 10. Modelo de dominio | ⏳ |
 | | 11. Fundamentos de JPA y entidades | ⏳ |
 | | 12. Repositorios y adaptadores de persistencia | ⏳ |
 | | ~~13. Mapeos entre persistencia y dominio~~ | Eliminada (D-29) |
 | | 14. Consultas de información relacionada y problemas habituales | ⏳ |
 | D. API | 15. DTOs de salida y mapeo dominio → DTO | ⏳ |
+| | 15A. API First: el contrato antes del código | 🟡 Contrato y Swagger UI hechos (D-47); falta 15A.3 |
 | | 16. Servicio y controladores REST de lectura | ⏳ |
 | | 17. Operaciones de escritura y transacciones | ⏳ |
 | | 18. Validaciones y manejo de excepciones | ⏳ |
 | E. Calidad y cierre | 19. Pruebas de integración y revisión de cobertura | ⏳ |
 | | 20. Revisión de arquitectura y documentación final | ⏳ |
-| Opcionales | 21. Contenerizar la aplicación · 22. MapStruct · 23. Personaje en `movie_actor` · 24. Spring Security + JWT | ⚪ |
+| F. Temas del profesor | 25. Monolito modular: ArchUnit y Spring Modulith | ⏳ |
+| | 26. Eventos · 27. Logs e instrumentación · 28. Concurrencia · 29. Serverless | ⚪ |
+| Opcionales | 21. Contenerizar la aplicación · 22. MapStruct · 23. Personaje en `movie_actor` · 24. Spring Security + JWT | ⚪/🟡 |
 
 ---
 
@@ -143,7 +150,7 @@ movies-mariadb-1   mariadb:12.3   Up 10 seconds (healthy)   0.0.0.0:3307->3306/t
 ```powershell
 docker compose up -d          # los tests se conectan a MariaDB: tiene que estar arrancado (D-35)
 .\mvnw.cmd test               # compila y ejecuta los tests
-.\mvnw.cmd spring-boot:run    # arranca la aplicación (se conecta y termina: aún no hay servidor web)
+.\mvnw.cmd spring-boot:run    # arranca la aplicación en http://localhost:8080
 .\mvnw.cmd clean              # borra target/
 ```
 
@@ -153,15 +160,32 @@ Resultado esperado de `test`:
 [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.DatabaseConnectionTests
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.FlywayMigrationTests
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.OpenApiContractTests
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
-Si MariaDB no está arrancado, los 4 tests fallan con `Connection refused` en `localhost:3307`.
+Si MariaDB no está arrancado, los tests fallan con `Connection refused` en `localhost:3307`.
 
 Dos `WARN` de Flyway son esperados (fase 8): `Using MariaDB 12.3 which is newer than the version Flyway has been verified with. The latest verified version of MariaDB is 11.7` ([D-04](docs/guia-estudio/decisiones-tecnicas.md)) y `No migrations found` mientras no existan archivos en `src/main/resources/db/migration`.
 
 Los avisos `WARNING` de Mockito ("self-attaching", "Dynamic loading of agents") son conocidos y no rompen nada (D-31).
+
+### Documentación de la API: Swagger UI (fase 15A)
+
+Con la aplicación arrancada:
+
+| URL | Qué es |
+|---|---|
+| <http://localhost:8080/swagger-ui.html> | **Swagger UI**: la interfaz navegable de los endpoints |
+| <http://localhost:8080/openapi.yaml> | El **contrato OpenAPI 3.0** en YAML (la fuente de verdad) |
+| <http://localhost:8080/v3/api-docs> | Documento generado por springdoc; **vacío hasta la fase 16** (aún no hay controladores) |
+
+![Swagger UI con el contrato de la versión 1](docs/guia-estudio/img/15A-swagger-ui.png)
+
+El contrato está escrito **antes** que el código (API First, D-47) y vive en `src/main/resources/static/openapi.yaml`. Describe los cuatro endpoints de solo lectura de D-36, el orden de las listas (D-38), la lista vacía como `200 []` (D-39) y la biografía opcional (D-37).
+
+> **Importante:** hoy la UI **documenta** los endpoints, pero no los ejecuta. "Try it out" devuelve `404` porque los controladores llegan en la **fase 16**. Cuando existan, springdoc generará el documento a partir del código y el paso 15A.3 comprobará que no contradice este contrato.
 
 ### Cargar los datos de prueba (fase 9)
 
@@ -473,11 +497,13 @@ daw-movies/
 ├── src/
 │   ├── main/java/com/daw/movies/MoviesApplication.java   ← clase de arranque
 │   ├── main/resources/application.yaml                    ← configuración (sin secretos: los lee de .env)
+│   ├── main/resources/static/openapi.yaml                 ← contrato OpenAPI v1, servido en /openapi.yaml (15A)
 │   ├── main/resources/db/migration/                       ← migraciones Flyway (V1–V4: las cuatro tablas)
 │   ├── main/resources/db/testdata/seed.sql                ← datos de prueba (no lo ejecuta Flyway, D-42)
 │   ├── test/java/com/daw/movies/MoviesApplicationTests.java
 │   ├── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB y ddl-auto
-│   └── test/java/com/daw/movies/FlywayMigrationTests.java   ← Flyway crea flyway_schema_history
+│   ├── test/java/com/daw/movies/FlywayMigrationTests.java   ← Flyway crea flyway_schema_history
+│   └── test/java/com/daw/movies/OpenApiContractTests.java   ← el contrato se sirve y es YAML válido
 └── docs/
     └── guia-estudio/      ← plan, fases, temario, decisiones y glosario
 ```

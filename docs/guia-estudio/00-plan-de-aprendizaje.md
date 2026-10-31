@@ -180,12 +180,12 @@ Depende de: 12.
 
 ### Fase 15A 🟡 API First: el contrato antes del código
 Se inserta entre la 15 y la 16 sin renumerar el resto, para no invalidar las referencias a las fases 16–24.
-Planificada el 2026-10-28 tras leer el [tema 02](https://cesguiro.es/doku.php/clase/daw/dws/1eval/api_first) del profesor. Aún no se ha empezado.
+**Adelantada el 2026-10-28** (15A.1 y 15A.2) a petición del alumno, para poder ver la interfaz de los endpoints: [diario 15A](15A-api-first.md). No depende de la fase 15: las rutas ya estaban decididas en D-36.
 
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
-| 15A.1 El contrato de la v1 ⏳ | Rutas, DTO, códigos y errores escritos antes de implementar ([tema 02](https://cesguiro.es/doku.php/clase/daw/dws/1eval/api_first)) | `src/main/resources/static/openapi.yaml`, servido en `/openapi.yaml` |
-| 15A.2 OpenAPI y Swagger UI ⏳ | `springdoc-openapi` 3.2.0 + Swagger UI; la UI carga el contrato estático | `http://localhost:8080/swagger-ui.html` |
+| 15A.1 El contrato de la v1 ✅ | Rutas, DTO, códigos y errores escritos antes de implementar ([tema 02](https://cesguiro.es/doku.php/clase/daw/dws/1eval/api_first)) | `src/main/resources/static/openapi.yaml`, servido en `/openapi.yaml` |
+| 15A.2 OpenAPI y Swagger UI ✅ | `springdoc-openapi` **3.2.0** + Swagger UI; la UI carga el contrato estático | `http://localhost:8080/swagger-ui.html` |
 | 15A.3 Contrato frente a implementación ⏳ | Que el contrato no mienta: lo declarado es lo que responde | Comparar `/v3/api-docs` (generado) con el contrato, en la fase 16 |
 
 Depende de: D-36 a D-39 (ya decididos en la fase 8) y, para 15A.3, de la fase 16. Decisión: D-47.
@@ -293,7 +293,7 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 | Tema del profesor | Fase nuestra | Estado |
 |---|---|---|
 | DWS 01 Arquitecturas | 5, 25 | 🟡 capas hechas; modular en 25 |
-| DWS 02 API First | 15A | ⏳ planificada |
+| DWS 02 API First | 15A | 🟡 contrato y Swagger UI hechos (D-47); falta implementarlo (fase 16) y 15A.3 |
 | DWS 03 Validación e invariancias | 10.2–10.3, 18.2, 18.5 | ✅ *value objects* adoptados (D-46) |
 | DWS 04 Monolito modular y Modulith | 25 | ⏳ añadida |
 | DWS 05 Persistencia JPA | 11–14, 19 | 🟡 entidad = dominio (D-29), sin MapStruct |

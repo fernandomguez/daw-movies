@@ -331,3 +331,17 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Consecuencia para la fase 11:** JPA no guarda un `Title` tal cual. `PersonName` se mapeará con `@Embeddable` (dos columnas) y los de un solo valor con `AttributeConverter`; se decide y se prueba allí, con el soporte real de Hibernate 7.
 - **Consecuencia para la fase 18:** la validación del DTO sigue existiendo, pero solo para dar un **400 con el campo culpable**; la garantía del dominio es el *value object*.
 - **Documentación:** [temario 10](temario/10-modelo-de-dominio.md#los-value-objects-d-46) y [plan, fase 10](00-plan-de-aprendizaje.md#fase-10--modelo-de-dominio).
+
+## D-47 API First: contrato OpenAPI versionado y Swagger UI con springdoc 3.2.0 — ✅ Decidida por el alumno (fase 15A adelantada, 2026-10-28)
+- **Contexto:** el alumno pide ver la **interfaz de los endpoints** antes de la fase 16. El plan ya tenía la fase 15A (API First) entre la 15 y la 16, pero no había ni contrato en OpenAPI ni capa web. Las rutas y las respuestas ya estaban decididas desde la fase 8 (D-36 a D-39).
+- **Decisión:**
+  - El **contrato de la v1** se escribe a mano en `src/main/resources/static/openapi.yaml` (OpenAPI 3.0.3). Spring Boot sirve `static/` en la raíz, así que queda en `/openapi.yaml` sin código Java y viaja dentro del `.jar`.
+  - **Swagger UI** lo muestra en `/swagger-ui.html`, con `springdoc-openapi-starter-webmvc-ui` **3.2.0** y `springdoc.swagger-ui.url=/openapi.yaml`.
+  - Se añade `spring-boot-starter-webmvc` **antes** de la fase 16 porque springdoc no arranca sin Spring MVC.
+- **Por qué el contrato es estático y no generado:** no hay controladores, así que `/v3/api-docs` estaría vacío. Además, en API First el contrato es la fuente de verdad, no el reflejo del código. En la fase 16 se activará el documento generado y el paso **15A.3** comprobará que no contradice el contrato.
+- **Versión comprobada:** springdoc **3.2.0** es la rama para Spring Boot 4 (`<release>3.2.0</release>` en Maven Central, `lastUpdated 2026-10-24`; la web de springdoc indica soporte de Boot 4). Spring Boot **no** gestiona esta versión: se declara explícita.
+- **Alternativa descartada:** servir Swagger UI desde un *webjar* con `swagger-ui-dist` y un `ResourceHandler` propio. Funciona, pero añade configuración manual y no deja el camino preparado para generar el documento desde el código en la fase 16.
+- **Coste:** Tomcat arranca en el 8080 (antes la aplicación terminaba sola); el YAML hay que mantenerlo a mano hasta que el código lo genere; el contrato puede mentir si no se compara (15A.3).
+- **Excepción a D-26:** la dependencia web se adelanta a la fase 16. Se anota como tal; la fase 16 sigue pendiente (controladores, DTO y servicio).
+- **Consecuencia:** `/v3/api-docs` existe pero devuelve `paths: {}` hasta la fase 16. "Try it out" responde `404`: la UI documenta, no ejecuta.
+- **Documentación:** [diario 15A](15A-api-first.md) y [temario 15A](temario/15A-api-first.md).

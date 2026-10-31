@@ -1,0 +1,316 @@
+openapi: 3.0.3
+
+info:
+  title: Movies API
+  version: 1.0.0
+  description: |
+    API de solo lectura del catálogo de películas.
+
+    Este archivo es la **versión 1 del contrato** y se escribe antes que el
+    código (API First, fase 15A). Los controladores que lo implementan llegan
+    en la fase 16; hasta entonces, "Try it out" responde 404.
+
+    Decisiones que se ven reflejadas aquí:
+    - Rutas y forma de las respuestas: D-36.
+    - Orden de las listas: D-38.
+    - Una lista vacía es `200 []`, no un error: D-39.
+    - `biography` es opcional (`null`): D-37.
+    - Errores con Problem Details (RFC 9457): fase 18.
+
+servers:
+  - url: http://localhost:8080
+    description: Desarrollo local
+
+tags:
+  - name: Películas
+    description: Consultas sobre el catálogo de películas
+  - name: Directores
+    description: Consultas sobre los directores y sus películas
+
+paths:
+  /movies:
+    get:
+      tags: [Películas]
+      operationId: listMovies
+      summary: Lista todas las películas
+      description: |
+        Devuelve todas las películas ordenadas alfabéticamente por título (D-38).
+
+        Si no hay ninguna, responde `200` con una lista vacía: no es un error
+        (D-39).
+      responses:
+        '200':
+          description: Lista de películas; puede estar vacía
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieSummary'
+              example:
+                - id: 1
+                  title: The Prestige
+                  releaseYear: 2006
+                - id: 2
+                  title: The Dark Knight
+                  releaseYear: 2008
+
+  /movies/{id}:
+    get:
+      tags: [Películas]
+      operationId: getMovie
+      summary: Ficha de una película
+      description: |
+        Devuelve la película con su director y su reparto.
+
+        El reparto va ordenado por apellido y, si coincide, por nombre (D-38).
+      parameters:
+        - $ref: '#/components/parameters/MovieId'
+      responses:
+        '200':
+          description: La película existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDetail'
+              example:
+                id: 1
+                title: The Prestige
+                releaseYear: 2006
+                durationMinutes: 130
+                director:
+                  id: 1
+                  fullName: Christopher Nolan
+                actors:
+                  - id: 3
+                    fullName: Christian Bale
+                  - id: 2
+                    fullName: Michael Caine
+                  - id: 8
+                    fullName: Hugh Jackman
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /directors/{id}:
+    get:
+      tags: [Directores]
+      operationId: getDirector
+      summary: Ficha de un director
+      description: |
+        Devuelve los datos del director, con el nombre y los apellidos por
+        separado.
+
+        `biography` es opcional: si no se conoce, llega como `null` (D-37).
+      parameters:
+        - $ref: '#/components/parameters/DirectorId'
+      responses:
+        '200':
+          description: El director existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectorDetail'
+              example:
+                id: 1
+                firstName: Christopher
+                lastName: Nolan
+                birthDate: '1970-07-30'
+                biography: Director, guionista y productor británico-estadounidense.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /directors/{id}/movies:
+    get:
+      tags: [Directores]
+      operationId: listMoviesByDirector
+      summary: Películas de un director
+      description: |
+        Devuelve las películas del director ordenadas por año, de la más antigua
+        a la más reciente y, si coincide el año, por título (D-38).
+
+        Si el director existe pero no tiene películas, responde `200 []`; el
+        `404` se reserva para un director que no existe (D-39).
+      parameters:
+        - $ref: '#/components/parameters/DirectorId'
+      responses:
+        '200':
+          description: Lista de películas del director; puede estar vacía
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieSummary'
+              example:
+                - id: 1
+                  title: The Prestige
+                  releaseYear: 2006
+                - id: 2
+                  title: The Dark Knight
+                  releaseYear: 2008
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    MovieId:
+      name: id
+      in: path
+      required: true
+      description: Identificador de la película
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 1
+
+    DirectorId:
+      name: id
+      in: path
+      required: true
+      description: Identificador del director
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 1
+
+  schemas:
+    MovieSummary:
+      type: object
+      description: Película tal y como aparece en una lista
+      required: [id, title, releaseYear]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: The Prestige
+        releaseYear:
+          type: integer
+          example: 2006
+
+    MovieDetail:
+      type: object
+      description: Ficha completa de una película
+      required: [id, title, releaseYear, durationMinutes, director, actors]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: The Prestige
+        releaseYear:
+          type: integer
+          example: 2006
+        durationMinutes:
+          type: integer
+          example: 130
+        director:
+          $ref: '#/components/schemas/PersonRef'
+        actors:
+          type: array
+          description: Reparto ordenado por apellido y, después, por nombre
+          items:
+            $ref: '#/components/schemas/PersonRef'
+
+    PersonRef:
+      type: object
+      description: |
+        Persona dentro de otra respuesta: solo lo necesario para mostrar la
+        etiqueta y poder enlazar a su ficha.
+      required: [id, fullName]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        fullName:
+          type: string
+          description: Nombre y apellidos calculados; no es una columna
+          example: Christopher Nolan
+
+    DirectorDetail:
+      type: object
+      description: Ficha completa de un director
+      required: [id, firstName, lastName, birthDate]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        firstName:
+          type: string
+          example: Christopher
+        lastName:
+          type: string
+          example: Nolan
+        birthDate:
+          type: string
+          format: date
+          example: '1970-07-30'
+        biography:
+          type: string
+          nullable: true
+          description: Opcional; `null` cuando no se conoce
+          example: Director, guionista y productor británico-estadounidense.
+
+    ProblemDetail:
+      type: object
+      description: Error estándar (RFC 9457), el mismo en todas las operaciones
+      properties:
+        type:
+          type: string
+          format: uri
+          example: about:blank
+        title:
+          type: string
+          example: Not Found
+        status:
+          type: integer
+          format: int32
+          example: 404
+        detail:
+          type: string
+          example: Movie with id 999 not found
+        instance:
+          type: string
+          format: uri
+          example: /movies/999
+
+  responses:
+    BadRequest:
+      description: El `id` de la ruta no es un número
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Bad Request
+            status: 400
+            detail: 'Failed to convert ''abc'' to Integer'
+            instance: /movies/abc
+
+    NotFound:
+      description: El recurso no existe
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            type: about:blank
+            title: Not Found
+            status: 404
+            detail: Movie with id 999 not found
+            instance: /movies/999

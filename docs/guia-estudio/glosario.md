@@ -259,3 +259,13 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 **`record`**: clase inmutable de Java que genera constructor, accesores (`title.value()`), `equals`, `hashCode` y `toString`. No tiene setters. Su **constructor compacto** permite validar sin repetir la asignación de campos.
 
 **Constructor compacto**: forma de un `record` para validar o normalizar sus componentes sin escribir el constructor completo: `public Title { if (...) throw ...; value = value.trim(); }`. Se ejecuta en **toda** creación del objeto.
+
+**OpenAPI**: estándar para describir una API HTTP en YAML o JSON (rutas, parámetros, cuerpos, respuestas y esquemas). Antes se llamaba *Swagger Specification*. En este proyecto, `src/main/resources/static/openapi.yaml` (OAS 3.0.3) es el contrato de la v1 (D-47).
+
+**Swagger UI**: aplicación web que lee un documento OpenAPI y lo pinta como página navegable, con "Try it out". No es lo mismo que OpenAPI: la UI **necesita** un documento; el documento no necesita la UI.
+
+**springdoc-openapi**: librería que genera un documento OpenAPI a partir de los `@RestController` de Spring y sirve Swagger UI. En este proyecto se usa la **3.2.0** (rama para Spring Boot 4), apuntando a nuestro contrato con `springdoc.swagger-ui.url=/openapi.yaml`.
+
+**API First (*contract first*)**: escribir el contrato de la API **antes** que el código. El contrato manda: si el código no coincide, se corrige el código. Lo contrario es *code first*, donde el documento se genera después y puede no reflejar lo acordado.
+
+**`operationId`**: nombre único de una operación dentro del documento OpenAPI (`listMovies`). Lo usan Swagger UI y los generadores de clientes.
