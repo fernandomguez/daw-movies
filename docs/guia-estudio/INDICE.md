@@ -40,9 +40,9 @@ Aquí se lleva el **progreso acumulado**: cuántas fases hay, cuántos pasos y e
 | Fases completadas | **10** (1–10) |
 | Fase adelantada | **15A** parcial: 15A.1 y 15A.2 hechos; falta 15A.3 |
 | Pasos numerados | **92** |
-| Pasos hechos | **51** (los 48 de las fases 1–10 + 15A.1, 15A.2 y 11.1) |
-| Pasos pendientes | **41** |
-| Siguiente paso | **11.2** — JPA en las clases del dominio (D-29) |
+| Pasos hechos | **52** (los 48 de las fases 1–10 + 15A.1, 15A.2, 11.1 y 11.2) |
+| Pasos pendientes | **40** |
+| Siguiente paso | **11.3** — entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`) |
 | Objetivo del alumno | **`POST /movies`** (fase 17) |
 | Ruta mínima hasta el POST | **28 pasos**, con la fase 14 incluida |
 
@@ -184,8 +184,8 @@ Aquí se lleva el **progreso acumulado**: cuántas fases hay, cuántos pasos y e
 | Paso | Concepto | Estado |
 |---|---|---|
 | 11.1 | Qué es JPA y qué es Hibernate | ✅ |
-| 11.2 | JPA en las clases del dominio (D-29) | ⏳ |
-| 11.3 | Entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`) | 🔒 |
+| 11.2 | JPA en las clases del dominio (D-29) | ✅ |
+| 11.3 | Entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`) | ⏳ |
 | 11.4 | `@ManyToOne` | 🔒 |
 | 11.5 | `@ManyToMany` + `@JoinTable` | 🔒 |
 | 11.6 | `FetchType` (`LAZY` vs. `EAGER`) | 🔒 |

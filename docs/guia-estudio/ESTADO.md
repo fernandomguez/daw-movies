@@ -10,10 +10,10 @@
 
 | Dato | Valor |
 |---|---|
-| Fase del plan | **11 — Fundamentos de JPA → EN CURSO** (1 de 6 pasos) |
-| Paso en curso | **11.2** — JPA en las clases del dominio (D-29), cuando el alumno lo pida |
-| Último paso terminado | 11.1 — qué es JPA y qué es Hibernate |
-| Último commit | `docs: remove references to deleted backup branches` (sobre `0dea9c6`, apuntes del 11.1) |
+| Fase del plan | **11 — Fundamentos de JPA → EN CURSO** (2 de 6 pasos) |
+| Paso en curso | **11.3** — entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`), cuando el alumno lo pida |
+| Último paso terminado | 11.2 — JPA en las clases del dominio (D-29) |
+| Último commit | `docs(fase-11): add 11.2 notes on the D-29 trade-off` (sobre la limpieza `3817503`) |
 | Etiqueta más reciente | **`fase-15A`** (anotada y publicada; la del plan es `fase-10`, también publicada) |
 | Tests | **55 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
@@ -21,9 +21,9 @@
 
 ### La siguiente acción, exacta
 
-La **fase 11 está en curso** (1 de 6 pasos). Lo siguiente es el **11.2**: justificar por escrito JPA en las clases del dominio (D-29), qué impone y qué se gana, sin tocar código todavía. Después, el 11.3 anotará `Director` y `Actor`.
+La **fase 11 está en curso** (2 de 6 pasos). Lo siguiente es el **11.3**: anotar `Director` y `Actor` con `@Entity`, `@Table`, `@Id` y `@Column`, y resolver la conversión de los *value objects*. Es el primer paso con código de la fase.
 
-El **11.1** dejó explicado el reparto de piezas (JPA / Hibernate / Spring Data / Spring Boot) y comprobado en el `pom.xml`: `hibernate-core 7.4.5.Final` y `jakarta.persistence-api 3.2.0` llegan con `spring-boot-starter-data-jpa`, sin declararlos nosotros. Ver [diario 11](11-fundamentos-jpa.md).
+El **11.2** dejó justificada D-29 por escrito: qué impone JPA a las clases (constructor sin argumentos, campos no `final`, clase no `final`, acceso por campo, colecciones mutables) y el coste que no se esconde —al leer, Hibernate **salta el constructor**, así que las comprobaciones de la entidad no se ejecutan y el guardián real es el esquema de Flyway. Ver [diario 11](11-fundamentos-jpa.md).
 
 **Segundo frente abierto:** la **fase 15A** (API First) tiene hechos 15A.1 (contrato `openapi.yaml`) y 15A.2 (springdoc 3.2.0 + Swagger UI). El **15A.3** no se puede hacer hasta que existan los controladores (fase 16): compara el documento generado `/v3/api-docs` con el contrato. La UI está en `http://localhost:8080/swagger-ui.html` y **no ejecuta** nada todavía ("Try it out" → `404`).
 
@@ -358,11 +358,27 @@ A petición del alumno: poder empezar en el primer commit e ir viajando fase a f
 
 **Siguiente:** paso 11.2 (sin cambios).
 
+### 2026-11-01 (segunda parte) — fase 11, paso 11.2
+
+1. **Justificación escrita, sin código:** D-29 al detalle en el [diario 11, §11.2](11-fundamentos-jpa.md#112-jpa-en-las-clases-del-dominio-d-29).
+2. **Qué impone JPA**, comprobado contra el código real de la fase 10: constructor sin argumentos (`protected`), campos no `final`, clase no `final`, acceso por campo (`@Id` en el campo → Hibernate no llama a los *setters*), colección mutable y no `final`, `id` `Long` generado, mapeo exacto del esquema (`validate`). Cinco de los ocho ya estaban resueltos sin querer.
+3. **Coste explicado sin adornos:** al leer, Hibernate crea la instancia por el constructor vacío y escribe los campos por reflexión, así que **las comprobaciones del constructor de la entidad no se ejecutan**. Los *value objects* sí se validan, porque se construyen por su constructor. La garantía real pasa a ser el esquema (`NOT NULL`, `CHECK`, claves foráneas).
+4. **Deuda detectada para el 11.3:** `PersonName` ocupa dos columnas y no cabe en un `AttributeConverter`. Se barajan `@Embeddable` en el `record`, columnas planas o volver a clase mutable. Se decide **con una prueba** sobre Hibernate 7.4.5, no por suposición.
+5. **Sin tocar código:** 55 tests en verde, ninguna entidad mapeada, ninguna anotación añadida.
+6. **Documentado:** [diario 11](11-fundamentos-jpa.md), [INDICE.md](INDICE.md) (11.2 ✅, 11.3 ⏳, contadores 52/40) y este archivo.
+7. **Sin commit:** la fase 11 se cierra al terminar el 11.6 (D-30).
+
+**Siguiente:** paso 11.3 (anotar `Director` y `Actor` + conversión de los *value objects*).
+
 ---
 
 ## 5. Trabajo sin commitear
 
-Ninguno: los apuntes del 11.1 entraron en `0dea9c6` y la limpieza del 2026-11-01 en su propio commit. La fase 11 sigue abierta (D-30); su commit de cierre llegará al terminar el 11.6.
+```
+nada: el árbol está limpio.
+```
+
+Los apuntes del 11.2 (y el dato verificado sobre `record` como `@Embeddable`) entraron en `docs(fase-11): add 11.2 notes on the D-29 trade-off`. La fase 11 sigue abierta (D-30): su commit de cierre llegará al terminar el 11.6.
 
 **Cerrada la fase 10 el 2026-10-31.** Su commit es `feat(fase-10): add domain entities` (incluye la ampliación de los temas 10 y 11 hecha al final de la sesión) y la etiqueta `fase-10`, **publicada**.
 
