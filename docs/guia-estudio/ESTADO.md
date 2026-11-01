@@ -10,14 +10,14 @@
 
 | Dato | Valor |
 |---|---|
-| Fase del plan | **11 — Fundamentos de JPA → CERRADA** (6 de 6 pasos). **Commit + etiqueta `fase-11` pendientes de confirmación del alumno** |
+| Fase del plan | **11 — Fundamentos de JPA → CERRADA y publicada** (6 de 6 pasos) |
 | Paso en curso | **12.1** — DAO frente a Repositorio (se crea el diario 12 al empezar) |
 | Último paso terminado | 11.6 — `FetchType.LAZY` en `director` (D-49) |
-| Último commit | `docs(fase-11): add 11.2 notes on the D-29 trade-off` (sobre la limpieza `3817503`) |
-| Etiqueta más reciente | **`fase-15A`** (anotada y publicada; la del plan es `fase-10`, también publicada) |
+| Último commit | `f3b9b13` — `feat(fase-11): map the domain with JPA` + etiqueta anotada `fase-11` |
+| Etiqueta más reciente | **`fase-11`** (anotada y publicada) |
 | Tests | **60 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades + 5 de mapeo JPA) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
-| Cambios sin commitear | sí: la fase 11 entera, lista para su commit único (ver §5) |
+| Cambios sin commitear | ninguno (ver §5) |
 
 ### La siguiente acción, exacta
 
@@ -412,7 +412,7 @@ A petición del alumno: poder empezar en el primer commit e ir viajando fase a f
 4. `.\mvnw.cmd clean test` → **60 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades + 5 de mapeo), `BUILD SUCCESS`.
 5. Deuda anotada para la fase 14: los *proxies* alteran la clase devuelta por los getters de relación; afectará a `equals`/`hashCode`.
 6. Documentado: [diario 11, §11.6 y cierre](11-fundamentos-jpa.md), **D-49**, [temario 11](temario/11-introduccion-jpa.md) (sección 14 y 3 preguntas), glosario (`LAZY`/`EAGER`, *proxy*), `INDICE.md` (fase 11 ✅, contadores 56/36), [RECORRIDO.md](RECORRIDO.md) (parada 15 con `fase-11`), `README.md` de la raíz (estado 1–11, 60 tests, D-44–D-49, errores reales del validate) y este archivo.
-7. **Fase 11 cerrada.** Se pide permiso para el commit único `feat(fase-11): ...` + etiqueta anotada `fase-11` + push (D-30).
+7. **Fase 11 cerrada y publicada:** commit `f3b9b13` (`feat(fase-11): map the domain with JPA`, 18 archivos, +927/−52), etiqueta anotada `fase-11` y push de ambos a `origin` (`8602541..f3b9b13  main -> main`, `[new tag] fase-11`).
 
 **Siguiente:** fase 12, paso 12.1 (DAO frente a Repositorio), con su diario nuevo.
 
@@ -421,26 +421,14 @@ A petición del alumno: poder empezar en el primer commit e ir viajando fase a f
 ## 5. Trabajo sin commitear
 
 ```
-todo lo de la fase 11, cerrada y lista para el commit único (D-30):
-  feat(fase-11): map the domain with JPA (60 tests en verde)
-
-src/main/java/.../domain/model/
-  Director.java, Actor.java    (@Entity, @Table, @Id..., @Embedded)
-  PersonName.java              (@Embeddable + @Column)
-  Movie.java                   (@Entity, @Table, @Id, @ManyToOne LAZY, @ManyToMany + @JoinTable)
-  TitleConverter.java, ReleaseYearConverter.java, DurationMinutesConverter.java,
-  BirthDateConverter.java, BiographyConverter.java   (nuevos, @Converter autoApply)
-src/test/java/com/daw/movies/
-  EntityMappingTests.java      (nuevo, 5 tests)
-docs/guia-estudio/
-  11-fundamentos-jpa.md        (closing: §11.3–§11.6 + cierre de fase)
-  temario/11-introduccion-jpa.md (secciones 11–14 reales, 9 preguntas)
-  decisiones-tecnicas.md       (D-48, D-49)
-  glosario.md                  (9 términos nuevos)
-  INDICE.md, RECORRIDO.md      (fase 11 ✅, contadores, parada 15)
-  ESTADO.md                    (bitácora del día, §1, §5)
-README.md                      (estado 1–11, 60 tests, D-44–D-49, errores 20–21)
+nada: el árbol está limpio.
 ```
+
+**El 2026-11-01 se cerró la fase 11** con el commit único `f3b9b13` (`feat(fase-11): map the domain with JPA`, 18 archivos: 5 converters y `EntityMappingTests` nuevos, `Director`/`Actor`/`Movie`/`PersonName` anotados y toda la documentación) y la etiqueta anotada `fase-11`, ambas publicadas. Este pequeño aparte del commit no recogía su propio hash (imposible de conocer antes de comitear); se apunta con un commit docs cuyo contenido describe el anterior.
+
+| Commit | Frente | Contenido |
+|---|---|---|
+| `f3b9b13` | **Fase 11** | `feat(fase-11): map the domain with JPA` — D-48, D-49, 60 tests |
 
 Los apuntes del 11.2 (y el dato verificado sobre `record` como `@Embeddable`) entraron en `docs(fase-11): add 11.2 notes on the D-29 trade-off`. La fase 11 sigue abierta (D-30): su commit de cierre llegará al terminar el 11.6.
 
