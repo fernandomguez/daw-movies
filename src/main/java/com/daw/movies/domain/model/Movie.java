@@ -3,6 +3,18 @@ package com.daw.movies.domain.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
 /**
  * Película.
  * <p>
@@ -17,17 +29,72 @@ import java.util.List;
  * Se evitan así referencias circulares al serializar y consultas que no hacen
  * falta (fase 14).
  * <p>
- * Es una entidad: su identidad es el {@code id} que asigna la base de datos, por
- * eso no implementa todavía {@code equals}/{@code hashCode} (fase 11/14). La
- * fase 11 añadirá las anotaciones JPA (D-29).
+ * Es una entidad JPA ({@code @Entity}): su identidad es el {@code id} que
+ * asigna la base de datos ({@code AUTO_INCREMENT}, V3), por eso no implementa
+ * todavía {@code equals}/{@code hashCode} (fase 11/14). Los tres campos con
+ * <em>value object</em> no necesitan {@code @Convert}: los converters del 11.3
+ * se aplican solos ({@code autoApply}). El director es la clave foránea en JPA
+ * (paso 11.4); el reparto es la relación N:M sobre la tabla intermedia
+ * {@code movie_actor} (paso 11.5).
  */
+@Entity
+@Table(name = "movie")
 public class Movie {
 
+	/** Identificador generado por {@code AUTO_INCREMENT}; {@code null} si aún no se ha guardado. */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
 	private Title title;
+
 	private ReleaseYear releaseYear;
+
+	/**
+	 * Duración en minutos. La columna se llama {@code duration_minutes}, una
+	 * palabra de más a la que la estrategia por defecto no puede llegar
+	 * (`duration` → `duration`): se declara con {@code @Column}. Comprobado con
+	 * el error real del validate en el 11.4.
+	 */
+	@Column(name = "duration_minutes")
 	private DurationMinutes duration;
+
+	/**
+	 * Director de la película: la clave foránea {@code movie.director_id} en JPA.
+	 * <p>
+	 * {@code @ManyToOne} es la cardinalidad (muchas películas → un director) y
+	 * {@code @JoinColumn} apunta la columna. La relación vive en este lado ("el
+	 * lado muchos"): esta entidad es la <strong>dueña</strong> de la clave
+	 * foránea, como lo es la tabla {@code movie} en el esquema. Es unidireccional
+	 * (fase 14): {@code Director} no tiene lista de películas.
+	 * <p>
+	 * {@code FetchType.LAZY} (paso 11.6, D-49): el {@code @ManyToOne} carga la
+	 * relación ansiosa por defecto; se declara perezosa porque una consulta de
+	 * películas no debería traer el director si el caso de uso no lo pide. Al
+	 * leer, Hibernate entrega un <em>proxy</em> que consulta la base solo la
+	 * primera vez que se toca el objeto.
+	 */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "director_id", nullable = false)
 	private Director director;
+
+	/**
+	 * Reparto de la película (tabla intermedia {@code movie_actor}, V4).
+	 * <p>
+	 * La relación N:M en JPA: {@code @ManyToMany} declara la cardinalidad y
+	 * {@code @JoinTable} apunta a la tabla intermedia que ya existe en el
+	 * esquema: {@code movie_id} es la columna propia (la película actual) y
+	 * {@code actor_id} la columna de la otra entidad. Es unidireccional (fase
+	 * 14): {@code Actor} no tiene lista de películas, y solo este lado lee y
+	 * escribe la relación. Por defecto se carga perezosa ({@code LAZY}); se
+	 * decide de forma explícita en el 11.6.
+	 */
+	@ManyToMany
+	@JoinTable(
+			name = "movie_actor",
+			joinColumns = @JoinColumn(name = "movie_id"),
+			inverseJoinColumns = @JoinColumn(name = "actor_id")
+	)
 	private List<Actor> actors = new ArrayList<>();
 
 	/** Solo para que JPA rellene los campos por reflexión (fase 11). */

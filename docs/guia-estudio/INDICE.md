@@ -4,7 +4,7 @@
 >
 > **Cuándo se usa:** al empezar a estudiar (para elegir qué leer) y al cerrar una fase (para añadir el diario que falta).
 >
-> **Última actualización:** 2026-10-31 (fase 10 cerrada).
+> **Última actualización:** 2026-11-01 (fase 11 cerrada).
 
 ## Cómo leer este índice
 
@@ -37,12 +37,12 @@ Aquí se lleva el **progreso acumulado**: cuántas fases hay, cuántos pasos y e
 | Métrica | Valor |
 |---|---|
 | Unidades de fase en el plan | **29** (1–20 sin la 13, más 15A y 21–29) |
-| Fases completadas | **10** (1–10) |
+| Fases completadas | **11** (1–11) |
 | Fase adelantada | **15A** parcial: 15A.1 y 15A.2 hechos; falta 15A.3 |
 | Pasos numerados | **92** |
-| Pasos hechos | **52** (los 48 de las fases 1–10 + 15A.1, 15A.2, 11.1 y 11.2) |
-| Pasos pendientes | **40** |
-| Siguiente paso | **11.3** — entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`) |
+| Pasos hechos | **56** (los 48 de las fases 1–10 + 15A.1, 15A.2 y los 6 de la fase 11) |
+| Pasos pendientes | **36** |
+| Siguiente paso | **12.1** — DAO frente a Repositorio (se crea el diario al empezar) |
 | Objetivo del alumno | **`POST /movies`** (fase 17) |
 | Ruta mínima hasta el POST | **28 pasos**, con la fase 14 incluida |
 
@@ -177,7 +177,7 @@ Aquí se lleva el **progreso acumulado**: cuántas fases hay, cuántos pasos y e
 | 10.3 | *Value objects* con TDD | ✅ |
 | 10.4 | Entidades y relaciones | ✅ |
 
-### Fase 11 · Fundamentos de JPA y entidades · ⏳ en curso
+### Fase 11 · Fundamentos de JPA y entidades · ✅
 
 📓 Diario: [11-fundamentos-jpa.md](11-fundamentos-jpa.md) · 📚 Temario: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.md)
 
@@ -185,10 +185,10 @@ Aquí se lleva el **progreso acumulado**: cuántas fases hay, cuántos pasos y e
 |---|---|---|
 | 11.1 | Qué es JPA y qué es Hibernate | ✅ |
 | 11.2 | JPA en las clases del dominio (D-29) | ✅ |
-| 11.3 | Entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`) | ⏳ |
-| 11.4 | `@ManyToOne` | 🔒 |
-| 11.5 | `@ManyToMany` + `@JoinTable` | 🔒 |
-| 11.6 | `FetchType` (`LAZY` vs. `EAGER`) | 🔒 |
+| 11.3 | Entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`) | ✅ |
+| 11.4 | `@ManyToOne` | ✅ |
+| 11.5 | `@ManyToMany` + `@JoinTable` | ✅ |
+| 11.6 | `FetchType` (`LAZY` vs. `EAGER`) | ✅ |
 
 ### Fase 12 · Repositorios y adaptadores de persistencia · 🔒
 
@@ -411,7 +411,7 @@ Después, muy recomendable: **fase 18** (+5 → 33), para que un título vacío 
 | [openapi.yaml](../../src/main/resources/static/openapi.yaml) | Contrato de la API v1 (hoy solo los 4 `GET`) |
 | [db/migration](../../src/main/resources/db/migration) | Migraciones `V1`–`V4` (esquema real) |
 | [db/testdata/seed.sql](../../src/main/resources/db/testdata/seed.sql) | Datos de prueba: 6 directores, 10 películas, 14 actores, 24 participaciones |
-| [domain/model](../../src/main/java/com/daw/movies/domain/model) | `Movie`, `Director`, `Actor` y los seis *value objects* |
+| [domain/model](../../src/main/java/com/daw/movies/domain/model) | Entidades (`Movie`, `Director`, `Actor`), *value objects*, cinco converters y `Texts` |
 
 ---
 

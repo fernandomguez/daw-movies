@@ -10,20 +10,20 @@
 
 | Dato | Valor |
 |---|---|
-| Fase del plan | **11 — Fundamentos de JPA → EN CURSO** (2 de 6 pasos) |
-| Paso en curso | **11.3** — entidades simples (`@Entity`, `@Table`, `@Id`, `@Column`), cuando el alumno lo pida |
-| Último paso terminado | 11.2 — JPA en las clases del dominio (D-29) |
+| Fase del plan | **11 — Fundamentos de JPA → CERRADA** (6 de 6 pasos). **Commit + etiqueta `fase-11` pendientes de confirmación del alumno** |
+| Paso en curso | **12.1** — DAO frente a Repositorio (se crea el diario 12 al empezar) |
+| Último paso terminado | 11.6 — `FetchType.LAZY` en `director` (D-49) |
 | Último commit | `docs(fase-11): add 11.2 notes on the D-29 trade-off` (sobre la limpieza `3817503`) |
 | Etiqueta más reciente | **`fase-15A`** (anotada y publicada; la del plan es `fase-10`, también publicada) |
-| Tests | **55 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades) |
+| Tests | **60 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades + 5 de mapeo JPA) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
-| Cambios sin commitear | ninguno (ver §5) |
+| Cambios sin commitear | sí: la fase 11 entera, lista para su commit único (ver §5) |
 
 ### La siguiente acción, exacta
 
-La **fase 11 está en curso** (2 de 6 pasos). Lo siguiente es el **11.3**: anotar `Director` y `Actor` con `@Entity`, `@Table`, `@Id` y `@Column`, y resolver la conversión de los *value objects*. Es el primer paso con código de la fase.
+La **fase 11 está cerrada** (los 6 pasos hechos). Lo siguiente es el **12.1** (fase 12, Repositorios y adaptadores): la tabla pide crear el diario al empezar. El **commit único `feat(fase-11): ...` + etiqueta anotada `fase-11`** está pendiente de la confirmación del alumno (D-30).
 
-El **11.2** dejó justificada D-29 por escrito: qué impone JPA a las clases (constructor sin argumentos, campos no `final`, clase no `final`, acceso por campo, colecciones mutables) y el coste que no se esconde —al leer, Hibernate **salta el constructor**, así que las comprobaciones de la entidad no se ejecutan y el guardián real es el esquema de Flyway. Ver [diario 11](11-fundamentos-jpa.md).
+El **11.6** ha cerrado el mapeo: `@ManyToOne(fetch = FetchType.LAZY)` en `Movie.director`, decidido con un test de comportamiento (el rojo mostró que con el default `EAGER` el `find` carga el objeto real; con `LAZY`, Hibernate entrega un *proxy*). La regla del proyecto queda en **D-49: todas las relaciones perezosas**, sin depender de defaults desiguales (*ManyToOne* ansioso, *ManyToMany* perezoso). Deuda anotada: los *proxies* afectarán a `equals`/`hashCode` (fase 14). Ver [diario 11, §11.6](11-fundamentos-jpa.md).
 
 **Segundo frente abierto:** la **fase 15A** (API First) tiene hechos 15A.1 (contrato `openapi.yaml`) y 15A.2 (springdoc 3.2.0 + Swagger UI). El **15A.3** no se puede hacer hasta que existan los controladores (fase 16): compara el documento generado `/v3/api-docs` con el contrato. La UI está en `http://localhost:8080/swagger-ui.html` y **no ejecuta** nada todavía ("Try it out" → `404`).
 
@@ -370,12 +370,76 @@ A petición del alumno: poder empezar en el primer commit e ir viajando fase a f
 
 **Siguiente:** paso 11.3 (anotar `Director` y `Actor` + conversión de los *value objects*).
 
+### 2026-11-01 (tercera parte) — fase 11, paso 11.3
+
+1. Entorno: `docker info` → `29.8.0`; `docker compose ps` → `movies-mariadb-1` **healthy** en el 3307. Línea base: `.\mvnw.cmd test` → **55 en verde**.
+2. **Rojo:** creado `EntityMappingTests` (2 tests: los 6 directores del seed con `name` reconstruido y DiCaprio con `biography == null`, leyendo con `EntityManager`). `.\mvnw.cmd test "-Dtest=EntityMappingTests"` → **rojo por el motivo correcto**: `Unknown entity type 'com.daw.movies.domain.model.Actor'` y `Could not resolve root entity 'Director'`.
+3. **Verde:** anotadas `Director` y `Actor` (`@Entity`, `@Table`, `@Id` + `@GeneratedValue(IDENTITY)`, `@Embedded` en `name`); `PersonName` como `@Embeddable` con `@Column` en los componentes del `record`; cinco `AttributeConverter` (`Title`, `ReleaseYear`, `DurationMinutes`, `BirthDate`, `Biography`) con `@Converter(autoApply = true)`. Primera ejecución → **verde a la primera**, lo que salda con una prueba la deuda del 11.2 (D-48).
+4. Observaciones anotadas: el `validate` pasa en silencio (solo habla cuando algo no encaja); no hubo problema mapeando `String` sobre la columna `TEXT` de `biography`.
+5. `.\mvnw.cmd clean test` → **57 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades + 2 de mapeo), `BUILD SUCCESS`. Los nuevos no tocan las tablas: solo leen filas del seed.
+6. Documentado: [diario 11, §11.3](11-fundamentos-jpa.md), [temario 11](temario/11-introduccion-jpa.md) (sección nueva con el código real, preguntas nuevas, avisos actualizados), **D-48**, glosario (`@Embeddable`, `EntityManager`, `JPQL`), `INDICE.md` (11.3 ✅, 11.4 ⏳, contadores 53/39) y este archivo.
+7. **Sin commit:** la fase 11 se cierra al terminar el 11.6 (D-30).
+
+**Siguiente:** paso 11.4 (`@ManyToOne` + `@JoinColumn` en `Movie.director`).
+
+### 2026-11-01 (cuarta parte) — fase 11, paso 11.4
+
+1. **Rojo:** cuarto test en `EntityMappingTests` (`mapsTheSeedMoviesAndTheirDirector`: 10 películas + *Inception* con su director). Error real: `Could not resolve root entity 'Movie'` (JPQL).
+2. Rojo técnico (el primero del validate en el proyecto): anotada la entidad, el arranque rompió con `Schema validation: missing column [duration] in table [movie]`. Causa: el campo `duration` y el nombre de la columna `duration_minutes`; la conversión *camelCase → snake_case* (estrategia de Spring Boot) no puede deducir la palabra que falta. Corregido con `@Column(name = "duration_minutes")`.
+3. **Verde:** `Movie` anotada: `@Entity`, `@Table`, `@Id` + `@GeneratedValue(IDENTITY)`, tres *value objects* sin `@Convert` (los converters del 11.3 se aplican con `autoApply`), `@ManyToOne` + `@JoinColumn(name = "director_id", nullable = false)` en `director` (lado dueño de la FK, unidireccional) y `@Transient` en `actors` hasta el 11.5.
+4. `.\mvnw.cmd clean test` → **58 en verde**, `BUILD SUCCESS`.
+5. Documentado: [diario 11, §11.4](11-fundamentos-jpa.md), [temario 11](temario/11-introduccion-jpa.md) (sección 12 con el código real y 4 preguntas), glosario (`@ManyToOne`/`@JoinColumn`, *lado dueño*, `@Transient`), `INDICE.md` (11.4 ✅, 11.5 ⏳, contadores 54/38) y este archivo.
+6. **Sin commit:** la fase 11 se cierra al terminar el 11.6 (D-30).
+
+**Siguiente:** paso 11.5 (`@ManyToMany` + `@JoinTable` en `Movie.actors`).
+
+### 2026-11-01 (quinta parte) — fase 11, paso 11.5
+
+1. **Rojo distinto:** quinto test en `EntityMappingTests` (`mapsTheCastOfInceptionThroughTheJoinTable`). Error real: `expected: <2> but was: <0>` — un **fallo de aserción**, no un error de arranque: la película se cargaba y el reparto venía vacío por el `@Transient` del 11.4. El test señalaba el hueco del mapeo, no una entidad rota.
+2. **Verde:** el import `jakarta.persistence.Transient` desaparece y `actors` pasa a ser relación: `@ManyToMany` + `@JoinTable(name = "movie_actor")`, `joinColumns = movie_id` (columna propia) e `inverseJoinColumns = actor_id` (columna ajena). Primera ejecución → verde.
+3. Matices anotados: el `validate` también comprueba la tabla intermedia (sigue sin crearse nada); la `@ManyToMany` es `LAZY` por defecto, de modo que `getActors()` genera un `SELECT` aparte en el test; sin `cascade` guardar `Movie` no guarda actores (D-14).
+4. `.\mvnw.cmd clean test` → **59 en verde**, `BUILD SUCCESS`.
+5. Documentado: [diario 11, §11.5](11-fundamentos-jpa.md), [temario 11](temario/11-introduccion-jpa.md) (sección 13 con el código real y 2 preguntas nuevas), glosario (`@ManyToMany`/`@JoinTable`), `INDICE.md` (11.5 ✅, 11.6 ⏳, contadores 55/37) y este archivo. En el glosario se detectó que un cambio sobrescribía la entrada `@Embeddable` de 11.3 y se restauró.
+6. **Sin commit:** la fase 11 se cierra al terminar el 11.6 (D-30), con permiso del alumno.
+
+**Siguiente:** paso 11.6 (`FetchType`: `LAZY` vs. `EAGER`), el último de la fase.
+
+### 2026-11-01 (sexta parte) — fase 11, paso 11.6 y cierre de la fase
+
+1. **Decisión propuesta y aplicada (D-49):** todas las relaciones perezosas. El contexto: `director` cargaba `EAGER` por defecto (`@ManyToOne`) y `actors` `LAZY` por defecto (`@ManyToMany`) — defaults desiguales que conviene no memorizar sino declarar.
+2. **Rojo** (test de comportamiento, no de anotación): `loadsTheDirectorLazily` con `assertNotEquals(Director.class, movie.getDirector().getClass())` → `expected: not equal but was: <class com.daw.movies.domain.model.Director>`. Con el default `EAGER`, el `find` carga el objeto real.
+3. **Verde:** `@ManyToOne(fetch = FetchType.LAZY)` en `Movie.director`. Con `LAZY`, Hibernate entrega un *proxy* (subclase generada en caliente) y el test pasa. `actors` queda sin `fetch` explícito: el default de `@ManyToMany` ya es perezoso, y la regla queda en D-49 y en el javadoc.
+4. `.\mvnw.cmd clean test` → **60 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades + 5 de mapeo), `BUILD SUCCESS`.
+5. Deuda anotada para la fase 14: los *proxies* alteran la clase devuelta por los getters de relación; afectará a `equals`/`hashCode`.
+6. Documentado: [diario 11, §11.6 y cierre](11-fundamentos-jpa.md), **D-49**, [temario 11](temario/11-introduccion-jpa.md) (sección 14 y 3 preguntas), glosario (`LAZY`/`EAGER`, *proxy*), `INDICE.md` (fase 11 ✅, contadores 56/36), [RECORRIDO.md](RECORRIDO.md) (parada 15 con `fase-11`), `README.md` de la raíz (estado 1–11, 60 tests, D-44–D-49, errores reales del validate) y este archivo.
+7. **Fase 11 cerrada.** Se pide permiso para el commit único `feat(fase-11): ...` + etiqueta anotada `fase-11` + push (D-30).
+
+**Siguiente:** fase 12, paso 12.1 (DAO frente a Repositorio), con su diario nuevo.
+
 ---
 
 ## 5. Trabajo sin commitear
 
 ```
-nada: el árbol está limpio.
+todo lo de la fase 11, cerrada y lista para el commit único (D-30):
+  feat(fase-11): map the domain with JPA (60 tests en verde)
+
+src/main/java/.../domain/model/
+  Director.java, Actor.java    (@Entity, @Table, @Id..., @Embedded)
+  PersonName.java              (@Embeddable + @Column)
+  Movie.java                   (@Entity, @Table, @Id, @ManyToOne LAZY, @ManyToMany + @JoinTable)
+  TitleConverter.java, ReleaseYearConverter.java, DurationMinutesConverter.java,
+  BirthDateConverter.java, BiographyConverter.java   (nuevos, @Converter autoApply)
+src/test/java/com/daw/movies/
+  EntityMappingTests.java      (nuevo, 5 tests)
+docs/guia-estudio/
+  11-fundamentos-jpa.md        (closing: §11.3–§11.6 + cierre de fase)
+  temario/11-introduccion-jpa.md (secciones 11–14 reales, 9 preguntas)
+  decisiones-tecnicas.md       (D-48, D-49)
+  glosario.md                  (9 términos nuevos)
+  INDICE.md, RECORRIDO.md      (fase 11 ✅, contadores, parada 15)
+  ESTADO.md                    (bitácora del día, §1, §5)
+README.md                      (estado 1–11, 60 tests, D-44–D-49, errores 20–21)
 ```
 
 Los apuntes del 11.2 (y el dato verificado sobre `record` como `@Embeddable`) entraron en `docs(fase-11): add 11.2 notes on the D-29 trade-off`. La fase 11 sigue abierta (D-30): su commit de cierre llegará al terminar el 11.6.

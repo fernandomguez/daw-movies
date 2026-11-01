@@ -349,3 +349,24 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Excepción a D-26:** la dependencia web se adelanta a la fase 16. Se anota como tal; la fase 16 sigue pendiente (controladores, DTO y servicio).
 - **Consecuencia:** `/v3/api-docs` existe pero devuelve `paths: {}` hasta la fase 16. "Try it out" responde `404`: la UI documenta, no ejecuta.
 - **Documentación:** [diario 15A](15A-api-first.md) y [temario 15A](temario/15A-api-first.md).
+
+## D-49 Todas las relaciones JPA son `LAZY` — ✅ Decidida por el alumno (fase 11, paso 11.6, 2026-11-01)
+- **Contexto:** tras el 11.4 y el 11.5, las dos relaciones de `Movie` cargaban por accidente distinto: `director` (`@ManyToOne`) era `EAGER` por defecto y `actors` (`@ManyToMany`) era `LAZY` por defecto. Depender de defaults desiguales obliga a saberlos de memoria y trae datos que nadie pidió.
+- **Decisión:** todas las relaciones de todas las entidades son perezosas: `@ManyToOne(fetch = FetchType.LAZY)` en `Movie.director`; `actors` ya es `LAZY` por defecto (`@ManyToMany`) y se deja la anotación sin `fetch`, documentado. La regla queda por escrito para no repetir el análisis en cada campo.
+- **Por qué:** (1) una consulta de listas no debe traer de regalo relaciones que el caso de uso no pide (en la API v1, `GET /movies` devuelve resúmenes); (2) `EAGER` también causa N+1 —la fase 14 lo contará y `JOIN FETCH` (14.3) es el antídoto—; (3) el coste de `LAZY`, el `LazyInitializationException` fuera de transacción, se planifica: transacciones en la fase 12 y `open-in-view: false` en el 14.6 (petición del profesor).
+- **Cómo se decidió (con prueba):** test de comportamiento, no de anotación: con `DEFAULT` (`EAGER`), `em.find` cargaba el `Director` real y la aserción del proxy fallaba (`expected: not equal but was: <class ...Director>`); con `LAZY`, Hibernate entrega un *proxy* (subclase en caliente) y el test pasa.
+- **Deuda anotada para la fase 14:** los *proxies* cambian la clase devuelta por los getters de relación, lo que afectará a `equals`/`hashCode` (fase 14, paso 14.4).
+- **Verificación:** `.\mvnw.cmd clean test` → **60 en verde** (55 + 5 de `EntityMappingTests`).
+- **Documentación:** [diario 11, §11.6](11-fundamentos-jpa.md) y [temario 11](temario/11-introduccion-jpa.md).
+
+## D-48 Cómo mapean los *value objects* en JPA: converters + `@Embeddable` — ✅ Decidida por el alumno (fase 11, paso 11.3, 2026-11-01)
+- **Contexto:** D-46 llenó el dominio de seis `record` que JPA no entiende. El 11.2 dejó anotado que el trabajo real de la fase era este mapeo y que `PersonName` (dos columnas) no cabía en un `AttributeConverter`.
+- **Decisión:**
+  - Los cinco *value objects* de una columna (`Title`, `ReleaseYear`, `DurationMinutes`, `BirthDate`, `Biography`) se traducen con un `AttributeConverter` cada uno: al escribir, el `record` entrega su valor interno en la columna; al leer, el valor de la tabla entra por el constructor del `record`, que lo valida.
+  - Se declaran con `@Converter(autoApply = true)`, mejor que un `@Convert` en cada atributo: `Movie` heredará los cinco en el 11.4 sin tocar nada.
+  - `PersonName` es `@Embeddable` con `@Column` en los componentes del `record` (`first_name`, `last_name`). Sin `@AttributeOverrides` en `Director`/`Actor`: las dos tablas tienen exactamente los mismos nombres de columna.
+- **Cómo se decidió (con una prueba, como anticipó el 11.2):** no leyendo documentación, sino probando contra Hibernate 7.4.5: primero el test y después las anotaciones. Si Hibernate no fuera capaz de instanciar el `record` (por ejemplo, si exigiera un constructor sin argumentos), el arranque habría fallado. Resultado: verde a la primera, con el `ddl-auto: validate` pasado en silencio, incluida la columna `biography TEXT`, y el nombre cruzando de las dos columnas al `record`.
+- **Alternativas descartadas:** columnas planas en la entidad (`firstName` y `lastName` como campos sueltos: la entidad deja de reflejar el dominio) y volver a una clase mutable `PersonName` (rompe la inmutabilidad de la fase 10 para contentar a la herramienta).
+- **Coste relacionado (ya asumido en D-29):** los *value objects* siguen validando al leer, porque Hibernate pasa por su constructor; lo que sigue sin ejecutarse al hidratar es el constructor de la entidad.
+- **Verificación:** `.\mvnw.cmd clean test` → **57 en verde** (55 anteriores + 2 de `EntityMappingTests`).
+- **Documentación:** [diario 11, §11.3](11-fundamentos-jpa.md) y [temario 11](temario/11-introduccion-jpa.md).

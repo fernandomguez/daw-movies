@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual:** fases 1–10 completadas (último commit de la fase 10: `feat(fase-10): add domain entities`) y **fase 15A adelantada**. El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`), levanta Tomcat en el 8080 y tiene **55 tests en verde**. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`; los datos de prueba (6 directores, 10 películas, 14 actores y 24 participaciones) se cargan aparte con `db/testdata/seed.sql`. El dominio está completo y **sin JPA todavía**: seis ***value objects*** (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography`) y las tres **entidades** (`Director`, `Actor` y `Movie`), escritos con TDD. Además, la **fase 15A (API First) está adelantada**: el contrato OpenAPI v1 se sirve en `/openapi.yaml` y **Swagger UI** lo muestra en `http://localhost:8080/swagger-ui.html`. Siguiente: fase 11, paso 11.1 (JPA y Hibernate), cuando el alumno lo pida.
+> **Estado actual:** fases 1–11 completadas y **fase 15A adelantada**. El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`), levanta Tomcat en el 8080 y tiene **60 tests en verde**. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`; los datos de prueba (6 directores, 10 películas, 14 actores y 24 participaciones) se cargan aparte con `db/testdata/seed.sql`. El dominio **ya está mapeado con JPA (fase 11)**: las tres entidades (`Director`, `Actor` y `Movie`) llevan `@Entity`, `@Table`, `@Id`, relaciones unidireccionales (`@ManyToOne`, `@ManyToMany + @JoinTable`) y `FetchType.LAZY` (D-49); los seis ***value objects*** (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography`) se convierten con `AttributeConverter` y `@Embeddable` (D-48); Hibernate **comprueba** el mapeo contra el esquema al arrancar (`ddl-auto: validate`, D-34). Las entidades no se usan todavía en repositorios: eso llega en la **fase 12**. Además, la **fase 15A (API First) está adelantada**: el contrato OpenAPI v1 se sirve en `/openapi.yaml` y **Swagger UI** lo muestra en `http://localhost:8080/swagger-ui.html`.
 
 ---
 
@@ -82,8 +82,8 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | | 7. Conexión entre Java y MariaDB | ✅ |
 | | 8. Flyway: migraciones del esquema | ✅ Completada (commit `f2ffe69`) |
 | | 9. Datos de prueba y comprobación de relaciones | ✅ Completada (commit `9973cf8`) |
-| C. Java y persistencia | 10. Modelo de dominio | ⏳ |
-| | 11. Fundamentos de JPA y entidades | ⏳ |
+| C. Java y persistencia | 10. Modelo de dominio | ✅ Completada (commit `aa0cef7`) |
+| | 11. Fundamentos de JPA y entidades | ✅ Completada (etiqueta `fase-11`) |
 | | 12. Repositorios y adaptadores de persistencia | ⏳ |
 | | ~~13. Mapeos entre persistencia y dominio~~ | Eliminada (D-29) |
 | | 14. Consultas de información relacionada y problemas habituales | ⏳ |
@@ -167,10 +167,11 @@ Resultado esperado de `test`:
 [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.PersonNameTest
 [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.ReleaseYearTest
 [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.TitleTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.EntityMappingTests
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.FlywayMigrationTests
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
 [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.OpenApiContractTests
-[INFO] Tests run: 55, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 60, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
@@ -326,6 +327,10 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 10.2 | Diseño de los seis *value objects* a partir del esquema, no de la imaginación (D-46) | [10](docs/guia-estudio/10-modelo-de-dominio.md) |
 | 10.3 | Los seis `record` con TDD: 28 tests nuevos, rojo de compilación y verde con `Texts` (35 en total) | [10](docs/guia-estudio/10-modelo-de-dominio.md) |
 | 10.4 | `Director`, `Actor` y `Movie`: entidades con getters, `fullName()`, constructor protegido para JPA y relaciones unidireccionales; 20 tests nuevos (55 en total) | [10](docs/guia-estudio/10-modelo-de-dominio.md) |
+| 11.3 | `Director` y `Actor` anotadas (`@Entity`, `@Table`, `@Id`): cinco converters con `autoApply` y `PersonName` como `@Embeddable` (D-48), comprobado con una prueba real sobre el seed; +2 tests (57 en total) | [11](docs/guia-estudio/11-fundamentos-jpa.md) |
+| 11.4 | `Movie` anotada; `@ManyToOne` + `@JoinColumn` en `director`; primer error real del `validate` (`duration` ≠ `duration_minutes`, con `@Column`); +1 test (58) | [11](docs/guia-estudio/11-fundamentos-jpa.md) |
+| 11.5 | Reparto con `@ManyToMany` + `@JoinTable(name = "movie_actor")` sobre la tabla de V4; rojo de aserción (`expected: 2 but was: 0`); +1 test (59) | [11](docs/guia-estudio/11-fundamentos-jpa.md) |
+| 11.6 | `FetchType.LAZY` en `director` (D-49): el proxy se comprobó con un test de comportamiento; +1 test (60) | [11](docs/guia-estudio/11-fundamentos-jpa.md) |
 
 ---
 
@@ -352,6 +357,8 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 17 | 9 | `NativeCommandError` y `CategoryInfo : NotSpecified` al provocar errores SQL | PowerShell interpreta como error propio la salida de error de `mariadb` | Es ruido: el mensaje real es la línea `ERROR 1452` / `4025` / `1062` |
 | 18 | 9 | `ERROR 1062 ... Duplicate entry '1' for key 'PRIMARY'` al cargar `seed.sql` | El script solo inserta y los datos ya existen | Vaciar las tablas en orden inverso y reiniciar los `AUTO_INCREMENT` |
 | 19 | 9 | `ERROR 1452 ... foreign key constraint fails` al insertar una película con `director_id` inexistente | La FK no encuentra el director | Es el comportamiento correcto (provocado a propósito en el paso 9.3): la base protege la integridad |
+| 20 | 11 | `Schema validation: missing column [duration] in table [movie]` al arrancar con la entidad `Movie` anotada | El campo `duration` no deduce la columna `duration_minutes`: la estrategia *camelCase → snake_case* de Spring Boot no adivina la palabra que falta | Declarar la columna con `@Column(name = "duration_minutes")` (paso 11.4). Es el primer caso en el que `ddl-auto: validate` muerde |
+| 21 | 11 | `Unknown entity type '...Actor'` / `Could not resolve root entity 'Director'` / `'Movie'` | Errores de los tests en rojo a propósito: las clases aún no llevaban `@Entity` al empezar cada paso | Mapear la entidad; es el ciclo TDD del 11.3–11.6, no un error a corregir "una vez" |
 
 ---
 
@@ -462,6 +469,12 @@ Resumen. Cada decisión, con sus alternativas y su motivo, está en [decisiones-
 | D-41 | Nombre `pk_...` en la clave primaria: MariaDB lo ignora (aviso 1280), se conserva en el SQL | ✅ |
 | D-42 | Datos de prueba en `db/testdata/seed.sql`, fuera de Flyway | ✅ |
 | D-43 | Sofia Coppola (6.º director) sin películas para practicar `LEFT JOIN` | ✅ |
+| D-44 | Modelo de dominio rico moderado: constructor que valida, sin setters | ✅ |
+| D-45 | Monolito clásico en capas ahora; modularización planificada (fase 25) | ✅ |
+| D-46 | *Value objects* en el dominio (`record` con constructor compacto) | ✅ |
+| D-47 | API First: contrato `openapi.yaml` versionado + Swagger UI (springdoc 3.2.0) | ✅ (falta 15A.3) |
+| D-48 | *Value objects* en JPA: converters de una columna + `@Embeddable` para `PersonName` | ✅ |
+| D-49 | Todas las relaciones JPA son `LAZY` | ✅ |
 
 ---
 
@@ -509,7 +522,7 @@ daw-movies/
 ├── mvnw, mvnw.cmd, .mvn/  ← Maven Wrapper (Maven 3.10.0)
 ├── src/
 │   ├── main/java/com/daw/movies/MoviesApplication.java   ← clase de arranque
-│   ├── main/java/com/daw/movies/domain/model/            ← dominio en Java puro: seis value objects (10.3) y las tres entidades (10.4)
+│   ├── main/java/com/daw/movies/domain/model/            ← dominio mapeado con JPA (fase 11): seis value objects (10.3), tres entidades (10.4), cinco converters y @Embeddable (11.3)
 │   ├── main/resources/application.yaml                    ← configuración (sin secretos: los lee de .env)
 │   ├── main/resources/static/openapi.yaml                 ← contrato OpenAPI v1, servido en /openapi.yaml (15A)
 │   ├── main/resources/db/migration/                       ← migraciones Flyway (V1–V4: las cuatro tablas)
@@ -518,6 +531,7 @@ daw-movies/
 │   ├── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB y ddl-auto
 │   ├── test/java/com/daw/movies/FlywayMigrationTests.java   ← Flyway crea flyway_schema_history
 │   ├── test/java/com/daw/movies/OpenApiContractTests.java   ← el contrato se sirve y es YAML válido
+│   ├── test/java/com/daw/movies/EntityMappingTests.java     ← las entidades cargan filas reales (5 tests, fase 11)
 │   └── test/java/com/daw/movies/domain/model/               ← 48 tests del dominio: 28 de los value objects y 20 de las entidades (sin Spring ni base de datos)
 └── docs/
     └── guia-estudio/      ← plan, fases, temario, decisiones y glosario

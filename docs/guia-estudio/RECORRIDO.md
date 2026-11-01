@@ -52,6 +52,7 @@ Así puedes tener el proyecto actual abierto en un editor y una parada antigua e
 | 12 | `fase-10` | `Director`, `Actor` y `Movie` con TDD (55 tests en total) | Solo para los tests de integración |
 | 13 | `fase-15A` | Contrato `openapi.yaml`, springdoc y Swagger UI | Sí, para arrancar la app y para los tests |
 | 14 | `main` | Índice general, este recorrido y las notas de la reescritura | Igual que la 13 |
+| 15 | `fase-11` | Entidades JPA: converters, `@Embeddable`, relaciones y `FetchType` (60 tests) | **Sí**, para tests y arranque |
 
 > **Interludio en la parada 13:** el 15A se adelantó el 2026-10-28. En el plan de estudio aparece entre las fases 15 y 16; en la historia está aquí porque se hizo antes. Este commit **no se moverá** cuando lleguemos a la fase 15: lo que faltará es el paso 15A.3, que se añadirá más adelante con su propio commit.
 
@@ -73,6 +74,7 @@ Así puedes tener el proyecto actual abierto en un editor y una parada antigua e
 | 12 | `domain/model/Movie.java` (relaciones y constructor `protected`) |
 | 13 | `static/openapi.yaml`, `OpenApiContractTests` |
 | 14 | `INDICE.md` y este archivo |
+| 15 | `domain/model/` completo con JPA (converters, `PersonName` `@Embeddable`, `Movie` con relaciones) y `EntityMappingTests` |
 
 ## Qué necesita cada parada para funcionar
 
