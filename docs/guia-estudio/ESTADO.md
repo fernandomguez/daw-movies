@@ -416,6 +416,20 @@ A petición del alumno: poder empezar en el primer commit e ir viajando fase a f
 
 **Siguiente:** fase 12, paso 12.1 (DAO frente a Repositorio), con su diario nuevo.
 
+### 2026-11-01 (séptima parte) — repaso general y sesión de dudas (sin código)
+
+- **Repaso pedido** de la fase 11 (y de todo lo anterior) hecho en la conversación: qué se hizo fase a fase, cómo funcionan JPA/Hibernate/Spring, entidades, anotaciones y qué se hace delante (anotaciones, tests) frente a detrás (SQL generado, proxies, hidratación). No se añadieron archivos: el contenido permanente ya está en [temario/11](temario/11-introduccion-jpa.md) y en los temarios de fases previas.
+- **Dudas resueltas en la conversación** (todas apoyadas en lo ya documentado, sin tocar código):
+  1. **Volumen de Docker (fase 4):** los datos viven en el volumen con nombre `movies_mariadb-data`, gestionado por Docker en el disco del host, fuera del contenedor; sobrevive a `docker compose down`, se pierde solo con `down -v`. Coherente con [compose.yaml](../../compose.yaml).
+  2. **Fase 5:** recordatorio de las tres capas y el DIP (el dominio no depende de nadie; su puerto, `MovieRepository`, lo implementa la persistencia). Documento: [temario/05](temario/05-arquitectura-tres-capas-dip.md).
+  3. **`DataSource` y HikariCP** (fase 7): interfaz que entrega conexiones + pool reutilizable. **`ddl-auto` (D-34):** por qué `validate` (Hibernate comprueba, no crea; el dueño del esquema es Flyway) y cómo fue de útil en el 11.4 (error real con `duration_minutes`).
+  4. **`record` y su `value` (fase 10):** el componente se define en la declaración (`record Title(String value)`), genera campo `final` + accesor `value()` + `equals`/`hashCode` por valor; el constructor compacto valida en toda creación.
+  5. **`LazyInitializationException` y `equals`:** el precio del `LAZY` (11.6/D-49) y por qué las entidades todavía no implementan igualdad (el `id` llega tras insertar; los proxies de fase 14 lo dificultan).
+  6. **Consulta abierta del alumno:** conectarse a datos de IMDb. Conclusión anotada (no hay BD de IMDb conectable): cargar datasets oficiales en MariaDB sería bajo coste; una API externa encaja como adaptador del puerto (fase 12 y DIP); una BD ajena requeriría un segundo DataSource y revisar D-34. Nada anotado en el plan: es una idea no comprometida.
+- **Tests en verde al cerrar:** 60. **Siguiente sesión:** fase 12, paso 12.1.
+
+**Siguiente:** fase 12, paso 12.1 (DAO frente a Repositorio), con su diario nuevo.
+
 ---
 
 ## 5. Trabajo sin commitear
