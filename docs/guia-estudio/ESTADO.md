@@ -459,6 +459,7 @@ Cambios, todo documentación:
 6. **Verificación con tests (petición del alumno, antes de comitear):** Docker Desktop estaba cerrado → abierto con `Start-Process`, `docker info` → `29.8.0`; `docker compose up -d --wait` → `movies-mariadb-1` **healthy** en el 3307; `.\mvnw.cmd clean test` → **60 en verde**, `BUILD SUCCESS`, `Successfully validated 4 migrations` (2 conexión + 1 Flyway + 1 contexto + 3 de contrato + 5 de mapeo + 28 de *value objects* + 20 de entidades).
 7. **Commit y push** del aparte de documentación (sin etiqueta; no es una fase): ver §5.
 8. **Solo documentación:** no se tocó código Java; la única ejecución fue la suite de tests, en verde.
+9. **Ajuste posterior a petición del alumno:** el `README.md` pasa a no mencionar al profesor (el proyecto es personal y aprendible por cualquiera): la nota de contexto se dirige a cualquier lector («Decidido tras revisar el temario y la práctica guiada del curso») y el bloque F de la tabla de progreso pasa a «Temas del temario de DWS». Enlaza al resto de la documentación, donde el contexto del curso se mantiene. Commit suelto de documentación, sin etiqueta ni fase.
 
 **Siguiente:** fase 12, paso 12.1 (sin cambios).
 
