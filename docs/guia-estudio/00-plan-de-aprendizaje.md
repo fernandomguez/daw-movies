@@ -1,7 +1,7 @@
 # 00 — Plan de aprendizaje (hoja de ruta)
 
 > **Estado:** aprobado el 2026-10-19. Revisado el 2026-10-20: dominio con anotaciones JPA y `@Service` (D-19, D-29); la fase 13 se elimina.
-> **Revisado el 2026-10-28** tras leer el temario del profesor ([DWS](https://cesguiro.es/doku.php/clase/daw/dws/start)): se añade la fase 15A (API First), el paso 18.5 (`ProblemDetail`), el 14.6 (`open-in-view`) y el Bloque F (fases 25–29). El proyecto es un **monolito clásico en capas** y pasará a modular **solo si la aplicación lo requiere** (D-45). La fase 10 adopta *value objects* (D-46).
+> **Revisado el 2026-10-28** tras leer el temario del profesor ([DWS](https://cesguiro.es/doku.php/clase/daw/dws/start)): se añade la fase 15A (API First), el paso 18.5 (`ProblemDetail`), el 14.6 (`open-in-view`) y el Bloque F (fases 25–29). El proyecto es un **monolito clásico en capas** y pasará a modular en la **fase 25**: la modularización es requisito del curso, confirmado por el profesor el 2026-11-02 (D-45). La fase 10 adopta *value objects* (D-46).
 > **Regla de trabajo:** solo trabajamos en el siguiente paso pendiente. No se avanza sin confirmación explícita.
 
 Leyenda: 🔴 imprescindible · 🟡 recomendable · ⚪ opcional
@@ -243,13 +243,13 @@ Depende de: todas las anteriores que hayamos hecho.
 - **21. Contenerizar la aplicación** ⚪ (`Dockerfile` + servicio `app` en Compose). Depende de: 20.
 - **22. MapStruct** ⚪, solo si los mapeos manuales se vuelven repetitivos y lo justificamos. El profesor lo usa en el [tema 05](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jpa); nosotros no separamos entidad y modelo (D-29), así que hoy no hace falta. Depende de: 15.
 - **23. Ampliar la relación película–actor con datos propios** ⚪ (por ejemplo, el nombre del personaje). Convierte la tabla intermedia en una entidad con identidad. Depende de: 14.
-- **24. Seguridad con Spring Security y JWT** 🟡. Login, token JWT que el cliente envía en cada petición y rutas protegidas (por ejemplo, solo usuarios autenticados pueden crear películas). Necesita una tabla de usuarios (migración Flyway) y contraseñas cifradas. **El profesor lo imparte en la 1ª evaluación** ([tema 06](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jwt) y [tema 07](https://cesguiro.es/doku.php/clase/daw/dws/1eval/spring_security)); si su práctica lo exige, pasa a 🔴. Depende de: 18.
+- **24. Seguridad con Spring Security y JWT** 🔴. Login, token JWT que el cliente envía en cada petición y rutas protegidas (por ejemplo, solo usuarios autenticados pueden crear películas). Necesita una tabla de usuarios (migración Flyway) y contraseñas cifradas. **El profesor lo imparte en la 1ª evaluación** ([tema 06](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jwt) y [tema 07](https://cesguiro.es/doku.php/clase/daw/dws/1eval/spring_security)) y **confirma que entra en este proyecto** (2026-11-02): los hitos 08–09 de su práctica son obligatorios, no opcionales. Depende de: 18.
 
 ## Bloque F — Temas del temario del profesor que faltaban
 
-Añadido el 2026-10-28 tras revisar [DWS](https://cesguiro.es/doku.php/clase/daw/dws/start) y [Programación](https://cesguiro.es/doku.php/clase/daw/prog/start). La fase 25 llega a la arquitectura de referencia de su [tema 04](https://cesguiro.es/doku.php/clase/daw/dws/1eval/modulith); las demás cubren temas que no estaban en el plan.
+Añadido el 2026-10-28 tras revisar [DWS](https://cesguiro.es/doku.php/clase/daw/dws/start) y [Programación](https://cesguiro.es/doku.php/clase/daw/prog/start). La fase 25 llega a la arquitectura de referencia de su [tema 04](https://cesguiro.es/doku.php/clase/daw/dws/1eval/modulith); las demás cubren temas que no estaban en el plan. **El 2026-11-02 el profesor confirmó** que la modularidad es requisito del curso (fase 25 🔴) y que JWT/Spring Security entran en el proyecto (fase 24 🔴, hitos 08–09 de su práctica).
 
-### Fase 25 🟡 Monolito modular: paquetes por módulo, ArchUnit y Spring Modulith
+### Fase 25 🔴 Monolito modular: paquetes por módulo, ArchUnit y Spring Modulith
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 25.1 De capas a módulos | Paquete por módulo con `api` e `internal`; raíz de composición `app`; decidir uno o dos módulos | Reorganización de paquetes |
@@ -295,9 +295,9 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 | DWS 01 Arquitecturas | 5, 25 | 🟡 capas hechas; modular en 25 |
 | DWS 02 API First | 15A | 🟡 contrato y Swagger UI hechos (D-47); falta implementarlo (fase 16) y 15A.3 |
 | DWS 03 Validación e invariancias | 10.2–10.3, 18.2, 18.5 | ✅ *value objects* adoptados (D-46) |
-| DWS 04 Monolito modular y Modulith | 25 | ⏳ añadida |
+| DWS 04 Monolito modular y Modulith | 25 | 🔴 requisito confirmado por el profesor (2026-11-02) |
 | DWS 05 Persistencia JPA | 11–14, 19 | 🟡 entidad = dominio (D-29), sin MapStruct |
-| DWS 06 JWT y 07 Spring Security | 24 | ⏳ recomendable |
+| DWS 06 JWT y 07 Spring Security | 24 | 🔴 imprescindible: entra en el proyecto (confirmado 2026-11-02) |
 | DWS 08 Eventos y mensajería | 26 | ⏳ añadida |
 | DWS 09 Logs e instrumentación | 27 | ⏳ añadida |
 | DWS 10 Serverless | 29 | ⚪ no encaja en esta API |
@@ -306,6 +306,6 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 | Prog 09 APIs REST y HTTP | 16 | ⏳ |
 | Prog 10 Spring Boot | 6, 7 | ✅ |
 | Prog 11 Hilos en Tomcat | 28 | ⏳ |
-| Prog 12 Login con tokens | 24 | ⏳ |
+| Prog 12 Login con tokens | 24 | 🔴 |
 
 **Nota sobre *value objects*:** el profesor los pide y se adoptan en la fase 10 (D-46): `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` son `record` con constructor compacto. El coste llega en la fase 11 (`AttributeConverter` y `@Embeddable`).

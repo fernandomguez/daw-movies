@@ -2,7 +2,7 @@
 
 > **Para qué sirve este archivo:** es el parte de situación. Se lee **al empezar cualquier sesión** (humano o asistente de IA) y se **actualiza al terminar cada paso**, antes de cerrar. Así se puede empezar de cero, sin memoria de la conversación anterior, sin inventar nada.
 >
-> Última actualización: **2026-11-01**.
+> Última actualización: **2026-11-02**.
 
 ---
 
@@ -432,11 +432,59 @@ A petición del alumno: poder empezar en el primer commit e ir viajando fase a f
 
 ---
 
+### 2026-11-02 — documento de comparación con la práctica P1 del profesor
+
+1. Recuperadas del historial las conclusiones de la comparación contra el temario del 2026-10-28; la página de la **práctica** ([P1](https://cesguiro.es/doku.php/clase/daw/dws/practicas/p1), publicada el 2026-10-31) no estaba cubierta: la comparación anterior se hizo contra el temario (la página `practicas` aún no existía).
+2. Creado un `comparacion-practica-p1.md` (descartado más tarde el mismo día): mapa hitos ↔ fases con el estado real (etiquetas, tests, commits), las seis divergencias deliberadas razonadas (D-29, D-34, D-42/43, paginación, recorrido JDBC→JPA) y las tres preguntas pendientes para el profesor.
+3. Añadido a [INDICE.md](INDICE.md) (documentos transversales).
+4. **Solo documentación**: no se tocó código ni tests; siguen los 60 en verde de la última ejecución (no se han vuelto a ejecutar).
+
+**Siguiente:** fase 12, paso 12.1 (sin cambios por esta sesión).
+
+### 2026-11-02 (segunda parte) — el profesor responde y el repo se deja a punto para su revisión
+
+Se comparte el repositorio con el profesor para que dé el visto bueno. Con ello se resuelven las tres preguntas:
+
+1. **Modularidad:** es **requisito del curso** — se empieza como monolito normal y se pasa a modular (confirma D-45).
+2. **Dominio:** el dominio propio vale — lo que se cubren son **los mismos hitos**; la API de películas sirve.
+3. **JWT/Spring Security:** **entran en este proyecto** (hitos 08–09 de su práctica).
+
+Cambios, todo documentación:
+
+1. **Plan:** fase 24 🟡→🔴 y fase 25 🟡→🔴; encabezado corregido (ya no dice «modular solo si la aplicación lo requiere»); tabla de cobertura (DWS 04, DWS 06/07, Prog 12) e intro del Bloque F anotan la confirmación con fecha.
+2. **D-45 corregida:** la modularización deja de ser condicional («solo si la aplicación lo requiere»); es requisito confirmado y la fase 25 fija el momento.
+3. **README de la raíz:** nota de contexto para la revisión del profesor (itinerario de la práctica con dominio propio, 11 fases etiquetadas, 60 tests, OpenAPI + Swagger), fase 24 pasa a 🔴 y sale de la fila «Opcionales» (que queda con 21–23 ⚪), fila 25 anotada como requisito.
+4. **[comparacion-practica-p1.md]** creado y **descartado el mismo día** por petición del alumno: no llegó a comitearse, así que no queda huella en git; el contenido útil (estado, divergencias, confirmaciones) vive en el README, el plan, D-45 y este archivo.
+5. **[INDICE.md](INDICE.md):** fila 24 → 🔴; fila 25 igual; entrada transversal del documento descartado retirada.
+6. **Verificación con tests (petición del alumno, antes de comitear):** Docker Desktop estaba cerrado → abierto con `Start-Process`, `docker info` → `29.8.0`; `docker compose up -d --wait` → `movies-mariadb-1` **healthy** en el 3307; `.\mvnw.cmd clean test` → **60 en verde**, `BUILD SUCCESS`, `Successfully validated 4 migrations` (2 conexión + 1 Flyway + 1 contexto + 3 de contrato + 5 de mapeo + 28 de *value objects* + 20 de entidades).
+7. **Commit y push** del aparte de documentación (sin etiqueta; no es una fase): ver §5.
+8. **Solo documentación:** no se tocó código Java; la única ejecución fue la suite de tests, en verde.
+
+**Siguiente:** fase 12, paso 12.1 (sin cambios).
+
+---
+
 ## 5. Trabajo sin commitear
 
 ```
 nada: el árbol está limpio.
 ```
+
+El **2026-11-02 se comiteó y subió** el aparte de documentación de las confirmaciones del profesor:
+
+```
+git add -A
+git commit -m "docs: record the professor's confirmations and prepare the repo for review"
+git push
+```
+
+| Archivo | Cambio |
+|---|---|
+| `README.md` | nota para la revisión del profesor; 24/25 → 🔴 (dependencias y progreso) |
+| `00-plan-de-aprendizaje.md` | 24 y 25 → 🔴; encabezado y cobertura del temario |
+| `decisiones-tecnicas.md` | D-45 corregida (confirmación 2026-11-02) |
+| `INDICE.md` | fila 24 → 🔴; fecha de actualización |
+| `ESTADO.md` | esta bitácora y este §5 |
 
 **El 2026-11-01 se cerró la fase 11** con el commit único `f3b9b13` (`feat(fase-11): map the domain with JPA`, 18 archivos: 5 converters y `EntityMappingTests` nuevos, `Director`/`Actor`/`Movie`/`PersonName` anotados y toda la documentación) y la etiqueta anotada `fase-11`, ambas publicadas. Este pequeño aparte del commit no recogía su propio hash (imposible de conocer antes de comitear); se apunta con un commit docs cuyo contenido describe el anterior.
 

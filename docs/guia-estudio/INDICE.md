@@ -4,7 +4,7 @@
 >
 > **Cuándo se usa:** al empezar a estudiar (para elegir qué leer) y al cerrar una fase (para añadir el diario que falta).
 >
-> **Última actualización:** 2026-11-01 (fase 11 cerrada).
+> **Última actualización:** 2026-11-02 (fase 11 cerrada; fases 24 y 25 pasan a 🔴 por confirmación del profesor).
 
 ## Cómo leer este índice
 
@@ -313,7 +313,7 @@ El plan no las divide en pasos. Se documentarán, si se hacen, con un diario pro
 | 21 | Contenerizar la aplicación (`Dockerfile` + Compose) | ⚪ opcional | 🔒 |
 | 22 | MapStruct | ⚪ opcional | 🔒 |
 | 23 | Ampliar la relación película–actor con datos propios | ⚪ opcional | 🔒 |
-| 24 | Seguridad con Spring Security y JWT | 🟡 recomendable | 🔒 |
+| 24 | Seguridad con Spring Security y JWT | 🔴 imprescindible | 🔒 |
 | 26 | Eventos de aplicación y mensajería | ⚪ opcional | 🔒 |
 | 27 | Logs e instrumentación | ⚪ opcional | 🔒 |
 | 28 | Concurrencia: hilos de Tomcat y virtual threads | ⚪ opcional | 🔒 |

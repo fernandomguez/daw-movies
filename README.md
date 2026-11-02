@@ -4,6 +4,8 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
+**Nota para la revisión del profesor (2026-11-02):** este proyecto sigue el itinerario temático de la práctica guiada de DWS ([hito de partida → hitos 04–09](https://cesguiro.es/doku.php/clase/daw/dws/practicas/p1)) con un dominio propio —una API de películas— porque lo que se cubren son **los mismos hitos**, no la tienda. Ya confirmado con el profesor: la **modularización es requisito** del curso (monolito clásico ahora, modular en la fase 25 — D-45) y **JWT + Spring Security entran en el proyecto** (fase 24, hitos 08–09). Lo que el repositorio muestra ahora: 11 fases cerradas con etiqueta, 60 tests en verde, esquema con Flyway y contrato OpenAPI + Swagger UI (fase 15A).
+
 > **Estado actual:** fases 1–11 completadas y **fase 15A adelantada**. El proyecto Spring Boot 4.1.1 arranca **conectado a MariaDB** (credenciales leídas de `.env`), levanta Tomcat en el 8080 y tiene **60 tests en verde**. Flyway crea **las cuatro tablas** (`director`, `actor`, `movie`, `movie_actor`) desde `V1`–`V4`; los datos de prueba (6 directores, 10 películas, 14 actores y 24 participaciones) se cargan aparte con `db/testdata/seed.sql`. El dominio **ya está mapeado con JPA (fase 11)**: las tres entidades (`Director`, `Actor` y `Movie`) llevan `@Entity`, `@Table`, `@Id`, relaciones unidireccionales (`@ManyToOne`, `@ManyToMany + @JoinTable`) y `FetchType.LAZY` (D-49); los seis ***value objects*** (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography`) se convierten con `AttributeConverter` y `@Embeddable` (D-48); Hibernate **comprueba** el mapeo contra el esquema al arrancar (`ddl-auto: validate`, D-34). Las entidades no se usan todavía en repositorios: eso llega en la **fase 12**. Además, la **fase 15A (API First) está adelantada**: el contrato OpenAPI v1 se sirve en `/openapi.yaml` y **Swagger UI** lo muestra en `http://localhost:8080/swagger-ui.html`.
 
 ---
@@ -59,7 +61,7 @@ Versiones elegidas y verificadas en fuentes oficiales en la fase 1 ([detalle](do
 | 16 | `spring-boot-starter-webmvc` (+ `-test`) | Controladores REST, Tomcat embebido, JSON | 🟡 añadido en 15A (lo necesita springdoc); faltan los controladores |
 | 18 | `spring-boot-starter-validation` | Bean Validation (`@NotBlank`, `@Valid`) | ⏳ |
 | 19 | `spring-boot-testcontainers`, `testcontainers-junit-jupiter`, `testcontainers-mariadb` | Tests de integración con un MariaDB real y desechable | ⏳ |
-| 24 | `spring-boot-starter-security` + librería JWT | Seguridad | 🟡 |
+| 24 | `spring-boot-starter-security` + librería JWT | Seguridad | 🔴 |
 | 25 | Spring Modulith (`spring-modulith-starter-*`) y `archunit-junit5` | Verificación de módulos y de dependencias (versiones por comprobar en la fase 25) | ⏳ |
 | 27 | `spring-boot-starter-actuator` | Métricas y salud | ⚪ (revisa D-27) |
 
@@ -94,9 +96,10 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | | 18. Validaciones y manejo de excepciones | ⏳ |
 | E. Calidad y cierre | 19. Pruebas de integración y revisión de cobertura | ⏳ |
 | | 20. Revisión de arquitectura y documentación final | ⏳ |
-| F. Temas del profesor | 25. Monolito modular: ArchUnit y Spring Modulith | ⏳ |
+| F. Temas del profesor | 25. Monolito modular: ArchUnit y Spring Modulith · **requisito confirmado** | ⏳ 🔴 |
 | | 26. Eventos · 27. Logs e instrumentación · 28. Concurrencia · 29. Serverless | ⚪ |
-| Opcionales | 21. Contenerizar la aplicación · 22. MapStruct · 23. Personaje en `movie_actor` · 24. Spring Security + JWT | ⚪/🟡 |
+| | 24. Spring Security y JWT · **requisito confirmado** | ⏳ 🔴 |
+| Opcionales | 21. Contenerizar la aplicación · 22. MapStruct · 23. Personaje en `movie_actor` | ⚪ |
 
 ---
 
