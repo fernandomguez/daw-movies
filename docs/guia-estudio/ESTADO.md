@@ -475,8 +475,11 @@ El **2026-11-02 se comiteó y subió** el aparte de documentación de las confir
 ```
 git add -A
 git commit -m "docs: record the professor's confirmations and prepare the repo for review"
-git push
+# [main 509fa07] 5 files changed, 68 insertions(+), 17 deletions(-)
+git push          # ede9bec..509fa07  main -> main
 ```
+
+Este apunte del hash entra en un `docs` suelto posterior (el commit anterior no puede contener su propio hash). Verificación posterior: `git status` → árbol limpio y sincronizado con `origin/main`.
 
 | Archivo | Cambio |
 |---|---|
