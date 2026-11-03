@@ -370,3 +370,11 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Coste relacionado (ya asumido en D-29):** los *value objects* siguen validando al leer, porque Hibernate pasa por su constructor; lo que sigue sin ejecutarse al hidratar es el constructor de la entidad.
 - **Verificación:** `.\mvnw.cmd clean test` → **57 en verde** (55 anteriores + 2 de `EntityMappingTests`).
 - **Documentación:** [diario 11, §11.3](11-fundamentos-jpa.md) y [temario 11](temario/11-introduccion-jpa.md).
+
+## D-50 Orden de trabajo tras la fase 10: el que fija el profesor — ✅ Aceptada por el alumno (2026-11-03)
+- **Contexto:** el profesor da el OK hasta la fase 10 y pide, por este orden: (1) organizar el dominio (agregados), refinar los *value objects* y meterlos en carpetas distintas; (2) crear persistencia y controladores; (3) validaciones con Jakarta (`@NotNull`…); (4) usuarios y pedidos para poder modularizar; (5) migrar a monolito modular; (6) empezar con Spring Modulith.
+- **Decisión:** se reordena el plan. Nuevas fases **11B** (1) y **23A** (4); la **18** sube a 🔴 y va antes que la 17; la **20** se hace después de la 25; las prioridades 5 y 6 son los pasos 25.1–25.2 y 25.3–25.4. La **24** (JWT) no está en su lista pero sigue siendo requisito (D-45) y se hace tras la 23A, que le aporta la tabla de usuarios.
+- **Alquileres → pedidos de películas:** se simplifica, como recomienda el profesor: sin fechas de devolución ni estados de alquiler.
+- **Abierto:** el profesor pide «refinar» los *value objects* (no quitarlos) y por separado «validaciones con Jakarta». Si se solapan, se decide en el 11B.2 con el código delante, no ahora.
+- **Referencia:** `docs/arquitectura.md`, esquema de carpetas aportado por el alumno, que se revisa en el 11B.3.
+- **Alcance:** solo documentación; no se toca código.

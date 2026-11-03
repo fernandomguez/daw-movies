@@ -2,6 +2,7 @@
 
 > **Estado:** aprobado el 2026-10-19. Revisado el 2026-10-20: dominio con anotaciones JPA y `@Service` (D-19, D-29); la fase 13 se elimina.
 > **Revisado el 2026-10-28** tras leer el temario del profesor ([DWS](https://cesguiro.es/doku.php/clase/daw/dws/start)): se añade la fase 15A (API First), el paso 18.5 (`ProblemDetail`), el 14.6 (`open-in-view`) y el Bloque F (fases 25–29). El proyecto es un **monolito clásico en capas** y pasará a modular en la **fase 25**: la modularización es requisito del curso, confirmado por el profesor el 2026-11-02 (D-45). La fase 10 adopta *value objects* (D-46).
+> **Revisado el 2026-11-03:** el profesor da el visto bueno hasta la fase 10 y fija el orden de lo que sigue (ver «Orden de trabajo según el profesor», D-50). Se añaden las fases **11B** y **23A**; la 18 sube a 🔴; la 20 pasa después de la 25.
 > **Regla de trabajo:** solo trabajamos en el siguiente paso pendiente. No se avanza sin confirmación explícita.
 
 Leyenda: 🔴 imprescindible · 🟡 recomendable · ⚪ opcional
@@ -12,6 +13,27 @@ Leyenda: 🔴 imprescindible · 🟡 recomendable · ⚪ opcional
 2. **Docker y MariaDB (fase 4) van antes que el proyecto Java.** Así comprobamos que la base de datos funciona por sí sola, sin mezclar problemas de Java con problemas de base de datos.
 3. **El modelo de dominio (fase 10) va antes que las entidades JPA (fase 11).** Si escribimos primero las entidades JPA, es fácil acabar diseñando el dominio "a imagen" de las tablas. Al revés, el dominio se diseña pensando en el negocio y después la persistencia se adapta a él (esa es la idea de la inversión de dependencias).
 4. **Las pruebas no son solo una fase final.** `base-standards.md` exige TDD, así que las pruebas aparecen desde la fase 6 y en cada fase con lógica Java. La fase 19 se dedica a las pruebas de integración con base de datos real y a revisar la cobertura.
+
+## Orden de trabajo según el profesor (2026-11-03)
+
+El profesor ha dado el OK hasta la fase 10 y pide, **por este orden**, lo que viene después:
+
+| Prioridad | Lo que pide | Fases del plan | Estado |
+|---|---|---|---|
+| 1 | Organizar el dominio (agregados), refinar los *value objects* y meterlos en carpetas distintas | **11B** (nueva) | ⏳ siguiente |
+| 2 | Crear persistencia y controladores | 12, 14, 15, 15A.3, 16 | ⏳ |
+| 3 | Validaciones con Jakarta (`@NotNull`…) | 18 (sube a 🔴 y va antes que la 17) | ⏳ |
+| 4 | Usuarios y pedidos (de películas, no alquileres) | **23A** (nueva) | ⏳ |
+| 5 | Migrar a monolito modular | 25.1–25.2 | ⏳ |
+| 6 | Empezar con Spring Modulith | 25.3–25.4 | ⏳ |
+
+**Qué cambia en la práctica**
+- La fase 11 ya está hecha. Lo siguiente es la **11B**, no la 12.1.
+- La 12 y la 16 (persistencia y controladores) no cambian de contenido, pero se escriben **después** de la 11B, ya sobre las carpetas nuevas.
+- La Jakarta Validation se hace pronto (18.2, sobre las entidades y los parámetros de la ruta). La parte de `@Valid` en cuerpos de petición llegará con la 17 (escritura), que pasa a después.
+- La 20 (revisión final) se hace **después de la 25**, para revisar ya la estructura modular.
+
+**Fuera de su lista, y por tanto después** (siguen en el plan): 17, 19, 20, 21, 22, 23, 26–29 y la **24** (JWT). La 24 no aparece en la lista del profesor, pero sigue siendo requisito (D-45, confirmado el 2026-11-02) y necesita la tabla de usuarios de la 23A.
 
 ## Bloque A — Preparación
 
@@ -141,7 +163,20 @@ Punto de partida: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.m
 
 Depende de: 8, 10.
 
+### Fase 11B 🔴 Organizar el dominio: agregados, *value objects* y carpetas
+**Prioridad 1 del profesor (2026-11-03).** Se inserta entre la 11 y la 12 sin renumerar. No añade tecnología nueva: ordena lo que ya hay antes de escribir repositorios y controladores.
+
+| Paso | Concepto | Resultado esperado |
+|---|---|---|
+| 11B.1 Agregados | Qué es un agregado y su raíz; qué objetos viven juntos y cuáles se relacionan solo por identificador | Decisión documentada: a qué agregado pertenecen `Movie`, `Director` y `Actor`, y cómo encajarán `Usuario` y `Pedido` (23A) |
+| 11B.2 Refinar los *value objects* | Revisar los seis de D-46: reglas, mensajes y cuáles son de verdad un concepto propio | Lista de cambios aprobada; tests primero (TDD) |
+| 11B.3 Carpetas | Estructura de paquetes que refleje los agregados y las capas. Punto de partida: [docs/arquitectura.md](../arquitectura.md), el esquema aportado por el alumno | Estructura aprobada, **sin mover nada todavía** |
+| 11B.4 Mover | Reorganizar los paquetes de una capa cada vez, con los tests en verde | Código en las carpetas nuevas |
+
+Depende de: 11.
+
 ### Fase 12 🔴 Repositorios y adaptadores de persistencia
+**Prioridad 2 del profesor** (persistencia y controladores), junto con 14, 15, 15A.3 y 16.
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 12.1 DAO frente a Repositorio | Acceso a datos pensado desde la tabla vs. desde el dominio | Elección justificada (avance en [temario/05](temario/05-arquitectura-tres-capas-dip.md), sección 10) |
@@ -150,7 +185,7 @@ Depende de: 8, 10.
 | 12.4 Adaptador | Implementa el puerto delegando en Spring Data (sin mapper, D-29) | `MovieRepositoryAdapter` |
 | 12.5 Inyección de dependencias | `@Service`, `@Component` e inyección por constructor (D-19) | El servicio recibe la implementación sin conocerla |
 
-Depende de: 11.
+Depende de: 11B (antes, 11).
 
 ### ~~Fase 13 Mapeos entre persistencia y dominio~~ — Eliminada (D-29, 2026-10-20)
 Con las anotaciones JPA en las clases del dominio ya no existen `MovieEntity` ni `MovieEntityMapper`, así que no hay nada que mapear entre persistencia y dominio. Los conceptos de mapeo (campos copiados, calculados y omitidos) se estudian en la fase 15 con el mapper dominio → DTO. La comparación con la entidad separada se ve en el paso 11.2.
@@ -191,6 +226,8 @@ Se inserta entre la 15 y la 16 sin renumerar el resto, para no invalidar las ref
 Depende de: D-36 a D-39 (ya decididos en la fase 8) y, para 15A.3, de la fase 16. Decisión: D-47.
 
 ### Fase 16 🔴 Servicio y controladores REST de lectura
+**Prioridad 2 del profesor** (controladores), tras la persistencia de la 12.
+
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 16.1 Servicio (caso de uso) | Quién coordina dominio y repositorio | `MovieService` |
@@ -206,9 +243,11 @@ Depende de: 15.
 | 17.2 Recorrido inverso | DTO → dominio → entidad → fila | `POST /movies` |
 | 17.3 Transacciones | Atomicidad: todo o nada | `@Transactional` en el servicio |
 
-Depende de: 16.
+Depende de: 16. **Pasa a después de la 18** (orden del profesor, 2026-11-03).
 
-### Fase 18 🟡 Validaciones y manejo de excepciones
+### Fase 18 🔴 Validaciones y manejo de excepciones
+**Prioridad 3 del profesor** (validaciones con Jakarta). Sube de 🟡 a 🔴 y se hace antes que la 17. El 18.2 se empieza sobre las entidades y los parámetros de la ruta (no necesita la 17); el `@Valid` sobre cuerpos de petición llega con la 17.
+
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 18.1 Tipos de errores | Validación de entrada, regla de dominio, restricción de BD, error inesperado | Tabla comparativa con ejemplos del proyecto |
@@ -217,7 +256,7 @@ Depende de: 16.
 | 18.4 `@RestControllerAdvice` | Gestión centralizada | Respuestas de error coherentes |
 | 18.5 `ProblemDetail` (RFC 9457) | Formato de error estándar, el mismo en todas las operaciones ([tema 03](https://cesguiro.es/doku.php/clase/daw/dws/1eval/validacion)) | Errores con `type`, `title`, `status` y `errors` |
 
-Depende de: 16 (17 recomendable).
+Depende de: 16 (la 17 ya no es previa; ver la nota de arriba).
 
 ## Bloque E — Calidad y cierre
 
@@ -237,13 +276,25 @@ Depende de: 12 (y 16 para 19.3). Las pruebas unitarias se hacen desde la fase 6.
 | 20.2 Revisar la guía | Coherencia con el código real | Guía actualizada |
 | 20.3 README del proyecto | Cómo arrancarlo desde cero | Instrucciones verificadas |
 
-Depende de: todas las anteriores que hayamos hecho.
+Depende de: todas las anteriores que hayamos hecho. **Se hace después de la 25** (orden del profesor, 2026-11-03), para revisar ya la estructura modular.
 
 ### Fases opcionales y recomendables ⚪/🟡
 - **21. Contenerizar la aplicación** ⚪ (`Dockerfile` + servicio `app` en Compose). Depende de: 20.
 - **22. MapStruct** ⚪, solo si los mapeos manuales se vuelven repetitivos y lo justificamos. El profesor lo usa en el [tema 05](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jpa); nosotros no separamos entidad y modelo (D-29), así que hoy no hace falta. Depende de: 15.
 - **23. Ampliar la relación película–actor con datos propios** ⚪ (por ejemplo, el nombre del personaje). Convierte la tabla intermedia en una entidad con identidad. Depende de: 14.
 - **24. Seguridad con Spring Security y JWT** 🔴. Login, token JWT que el cliente envía en cada petición y rutas protegidas (por ejemplo, solo usuarios autenticados pueden crear películas). Necesita una tabla de usuarios (migración Flyway) y contraseñas cifradas. **El profesor lo imparte en la 1ª evaluación** ([tema 06](https://cesguiro.es/doku.php/clase/daw/dws/1eval/jwt) y [tema 07](https://cesguiro.es/doku.php/clase/daw/dws/1eval/spring_security)) y **confirma que entra en este proyecto** (2026-11-02): los hitos 08–09 de su práctica son obligatorios, no opcionales. Depende de: 18.
+
+### Fase 23A 🔴 Usuarios y pedidos de películas
+**Prioridad 4 del profesor (2026-11-03).** Se inserta entre la 23 y la 24 sin renumerar. Se había hablado de «alquileres»; el profesor recomienda simplificar a **pedidos de películas**, sin fechas de devolución ni estados de alquiler. Sirve para tener algo más que el catálogo y poder partir el proyecto en módulos (fase 25). Los pasos son una propuesta que se concreta en el 23A.1.
+
+| Paso | Concepto | Resultado esperado |
+|---|---|---|
+| 23A.1 Diseño | Qué es un pedido de películas, qué datos lleva y quién lo hace; `Usuario` y `Pedido` como agregados que se relacionan con el catálogo solo por identificador | Diseño documentado (sin código) |
+| 23A.2 Esquema | Migraciones Flyway nuevas para usuarios y pedidos; una migración aplicada nunca se edita | Tablas nuevas verificadas |
+| 23A.3 Dominio y persistencia | Entidades y repositorios, como en las fases 10–12 | Clases y tests (TDD) |
+| 23A.4 API | Servicios y controladores de usuarios y pedidos | Endpoints por decidir en el 23A.1 |
+
+Depende de: 11B, 16 y 18. La tabla de usuarios la reutilizará la fase 24 (JWT).
 
 ## Bloque F — Temas del temario del profesor que faltaban
 
@@ -257,7 +308,9 @@ Añadido el 2026-10-28 tras revisar [DWS](https://cesguiro.es/doku.php/clase/daw
 | 25.3 ArchUnit | Sin ciclos, solo por la API pública, dominio sin frameworks | Tests de arquitectura |
 | 25.4 Spring Modulith | `ApplicationModules.of(...).verify()` y documentación generada | Verificación automática |
 
-Depende de: 20. **Decisión pendiente en 25.1:** con D-29 las entidades se referencian entre sí. Con **un** módulo (`catalog` con películas, directores y actores) no hay conflicto; con **dos** (`movies` y `people`) las relaciones tendrían que pasar a identificadores, como indica su tema 05.
+**Prioridades 5 y 6 del profesor (2026-11-03):** 25.1–25.2 son «migrar a monolito modular» (5) y 25.3–25.4 son «empezar con Spring Modulith» (6).
+
+Depende de: 23A (ya no de la 20, que se hace después). **Decisión pendiente en 25.1:** con D-29 las entidades se referencian entre sí. Con **un** módulo (`catalog` con películas, directores y actores) no hay conflicto; con **dos** (`movies` y `people`) las relaciones tendrían que pasar a identificadores, como indica su tema 05.
 
 ### Fase 26 ⚪ Eventos de aplicación y mensajería
 Publicar un evento al crear una película y escucharlo con `@TransactionalEventListener`; después, la diferencia con un intermediario real (RabbitMQ/Kafka). Depende de: 17.
@@ -279,14 +332,18 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
                            │
                10 (necesita 3 y 5)
                            ↓
-                  11 → 12 → 14
-                              ↓
-                       15 → 15A → 16 → 17 → 18
-                              ↓
-                        19 → 20 → 25 (modular)
-                              │
-                   16 → 26 (eventos), 27 (logs), 28 (concurrencia)
+                 11 → 11B → 12 → 14
+                                  ↓
+                          15 → 15A → 16 → 18 (Jakarta) → 23A (usuarios y pedidos)
+                                  │                              ↓
+                                  │                       25 (modular + Modulith)
+                                  │                              ↓
+                                  │                       20 (revisión) · 24 (JWT)
+                                  ├→ 17 (escritura), 19 (pruebas)
+                                  └→ 26 (eventos), 27 (logs), 28 (concurrencia)
 ```
+
+Las cajas de arriba siguen el **orden del profesor** (2026-11-03); lo que cuelga de la 16 sin estar en su lista (17, 19, 26–28) se hace después.
 
 ## Cobertura del temario del profesor (2026-10-28)
 
@@ -294,7 +351,7 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 |---|---|---|
 | DWS 01 Arquitecturas | 5, 25 | 🟡 capas hechas; modular en 25 |
 | DWS 02 API First | 15A | 🟡 contrato y Swagger UI hechos (D-47); falta implementarlo (fase 16) y 15A.3 |
-| DWS 03 Validación e invariancias | 10.2–10.3, 18.2, 18.5 | ✅ *value objects* adoptados (D-46) |
+| DWS 03 Validación e invariancias | 10.2–10.3, 11B.2, 18.2, 18.5 | 🟡 *value objects* adoptados (D-46); se refinan en 11B.2 y se añade Jakarta en la 18 |
 | DWS 04 Monolito modular y Modulith | 25 | 🔴 requisito confirmado por el profesor (2026-11-02) |
 | DWS 05 Persistencia JPA | 11–14, 19 | 🟡 entidad = dominio (D-29), sin MapStruct |
 | DWS 06 JWT y 07 Spring Security | 24 | 🔴 imprescindible: entra en el proyecto (confirmado 2026-11-02) |
@@ -308,4 +365,4 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 | Prog 11 Hilos en Tomcat | 28 | ⏳ |
 | Prog 12 Login con tokens | 24 | 🔴 |
 
-**Nota sobre *value objects*:** el profesor los pide y se adoptan en la fase 10 (D-46): `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` son `record` con constructor compacto. El coste llega en la fase 11 (`AttributeConverter` y `@Embeddable`).
+**Nota sobre *value objects*:** el profesor los pide y se adoptan en la fase 10 (D-46): `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` son `record` con constructor compacto. El coste llega en la fase 11 (`AttributeConverter` y `@Embeddable`). La fase 11B los **refina** (no los quita): prioridad 1 del profesor, 2026-11-03.

@@ -1,0 +1,20 @@
+Controller
+   controladores (BookController)
+   dto
+      request (BookRequest)
+      response (BookResponse)
+domain
+    models (Book)
+    service
+        Interfaces servicio (BookService)
+        impl
+            Implementacions (BookServiceImpl)
+    repository
+        Interface repository (BookRepository)
+persistence
+    repository.impl
+        Implementación repository (BookRepositoryImpl)
+    dao
+        Interfaces DAOs (BookDao)
+        impl.jdbc
+            Implementaciones (BookDaoJdbc)

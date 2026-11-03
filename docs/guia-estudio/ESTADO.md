@@ -2,7 +2,7 @@
 
 > **Para qué sirve este archivo:** es el parte de situación. Se lee **al empezar cualquier sesión** (humano o asistente de IA) y se **actualiza al terminar cada paso**, antes de cerrar. Así se puede empezar de cero, sin memoria de la conversación anterior, sin inventar nada.
 >
-> Última actualización: **2026-11-02**.
+> Última actualización: **2026-11-03**.
 
 ---
 
@@ -11,15 +11,17 @@
 | Dato | Valor |
 |---|---|
 | Fase del plan | **11 — Fundamentos de JPA → CERRADA y publicada** (6 de 6 pasos) |
-| Paso en curso | **12.1** — DAO frente a Repositorio (se crea el diario 12 al empezar) |
+| Paso en curso | **11B.1** — Agregados (fase 11B nueva, orden del profesor, D-50). **No empezado**: espera permiso del alumno. El 12.1 queda después de la 11B |
 | Último paso terminado | 11.6 — `FetchType.LAZY` en `director` (D-49) |
 | Último commit | `f3b9b13` — `feat(fase-11): map the domain with JPA` + etiqueta anotada `fase-11` |
 | Etiqueta más reciente | **`fase-11`** (anotada y publicada) |
 | Tests | **60 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades + 5 de mapeo JPA) |
 | Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
-| Cambios sin commitear | ninguno (ver §5) |
+| Cambios sin commitear | ninguno: se comitearon el plan, `ESTADO.md`, D-50 y `docs/arquitectura.md`/`.txt` en un `docs:` suelto del 2026-11-03 (sin etiqueta ni push). El *stash* `copia-2026-11-03-antes-de-volver-a-2d58690` sigue guardado |
 
 ### La siguiente acción, exacta
+
+**Actualización (2026-11-03):** el profesor fijó el orden de lo que sigue (D-50) y el plan se reordenó. La siguiente acción es el **11B.1** (agregados, sin código), no el 12.1. Ver la entrada del 2026-11-03 de la bitácora y la tabla «Orden de trabajo según el profesor» del [plan](00-plan-de-aprendizaje.md). El párrafo siguiente describe el estado anterior.
 
 La **fase 11 está cerrada** (los 6 pasos hechos). Lo siguiente es el **12.1** (fase 12, Repositorios y adaptadores): la tabla pide crear el diario al empezar. El **commit único `feat(fase-11): ...` + etiqueta anotada `fase-11`** está pendiente de la confirmación del alumno (D-30).
 
@@ -462,6 +464,15 @@ Cambios, todo documentación:
 9. **Ajuste posterior a petición del alumno:** el `README.md` pasa a no mencionar al profesor (el proyecto es personal y aprendible por cualquiera): la nota de contexto se dirige a cualquier lector («Decidido tras revisar el temario y la práctica guiada del curso») y el bloque F de la tabla de progreso pasa a «Temas del temario de DWS». Enlaza al resto de la documentación, donde el contexto del curso se mantiene. Commit suelto de documentación, sin etiqueta ni fase.
 
 **Siguiente:** fase 12, paso 12.1 (sin cambios).
+
+### 2026-11-03 — vuelta atrás y reordenación del plan según el profesor
+
+1. **Vuelta atrás a petición del alumno.** El 3 de noviembre se había trabajado sin comitear (Jakarta en lugar de *value objects*, paquete `catalog`, controladores y una reestructuración según `docs/arquitectura.md`). El alumno pidió volver a `2d58690`. Se guardó todo en un *stash* (`git stash push -u`, llamado «copia-2026-11-03-antes-de-volver-a-2d58690») y se recuperaron solo `docs/arquitectura.md` y `docs/arquitectura.txt`. Comprobado: `.\mvnw.cmd clean test` → **60 en verde**, `BUILD SUCCESS`. Nada de eso llegó a commitearse ni a subirse.
+2. **El profesor da el OK hasta la fase 10** y fija el orden de lo siguiente: (1) organizar el dominio en agregados, refinar los *value objects* y meterlos en carpetas; (2) persistencia y controladores; (3) validaciones con Jakarta; (4) usuarios y pedidos de películas (no alquileres); (5) monolito modular; (6) Spring Modulith.
+3. **Plan reordenado** (solo documentación, **D-50**): nueva **fase 11B** (prioridad 1) y **23A** (prioridad 4); tabla «Orden de trabajo según el profesor»; la 18 sube a 🔴 y va antes de la 17; la 20 pasa después de la 25; la 24 (JWT) sigue siendo requisito y va tras la 23A. Mapa de dependencias y tabla de cobertura actualizados.
+4. **No se tocó código ni se ejecutó nada** salvo la suite de tests del punto 1. **Pendiente:** `INDICE.md` y el `README.md` de la raíz aún no incluyen las fases 11B y 23A.
+
+**Siguiente:** paso **11B.1** (agregados), cuando el alumno lo pida. Sustituye al 12.1 como siguiente acción.
 
 ---
 
