@@ -1,4 +1,4 @@
-package com.daw.movies.controller.controllers;
+package com.daw.movies.controller.exception;
 
 import java.util.stream.Collectors;
 

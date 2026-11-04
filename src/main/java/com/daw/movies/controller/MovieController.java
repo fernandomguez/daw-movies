@@ -1,4 +1,4 @@
-package com.daw.movies.controller.controllers;
+package com.daw.movies.controller;
 
 import java.util.List;
 
@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.daw.movies.controller.MovieMapper;
 import com.daw.movies.controller.dto.request.MovieRequest;
 import com.daw.movies.controller.dto.response.MovieResponse;
+import com.daw.movies.controller.mapper.MovieMapper;
 import com.daw.movies.domain.service.MovieService;
 
 import jakarta.validation.Valid;

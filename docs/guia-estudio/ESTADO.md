@@ -326,6 +326,20 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 3. Observado, **no tocado**: `docs/arquitectura.md` existe sin seguimiento y **vacío**; la rama local `main` está en la fase 10, mientras `origin/main` y las etiquetas `fase-11` y `fase-15A` contienen trabajo posterior (el commit `daf027e` de la 15A no está en el historial de `main`; por eso `openapi.yaml` y springdoc no existen en el árbol actual, aunque §1 los menciona).
 4. No se ejecutó ningún comando de Maven ni de Docker.
 
+### 2026-11-04 (segunda parte) — nuevo rumbo: paso 0 (que compile)
+
+**Contexto:** el profesor da el visto bueno al nuevo rumbo (D-46 revocada, arquitectura por capas con DAO JDBC). Plan aprobado: 0) compilar y tests en verde, 1) revisar el código, 2) actualizar el skill `creador-de-skills` (`presentation` → `controller`), 3) Swagger (springdoc), 4) monolito modular con un módulo `catalog`. Plan completo en `~/.claude/plans/vamos-a-cambiar-el-drifting-pond.md`.
+
+**Estado real del código (commit `398ab41`):** JDBC puro (`JdbcTemplate`), sin JPA ni springdoc; endpoints `/movies` (5). §1 de este archivo (JPA, 55 tests, OpenAPI) **está desfasado**; se corrige en el paso 1.
+
+**Paso 0:**
+1. `controller/MovieController`, `controller/mapper/MovieMapper` y `controller/exception/GlobalExceptionHandler` tenían el `package` de su ubicación anterior. Corregidos los tres `package` y el import del mapper.
+2. `.\mvnw.cmd -q clean test-compile` → `exit=0`.
+3. Docker Desktop estaba cerrado: `Start-Process` + espera; `docker compose up -d --wait` → `movies-mariadb-1` **healthy** en el 3307.
+4. `.\mvnw.cmd clean test` → **23 tests en verde** (`DatabaseConnectionTests` 1, `ActorTest` 6, `DirectorTest` 6, `MovieTest` 8, `FlywayMigrationTests` 1, `MoviesApplicationTests` 1), `BUILD SUCCESS`. No hay tests de controller, service ni DAO.
+
+**Siguiente:** paso 1 (revisar y entender el código), cuando el alumno lo pida.
+
 ## 5. Trabajo sin commitear
 
 ```

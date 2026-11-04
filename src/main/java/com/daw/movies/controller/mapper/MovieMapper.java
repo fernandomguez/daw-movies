@@ -1,4 +1,4 @@
-package com.daw.movies.controller;
+package com.daw.movies.controller.mapper;
 
 import java.util.List;
 
