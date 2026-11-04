@@ -9,44 +9,50 @@ import org.junit.jupiter.api.Test;
 
 class DirectorTest {
 
-	private static final PersonName NOLAN = new PersonName("Christopher", "Nolan");
-	private static final BirthDate NOLAN_BIRTH_DATE = new BirthDate(LocalDate.of(1970, 7, 30));
+	private static final LocalDate NOLAN_BIRTH_DATE = LocalDate.of(1970, 7, 30);
 
 	@Test
 	void keepsItsData() {
-		Biography biography = new Biography("Director británico-estadounidense");
+		Director director = new Director("Christopher", "Nolan", NOLAN_BIRTH_DATE,
+				"Director británico-estadounidense");
 
-		Director director = new Director(NOLAN, NOLAN_BIRTH_DATE, biography);
-
-		assertThat(director.getName()).isEqualTo(NOLAN);
+		assertThat(director.getFirstName()).isEqualTo("Christopher");
+		assertThat(director.getLastName()).isEqualTo("Nolan");
 		assertThat(director.getBirthDate()).isEqualTo(NOLAN_BIRTH_DATE);
-		assertThat(director.getBiography()).isEqualTo(biography);
+		assertThat(director.getBiography()).isEqualTo("Director británico-estadounidense");
 	}
 
 	@Test
-	void buildsTheFullNameFromThePersonName() {
-		Director director = new Director(NOLAN, NOLAN_BIRTH_DATE, null);
+	void buildsTheFullNameFromTheNames() {
+		Director director = new Director("Christopher", "Nolan", NOLAN_BIRTH_DATE, null);
 
 		assertThat(director.fullName()).isEqualTo("Christopher Nolan");
 	}
 
 	@Test
 	void acceptsNullBiography() {
-		Director director = new Director(NOLAN, NOLAN_BIRTH_DATE, null);
+		Director director = new Director("Christopher", "Nolan", NOLAN_BIRTH_DATE, null);
 
 		assertThat(director.getBiography()).isNull();
 	}
 
 	@Test
-	void rejectsNullName() {
-		assertThatThrownBy(() -> new Director(null, NOLAN_BIRTH_DATE, null))
+	void rejectsNullFirstName() {
+		assertThatThrownBy(() -> new Director(null, "Nolan", NOLAN_BIRTH_DATE, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessageContaining("nombre");
 	}
 
 	@Test
+	void rejectsNullLastName() {
+		assertThatThrownBy(() -> new Director("Christopher", null, NOLAN_BIRTH_DATE, null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("apellido");
+	}
+
+	@Test
 	void rejectsNullBirthDate() {
-		assertThatThrownBy(() -> new Director(NOLAN, null, null))
+		assertThatThrownBy(() -> new Director("Christopher", "Nolan", null, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessageContaining("fecha de nacimiento");
 	}

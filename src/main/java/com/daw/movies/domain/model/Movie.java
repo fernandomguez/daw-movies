@@ -15,34 +15,28 @@ import java.util.List;
  * Las dos relaciones son <strong>unidireccionales</strong>: la película conoce a
  * su director y a sus actores; ni el director ni el actor conocen sus películas.
  * Se evitan así referencias circulares al serializar y consultas que no hacen
- * falta (fase 14).
+ * falta.
  * <p>
  * Es una entidad: su identidad es el {@code id} que asigna la base de datos, por
- * eso no implementa todavía {@code equals}/{@code hashCode} (fase 11/14). La
- * fase 11 añadirá las anotaciones JPA (D-29).
+ * eso no implementa todavía {@code equals}/{@code hashCode}.
+ * <p>
+ * Usa tipos simples; las reglas de entrada (título no en blanco, año desde 1888,
+ * duración positiva) se comprueban en la capa de entrada, {@code MovieRequest}
+ * con Jakarta Validation. El constructor conserva solo las comprobaciones
+ * defensivas de lo que no puede faltar.
  */
 public class Movie {
 
 	private Long id;
-	private Title title;
-	private ReleaseYear releaseYear;
-	private DurationMinutes duration;
+	private String title;
+	private int releaseYear;
+	private int duration;
 	private Director director;
 	private List<Actor> actors = new ArrayList<>();
 
-	/** Solo para que JPA rellene los campos por reflexión (fase 11). */
-	protected Movie() {
-	}
-
-	public Movie(Title title, ReleaseYear releaseYear, DurationMinutes duration, Director director) {
+	public Movie(String title, int releaseYear, int duration, Director director) {
 		if (title == null) {
 			throw new IllegalArgumentException("El título es obligatorio");
-		}
-		if (releaseYear == null) {
-			throw new IllegalArgumentException("El año de estreno es obligatorio");
-		}
-		if (duration == null) {
-			throw new IllegalArgumentException("La duración es obligatoria");
 		}
 		if (director == null) {
 			throw new IllegalArgumentException("El director es obligatorio");
@@ -53,19 +47,25 @@ public class Movie {
 		this.director = director;
 	}
 
+	/** Reconstrucción desde la base de datos: con el id y el reparto ya cargado. */
+	public Movie(Long id, String title, int releaseYear, int duration, Director director) {
+		this(title, releaseYear, duration, director);
+		this.id = id;
+	}
+
 	public Long getId() {
 		return id;
 	}
 
-	public Title getTitle() {
+	public String getTitle() {
 		return title;
 	}
 
-	public ReleaseYear getReleaseYear() {
+	public int getReleaseYear() {
 		return releaseYear;
 	}
 
-	public DurationMinutes getDuration() {
+	public int getDuration() {
 		return duration;
 	}
 

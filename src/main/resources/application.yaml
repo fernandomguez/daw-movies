@@ -16,14 +16,3 @@ spring:
     url: jdbc:mariadb://localhost:${MARIADB_PORT:3307}/${MARIADB_DATABASE:movies}
     username: ${MARIADB_USER}
     password: ${MARIADB_PASSWORD}
-
-  # El esquema lo crea y lo cambia Flyway (fase 8). Hibernate solo comprueba que
-  # las tablas encajan con las entidades; si no encajan, la aplicación no arranca (D-34).
-  jpa:
-    hibernate:
-      ddl-auto: validate
-
-logging:
-  level:
-    # Hibernate escribe en INFO la URL de conexión con el usuario y la contraseña en claro (D-33).
-    org.hibernate.orm.connections.pooling: WARN

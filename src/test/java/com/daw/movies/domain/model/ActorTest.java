@@ -9,44 +9,49 @@ import org.junit.jupiter.api.Test;
 
 class ActorTest {
 
-	private static final PersonName DICAPRIO = new PersonName("Leonardo", "DiCaprio");
-	private static final BirthDate DICAPRIO_BIRTH_DATE = new BirthDate(LocalDate.of(1974, 11, 11));
+	private static final LocalDate DICAPRIO_BIRTH_DATE = LocalDate.of(1974, 11, 11);
 
 	@Test
 	void keepsItsData() {
-		Biography biography = new Biography("Actor estadounidense");
+		Actor actor = new Actor("Leonardo", "DiCaprio", DICAPRIO_BIRTH_DATE, "Actor estadounidense");
 
-		Actor actor = new Actor(DICAPRIO, DICAPRIO_BIRTH_DATE, biography);
-
-		assertThat(actor.getName()).isEqualTo(DICAPRIO);
+		assertThat(actor.getFirstName()).isEqualTo("Leonardo");
+		assertThat(actor.getLastName()).isEqualTo("DiCaprio");
 		assertThat(actor.getBirthDate()).isEqualTo(DICAPRIO_BIRTH_DATE);
-		assertThat(actor.getBiography()).isEqualTo(biography);
+		assertThat(actor.getBiography()).isEqualTo("Actor estadounidense");
 	}
 
 	@Test
-	void buildsTheFullNameFromThePersonName() {
-		Actor actor = new Actor(DICAPRIO, DICAPRIO_BIRTH_DATE, null);
+	void buildsTheFullNameFromTheNames() {
+		Actor actor = new Actor("Leonardo", "DiCaprio", DICAPRIO_BIRTH_DATE, null);
 
 		assertThat(actor.fullName()).isEqualTo("Leonardo DiCaprio");
 	}
 
 	@Test
 	void acceptsNullBiography() {
-		Actor actor = new Actor(DICAPRIO, DICAPRIO_BIRTH_DATE, null);
+		Actor actor = new Actor("Leonardo", "DiCaprio", DICAPRIO_BIRTH_DATE, null);
 
 		assertThat(actor.getBiography()).isNull();
 	}
 
 	@Test
-	void rejectsNullName() {
-		assertThatThrownBy(() -> new Actor(null, DICAPRIO_BIRTH_DATE, null))
+	void rejectsNullFirstName() {
+		assertThatThrownBy(() -> new Actor(null, "DiCaprio", DICAPRIO_BIRTH_DATE, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessageContaining("nombre");
 	}
 
 	@Test
+	void rejectsNullLastName() {
+		assertThatThrownBy(() -> new Actor("Leonardo", null, DICAPRIO_BIRTH_DATE, null))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("apellido");
+	}
+
+	@Test
 	void rejectsNullBirthDate() {
-		assertThatThrownBy(() -> new Actor(DICAPRIO, null, null))
+		assertThatThrownBy(() -> new Actor("Leonardo", "DiCaprio", null, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessageContaining("fecha de nacimiento");
 	}

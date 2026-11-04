@@ -10,22 +10,18 @@ import org.junit.jupiter.api.Test;
 class MovieTest {
 
 	private static final Director NOLAN = new Director(
-			new PersonName("Christopher", "Nolan"),
-			new BirthDate(LocalDate.of(1970, 7, 30)),
-			null);
+			"Christopher", "Nolan", LocalDate.of(1970, 7, 30), null);
 
 	private static final Actor DICAPRIO = new Actor(
-			new PersonName("Leonardo", "DiCaprio"),
-			new BirthDate(LocalDate.of(1974, 11, 11)),
-			null);
+			"Leonardo", "DiCaprio", LocalDate.of(1974, 11, 11), null);
 
 	@Test
 	void keepsItsData() {
 		Movie movie = inception();
 
-		assertThat(movie.getTitle().value()).isEqualTo("Inception");
-		assertThat(movie.getReleaseYear().value()).isEqualTo(2010);
-		assertThat(movie.getDuration().value()).isEqualTo(148);
+		assertThat(movie.getTitle()).isEqualTo("Inception");
+		assertThat(movie.getReleaseYear()).isEqualTo(2010);
+		assertThat(movie.getDuration()).isEqualTo(148);
 		assertThat(movie.getDirector().fullName()).isEqualTo("Christopher Nolan");
 	}
 
@@ -45,10 +41,7 @@ class MovieTest {
 
 	@Test
 	void keepsTheOrderOfTheCast() {
-		Actor caine = new Actor(
-				new PersonName("Michael", "Caine"),
-				new BirthDate(LocalDate.of(1933, 3, 14)),
-				null);
+		Actor caine = new Actor("Michael", "Caine", LocalDate.of(1933, 3, 14), null);
 		Movie movie = inception();
 
 		movie.addActor(DICAPRIO);
@@ -74,39 +67,20 @@ class MovieTest {
 
 	@Test
 	void rejectsNullTitle() {
-		assertThatThrownBy(() -> new Movie(null, new ReleaseYear(2010),
-				new DurationMinutes(148), NOLAN))
+		assertThatThrownBy(() -> new Movie(null, 2010, 148, NOLAN))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessageContaining("título");
 	}
 
 	@Test
-	void rejectsNullReleaseYear() {
-		assertThatThrownBy(() -> new Movie(new Title("Inception"), null,
-				new DurationMinutes(148), NOLAN))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("año");
-	}
-
-	@Test
-	void rejectsNullDuration() {
-		assertThatThrownBy(() -> new Movie(new Title("Inception"), new ReleaseYear(2010),
-				null, NOLAN))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessageContaining("duración");
-	}
-
-	@Test
 	void rejectsNullDirector() {
-		assertThatThrownBy(() -> new Movie(new Title("Inception"), new ReleaseYear(2010),
-				new DurationMinutes(148), null))
+		assertThatThrownBy(() -> new Movie("Inception", 2010, 148, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessageContaining("director");
 	}
 
 	private static Movie inception() {
-		return new Movie(new Title("Inception"), new ReleaseYear(2010),
-				new DurationMinutes(148), NOLAN);
+		return new Movie("Inception", 2010, 148, NOLAN);
 	}
 
 }
