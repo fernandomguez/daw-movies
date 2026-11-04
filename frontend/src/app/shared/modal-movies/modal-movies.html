@@ -26,7 +26,7 @@
       @for (actor of movie().actors; track actor.id) {
         <li class="modal__actor">{{ actor.fullName }}</li>
       } @empty {
-        <li class="modal__actor modal__actor--vacio">No hay actores en el reparto</li>
+        <li class="modal__vacio">No hay actores en el reparto</li>
       }
     </ul>
   </section>

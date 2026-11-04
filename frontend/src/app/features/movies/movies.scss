@@ -1,98 +1,117 @@
-// El listado: cabecera con título+contador, buscador, botón de nueva película
-// y la grid de cards. Tokens --movies-* apuntando a --mlt-sys-*.
+// Tokens del bloque que apuntan a los --mlt-sys-* y estado privado para el
+// hover del botón; las propiedades solo leen tokens o estado, nunca valores crudos.
 .movies {
-  --movies-max-width: 1100px;
+  // Tokens de diseño
+  --movies-anchura-maxima: var(--mlt-sys-width-12);
+  --movies-seccion-padding: var(--mlt-sys-padding-7) var(--mlt-sys-padding-5);
+  --movies-grid-gap: var(--mlt-sys-margin-6);
+  --movies-grid-columnas: repeat(auto-fill, minmax(var(--mlt-sys-width-9), 1fr));
+  --movies-input-padding: var(--mlt-sys-padding-3);
+  --movies-boton-padding: var(--mlt-sys-padding-3) var(--mlt-sys-padding-6);
+  --movies-aviso-padding: var(--mlt-sys-padding-4);
+  --movies-cabecera-gap: var(--mlt-sys-margin-4);
+  --movies-filter-gap: var(--mlt-sys-margin-2);
+  --movies-boton-gap: var(--mlt-sys-padding-1);
+  --movies-border-radius: var(--mlt-sys-border-radius-4);
+  --movies-border-radius-pill: var(--mlt-sys-border-radius-9);
+  --movies-border-width: var(--mlt-sys-width-1);
+  --movies-outline-width: var(--mlt-sys-width-8);
+  --movies-outline-offset: var(--mlt-sys-width-1);
+  --movies-font-weight-destacada: var(--mlt-sys-font-weight-2);
+  --movies-duracion: var(--mlt-sys-duracion-rapida);
+  --movies-elevacion-hover: var(--mlt-sys-elevacion-boton-pequeno);
   --movies-color-texto-titulo: var(--mlt-sys-color-principal-1);
   --movies-color-texto-suave: var(--mlt-sys-color-gris-6);
   --movies-color-error-texto: var(--mlt-sys-color-peligroso-2);
   --movies-color-error-fondo: var(--mlt-sys-color-peligroso-9);
   --movies-color-aviso-fondo: var(--mlt-sys-color-alternativo-9);
   --movies-color-aviso-texto: var(--mlt-sys-color-alternativo-2);
-  --movies-color-principal: var(--mlt-sys-color-principal-5);
-  --movies-color-principal-hover: var(--mlt-sys-color-principal-4);
-  --movies-color-boton-texto: var(--mlt-sys-color-blanco-9);
-  --movies-input-border-color: var(--mlt-sys-color-gris-8);
-  --movies-border-radius-campo: var(--mlt-sys-border-radius-4);
+  --movies-color-boton: var(--mlt-sys-color-principal-5);
+  --movies-color-boton-hover: var(--mlt-sys-color-principal-4);
+  --movies-color-fondo-boton: var(--mlt-sys-color-blanco-9);
 
-  max-width: var(--movies-max-width);
+  // Propiedades CSS
+  max-width: var(--movies-anchura-maxima);
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: var(--movies-seccion-padding);
 
+  // Elementos
   &__cabecera {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: var(--mlt-sys-margin-4);
+    gap: var(--movies-cabecera-gap);
     justify-content: space-between;
   }
 
   &__title {
-    margin: 0 0 var(--mlt-sys-margin-3);
+    margin: 0 0 var(--movies-filter-gap);
     color: var(--movies-color-texto-titulo);
   }
 
   &__filter {
     display: flex;
     align-items: center;
-    gap: var(--mlt-sys-margin-2);
-    margin-bottom: var(--mlt-sys-margin-4);
+    gap: var(--movies-filter-gap);
+    margin-bottom: var(--movies-cabecera-gap);
   }
 
   &__filter-label {
-    font-weight: 600;
+    font-weight: var(--movies-font-weight-destacada);
     color: var(--movies-color-texto-suave);
   }
 
   &__filter-input {
-    padding: var(--mlt-sys-padding-3);
-    border: 1px solid var(--movies-input-border-color);
-    border-radius: var(--movies-border-radius-campo);
+    padding: var(--movies-input-padding);
+    border: var(--movies-border-width) solid var(--movies-color-texto-suave);
+    border-radius: var(--movies-border-radius);
     font: inherit;
 
     &:focus-visible {
-      outline: 2px solid var(--movies-color-principal);
-      outline-offset: 1px;
+      outline: var(--movies-outline-width) solid var(--movies-color-boton);
+      outline-offset: var(--movies-outline-offset);
     }
   }
 
   &__toolbar {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: var(--mlt-sys-margin-4);
+    margin-bottom: var(--movies-cabecera-gap);
   }
 
   &__nueva-button {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: var(--mlt-sys-padding-3) var(--mlt-sys-padding-5);
+    gap: var(--movies-boton-gap);
+    padding: var(--movies-boton-padding);
     border: none;
-    border-radius: 999px;
-    background: var(--movies-color-principal);
-    color: var(--movies-color-boton-texto);
+    border-radius: var(--movies-border-radius-pill);
+    background: var(--movies-color-boton);
+    color: var(--movies-color-fondo-boton);
     font: inherit;
-    font-weight: 600;
+    font-weight: var(--movies-font-weight-destacada);
     cursor: pointer;
-    transition: background 0.15s, transform 0.15s;
+    transition: background var(--movies-duracion), transform var(--movies-duracion);
 
-    &:hover {
-      background: var(--movies-color-principal-hover);
-      transform: translateY(-1px);
+    &:hover,
+    &:focus-visible {
+      background: var(--movies-color-boton-hover);
+      transform: translateY(var(--movies-elevacion-hover));
     }
   }
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: var(--movies-grid-columnas);
+    gap: var(--movies-grid-gap);
   }
 
   &__vacio,
   &__error,
   &__aviso {
-    padding: var(--mlt-sys-padding-4);
-    border-radius: var(--movies-border-radius-campo);
-    margin: 0 0 var(--mlt-sys-margin-4);
+    padding: var(--movies-aviso-padding);
+    border-radius: var(--movies-border-radius);
+    margin: 0 0 var(--movies-cabecera-gap);
   }
 
   &__vacio {

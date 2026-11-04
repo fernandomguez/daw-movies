@@ -1,7 +1,7 @@
 // Imports: formularios reactivos, el servicio que habla con la API y el modelo.
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Movie } from '../../core/models/movie';
+import { Movie, MoviePayload } from '../../core/models/movie';
 import { MovieService } from '../../core/services/movie-service';
 
 // Modal de crear/editar: si le llega una película, la edita (PUT);
@@ -83,14 +83,14 @@ export class FormMovies {
     }
   }
 
-  protected crearPelicula(payload: { title: string; releaseYear: number; duration: number; directorId: number }): void {
+  protected crearPelicula(payload: MoviePayload): void {
     this.movieService.create(payload).subscribe({
       next: () => this.cerrar.emit(),
       error: (err) => this.aviso.set(this.movieService.mensajePublico(err)),
     });
   }
 
-  protected actualizarPelicula(payload: { title: string; releaseYear: number; duration: number; directorId: number }): void {
+  protected actualizarPelicula(payload: MoviePayload): void {
     const id = this.movie()!.id;
     this.movieService.update(id, payload).subscribe({
       next: () => this.cerrar.emit(),

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { FormMovies } from './form-movies';
 import { Movie } from '../../core/models/movie';
 
@@ -38,11 +38,16 @@ describe('FormMovies', () => {
     expect((component as any).aviso()).toContain('Revisa los campos');
   });
 
-  it('avisa al pedir el cierre', () => {
-    let cerrado = false;
-    component.cerrar.subscribe(() => (cerrado = true));
-    component.cerrar.emit();
-    expect(cerrado).toBe(true);
+  it('no llama a la API si el formulario es inválido y avisa', () => {
+    const http = TestBed.inject(HttpTestingController);
+    // El MovieService hace un GET /movies al instanciarse: lo descargamos aquí.
+    http.expectOne('/movies').flush([]);
+    (component as any).form.controls.title.setValue('');
+    (component as any).form.controls.title.markAsTouched();
+    (component as any).enviarFormulario();
+    expect((component as any).aviso()).toContain('Revisa los campos');
+    // Falla si se ha publicado algo más de lo que esperábamos (nada)
+    http.verify();
   });
 });
 

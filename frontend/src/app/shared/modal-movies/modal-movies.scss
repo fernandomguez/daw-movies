@@ -1,49 +1,59 @@
-// Modal flotante: fondo oscuro que difumina la página y una ficha centrada.
-// Los tokens apuntan a --mlt-sys-*; nada crudo aquí.
+// Tokens del bloque que apuntan a los --mlt-sys-*; propiedades que solo leen
+// tokens. Mismo encuadre que el del formulario para que se vean como hermanos.
 .modal {
+  // Tokens de diseño
+  --modal-ficha-padding: var(--mlt-sys-padding-6);
+  --modal-ficha-anchura: var(--mlt-sys-width-11);
+  --modal-ficha-sombra: var(--mlt-sys-sombra-ficha);
+  --modal-cabecera-gap: var(--mlt-sys-margin-3);
+  --modal-cabecera-padding: var(--mlt-sys-padding-4);
+  --modal-fila-gap: var(--mlt-sys-margin-3);
+  --modal-fila-padding: var(--mlt-sys-padding-2);
+  --modal-actores-gap: var(--mlt-sys-margin-2);
+  --modal-actor-padding: var(--mlt-sys-padding-1) var(--mlt-sys-padding-2);
+  --modal-border-radius: var(--mlt-sys-border-radius-6);
+  --modal-border-radius-pill: var(--mlt-sys-border-radius-9);
+  --modal-border-width: var(--mlt-sys-width-1);
+  --modal-etiqueta-anchura: var(--mlt-sys-width-13);
+  --modal-font-size-close: var(--mlt-sys-font-size-6);
+  --modal-font-size-actor: var(--mlt-sys-font-size-3);
+  --modal-font-weight-destacada: var(--mlt-sys-font-weight-2);
+  --modal-actor-color-fondo: var(--mlt-sys-color-alternativo-9);
+  --modal-actor-color-texto: var(--mlt-sys-color-alternativo-2);
   --modal-color-fondo-oscuro: var(--mlt-sys-color-negro-5);
   --modal-color-ficha: var(--mlt-sys-color-blanco-9);
   --modal-color-texto-titulo: var(--mlt-sys-color-principal-1);
   --modal-color-texto-suave: var(--mlt-sys-color-gris-7);
   --modal-color-linea: var(--mlt-sys-color-gris-9);
-  --modal-border-radius: var(--mlt-sys-border-radius-6);
-  --modal-actor-border-radius: var(--mlt-sys-border-radius-9);
-  --modal-font-size-close: var(--mlt-sys-font-size-6);
-  --modal-font-size-actor: var(--mlt-sys-font-size-3);
+  --modal-z: var(--mlt-sys-z-modal);
 
-  // Tokens del actor (badge): colores de su aspecto normal
-  --modal-actor-color-fondo: var(--mlt-sys-color-alternativo-9);
-  --modal-actor-color-texto: var(--mlt-sys-color-alternativo-2);
-
-  // Estado privado del actor: por defecto, un actor con películas
-  --modal-privateState-actor-fondo: var(--modal-actor-color-fondo);
-  --modal-privateState-actor-texto: var(--modal-actor-color-texto);
-
+  // Propiedades CSS
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--modal-color-fondo-oscuro);
-  z-index: 10;
+  z-index: var(--modal-z);
 
+  // Elementos
   &__ficha {
     background: var(--modal-color-ficha);
     border-radius: var(--modal-border-radius);
-    padding: var(--mlt-sys-padding-6);
-    width: min(480px, 90vw);
-    max-height: 85vh;
+    padding: var(--modal-ficha-padding);
+    width: min(var(--modal-ficha-anchura), 90vw);
+    max-height: 85vh; // viewport: sube y baja con la ventana, no es un número de estilo
     overflow: auto;
-    box-shadow: 0 10px 40px rgb(0 0 0 / 25%);
+    box-shadow: var(--modal-ficha-sombra);
   }
 
   &__cabecera {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--mlt-sys-margin-3);
-    border-bottom: 1px solid var(--modal-color-linea);
-    padding-bottom: var(--mlt-sys-padding-4);
+    gap: var(--modal-cabecera-gap);
+    border-bottom: var(--modal-border-width) solid var(--modal-color-linea);
+    padding-bottom: var(--modal-cabecera-padding);
   }
 
   &__titulo {
@@ -64,19 +74,19 @@
   }
 
   &__datos {
-    margin: var(--mlt-sys-margin-4) 0 0;
+    margin: var(--modal-cabecera-padding) 0 0;
   }
 
   &__fila {
     display: flex;
-    gap: var(--mlt-sys-margin-3);
-    padding: var(--mlt-sys-padding-2) 0;
+    gap: var(--modal-fila-gap);
+    padding: var(--modal-fila-padding) 0;
   }
 
   &__etiqueta {
-    width: 6rem;
+    width: var(--modal-etiqueta-anchura);
     margin: 0;
-    font-weight: 600;
+    font-weight: var(--modal-font-weight-destacada);
     color: var(--modal-color-texto-suave);
   }
 
@@ -85,7 +95,7 @@
   }
 
   &__subtitulo {
-    margin: var(--mlt-sys-margin-4) 0 var(--mlt-sys-margin-2);
+    margin: var(--modal-cabecera-padding) 0 var(--modal-actores-gap);
     color: var(--modal-color-texto-titulo);
   }
 
@@ -95,20 +105,27 @@
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: var(--mlt-sys-margin-2);
+    gap: var(--modal-actores-gap);
   }
 
   &__actor {
-    padding: 0.2rem 0.6rem;
-    border-radius: var(--modal-actor-border-radius);
-    background: var(--modal-privateState-actor-fondo);
-    color: var(--modal-privateState-actor-texto);
+    padding: var(--modal-actor-padding);
+    border-radius: var(--modal-border-radius-pill);
+    background: var(--modal-actor-color-fondo);
+    color: var(--modal-actor-color-texto);
     font-size: var(--modal-font-size-actor);
-    font-weight: 600;
+    font-weight: var(--modal-font-weight-destacada);
+  }
 
-    &--vacio {
-      --modal-privateState-actor-fondo: var(--modal-color-linea);
-      --modal-privateState-actor-texto: var(--modal-color-texto-suave);
-    }
+  // Reparto vacío: elemento sin modificador, con sus propios tokens
+  &__vacio {
+    --modal-vacio-color-fondo: var(--modal-color-linea);
+    --modal-vacio-color-texto: var(--modal-color-texto-suave);
+
+    padding: var(--modal-actor-padding);
+    border-radius: var(--modal-border-radius-pill);
+    background: var(--modal-vacio-color-fondo);
+    color: var(--modal-vacio-color-texto);
+    font-size: var(--modal-font-size-actor);
   }
 }

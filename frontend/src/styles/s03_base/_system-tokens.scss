@@ -47,4 +47,25 @@
   @for $i from 0 through list.length($widths) - 1 {
     --mlt-sys-width-#{$i}: #{list.nth($widths, $i + 1)};
   }
+
+  // Sombras, elevaciones, duraciones, pesos y capas: por nombre, no por índice.
+  @each $nombre, $valor in $sombras {
+    --mlt-sys-sombra-#{$nombre}: #{$valor};
+  }
+
+  @each $nombre, $valor in $elevaciones {
+    --mlt-sys-elevacion-#{$nombre}: #{$valor};
+  }
+
+  @each $nombre, $valor in $duraciones {
+    --mlt-sys-duracion-#{$nombre}: #{$valor};
+  }
+
+  @for $i from 1 through list.length($pesos) {
+    --mlt-sys-font-weight-#{$i}: #{list.nth($pesos, $i)};
+  }
+
+  @each $nombre, $valor in $z-index {
+    --mlt-sys-z-#{$nombre}: #{$valor};
+  }
 }

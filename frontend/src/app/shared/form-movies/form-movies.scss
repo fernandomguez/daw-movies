@@ -1,6 +1,27 @@
-// Modal de formulario: mismo encuadre que el modal de detalle.
-// Tokens --form-* apuntando a --mlt-sys-*; nada crudo.
+// Tokens del bloque que apuntan a los --mlt-sys-*; propiedades que solo leen
+// tokens. Mismo encuadre que el modal de detalle para que se vean como hermanos.
 .form {
+  // Tokens de diseÃ±o
+  --form-ficha-padding: var(--mlt-sys-padding-6);
+  --form-ficha-anchura: var(--mlt-sys-width-10);
+  --form-ficha-sombra: var(--mlt-sys-sombra-ficha);
+  --form-cabecera-gap: var(--mlt-sys-margin-3);
+  --form-cabecera-padding: var(--mlt-sys-padding-4);
+  --form-cuerpo-gap: var(--mlt-sys-margin-3);
+  --form-aviso-padding: var(--mlt-sys-padding-3);
+  --form-input-padding: var(--mlt-sys-padding-3);
+  --form-enviar-padding: var(--mlt-sys-padding-4);
+  --form-campo-gap: var(--mlt-sys-margin-1);
+  --form-aviso-gap: var(--mlt-sys-margin-3);
+  --form-border-radius: var(--mlt-sys-border-radius-6);
+  --form-border-radius-campo: var(--mlt-sys-border-radius-4);
+  --form-border-width: var(--mlt-sys-width-1);
+  --form-outline-width: var(--mlt-sys-width-8);
+  --form-outline-offset: var(--mlt-sys-width-1);
+  --form-font-size-close: var(--mlt-sys-font-size-6);
+  --form-font-size-error: var(--mlt-sys-font-size-3);
+  --form-font-weight-destacada: var(--mlt-sys-font-weight-2);
+  --form-duracion: var(--mlt-sys-duracion-rapida);
   --form-color-fondo-oscuro: var(--mlt-sys-color-negro-5);
   --form-color-ficha: var(--mlt-sys-color-blanco-9);
   --form-color-texto-titulo: var(--mlt-sys-color-principal-1);
@@ -8,38 +29,37 @@
   --form-color-linea: var(--mlt-sys-color-gris-9);
   --form-color-error-texto: var(--mlt-sys-color-peligroso-2);
   --form-color-error-fondo: var(--mlt-sys-color-peligroso-9);
-  --form-color-principal: var(--mlt-sys-color-principal-5);
-  --form-color-principal-hover: var(--mlt-sys-color-principal-4);
-  --form-border-radius: var(--mlt-sys-border-radius-6);
-  --form-border-radius-campo: var(--mlt-sys-border-radius-4);
-  --form-font-size-close: var(--mlt-sys-font-size-6);
-  --form-font-size-error: var(--mlt-sys-font-size-3);
+  --form-color-boton: var(--mlt-sys-color-principal-5);
+  --form-color-boton-hover: var(--mlt-sys-color-principal-4);
+  --form-z: var(--mlt-sys-z-modal);
 
+  // Propiedades CSS
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--form-color-fondo-oscuro);
-  z-index: 10;
+  z-index: var(--form-z);
 
+  // Elementos
   &__ficha {
     background: var(--form-color-ficha);
     border-radius: var(--form-border-radius);
-    padding: var(--mlt-sys-padding-6);
-    width: min(440px, 90vw);
-    max-height: 85vh;
+    padding: var(--form-ficha-padding);
+    width: min(var(--form-ficha-anchura), 90vw);
+    max-height: 85vh; // viewport: sube y baja con la ventana, no es un nÃºmero de estilo
     overflow: auto;
-    box-shadow: 0 10px 40px rgb(0 0 0 / 25%);
+    box-shadow: var(--form-ficha-sombra);
   }
 
   &__cabecera {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--mlt-sys-margin-3);
-    border-bottom: 1px solid var(--form-color-linea);
-    padding-bottom: var(--mlt-sys-padding-4);
+    gap: var(--form-cabecera-gap);
+    border-bottom: var(--form-border-width) solid var(--form-color-linea);
+    padding-bottom: var(--form-cabecera-padding);
   }
 
   &__titulo {
@@ -60,8 +80,8 @@
   }
 
   &__aviso {
-    margin: var(--mlt-sys-margin-3) 0 var(--mlt-sys-margin-2);
-    padding: var(--mlt-sys-padding-3);
+    margin: var(--form-aviso-gap) 0 var(--form-campo-gap);
+    padding: var(--form-aviso-padding);
     border-radius: var(--form-border-radius-campo);
     background: var(--form-color-error-fondo);
     color: var(--form-color-error-texto);
@@ -70,30 +90,30 @@
   &__cuerpo {
     display: flex;
     flex-direction: column;
-    gap: var(--mlt-sys-margin-3);
-    margin-top: var(--mlt-sys-margin-4);
+    gap: var(--form-cuerpo-gap);
+    margin-top: var(--form-cabecera-padding);
   }
 
   &__campo {
     display: flex;
     flex-direction: column;
-    gap: var(--mlt-sys-margin-1);
+    gap: var(--form-campo-gap);
   }
 
   &__etiqueta {
-    font-weight: 600;
+    font-weight: var(--form-font-weight-destacada);
     color: var(--form-color-texto-suave);
   }
 
   &__input {
-    padding: var(--mlt-sys-padding-3);
-    border: 1px solid var(--form-color-linea);
+    padding: var(--form-input-padding);
+    border: var(--form-border-width) solid var(--form-color-linea);
     border-radius: var(--form-border-radius-campo);
     font: inherit;
 
     &:focus-visible {
-      outline: 2px solid var(--form-color-principal);
-      outline-offset: 1px;
+      outline: var(--form-outline-width) solid var(--form-color-boton);
+      outline-offset: var(--form-outline-offset);
     }
   }
 
@@ -103,19 +123,20 @@
   }
 
   &__enviar {
-    margin-top: var(--mlt-sys-margin-3);
-    padding: var(--mlt-sys-padding-4);
+    margin-top: var(--form-aviso-gap);
+    padding: var(--form-enviar-padding);
     border: none;
     border-radius: var(--form-border-radius-campo);
-    background: var(--form-color-principal);
+    background: var(--form-color-boton);
     color: var(--form-color-ficha);
     font: inherit;
-    font-weight: 600;
+    font-weight: var(--form-font-weight-destacada);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background var(--form-duracion);
 
     &:hover {
-      background: var(--form-color-principal-hover);
+      background: var(--form-color-boton-hover);
     }
   }
 }
+

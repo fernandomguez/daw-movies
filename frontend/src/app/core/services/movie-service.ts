@@ -1,5 +1,5 @@
 // Imports: Angular DI (inject) + HttpClient para hablar con el backend vía proxy.
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Movie, MoviePayload } from '../models/movie';
@@ -41,7 +41,7 @@ export class MovieService {
   // Convierte el error de la API en el mensaje que devuelve el
   // GlobalExceptionHandler (JSON { "message": "..." } en 400/404);
   // lo usan los formularios para pintar el aviso exacto del backend.
-  mensajePublico(err: any): string {
+  mensajePublico(err: HttpErrorResponse): string {
     return err?.error?.message ?? 'No se pudo conectar con el backend.';
   }
 
