@@ -13,7 +13,7 @@
 | Dato | Valor |
 |---|---|
 | Rumbo actual | Arquitectura por capas con JDBC: `controller` (con `dto`, `mapper`, `handler`), `domain` (`model`, `service`, `repository`, `exception`), `persistence` (`dao`, `repository.impl`) |
-| Paso en curso | **Paso 1 casi cerrado** (entender el código + tests + docs). Falta solo comitear el renombrado `controller.exception` → `controller.handler` |
+| Paso en curso | **Fase 2 completa** (skill: `40b0bb1`, `ca3c834`, `ff9f2ad`, `2b9cd9f` en `Lorenzo\creador-de-skills`). Siguiente: fase 3 (Swagger) |
 | Último commit | `339cb5d docs: adapt temario, diary, plan, glossary, READMEs and ESTADO to the new direction` (local; **sin push**) |
 | Tests | **55 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo, 3 de integración (necesitan Docker) |
 | Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Sin Swagger todavía |
@@ -374,6 +374,44 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 7. A petición del alumno, el paquete `controller.exception` pasa a llamarse **`controller.handler`** (`git mv`; `package`, import del test y docs actualizados). `.\mvnw.cmd clean test` → 55 en verde. El nombre antiguo solo queda en la entrada del paso 0, que es historia.
 
 **Siguiente:** fase 2 (skill `creador-de-skills`), cuando el alumno lo pida.
+
+### 2026-11-04 (tercera parte) — fase 2a: `k-back-module`
+
+1. `git rev-parse --is-inside-work-tree` en `Lorenzo\creador-de-skills` → **no era repositorio**. A petición del alumno: `git init -b main`, `.gitignore` con `target/` y commit inicial `3c6027a` (estado previo, sin tocar).
+2. Reescrito `skills-code-review/skills/k-back-module/SKILL.md`: `presentation` → `controller` (con `dto`, `mapper`, `handler`), `models` → `model`, `exceptions` → `exception`; ArchUnit y reglas R01/R02/R05 con `..controller..`; el servicio recibe valores sueltos; el mapper solo hace la salida (R07); sin *value objects*; enrutado a `k-back-controller` (la carpeta se renombra en la 2b). Solo `<Entidad>` y `<paquete.raíz>`.
+3. Commit `40b0bb1` en el repo del skill. No hay tests que ejecutar ahí (son documentos Markdown).
+4. **Decisión del alumno:** las excepciones de persistencia (`PersistenceAccessException`, `PersistenceConflictException`; tu proyecto no las tiene) se tratan en la **2b**. En la 2a se dejó una nota en el skill y no se crea el paquete.
+5. `demo-cliente/` sin tocar (ejemplo antiguo).
+
+### 2026-11-04 (cuarta parte) — fase 2b, subpaso 1: `k-back-controller`
+
+1. **Pregunta del alumno:** el profesor ve `presentation` como el nombre conceptual de la capa, pero usa `controller` por el orden alfabético. **Recomendación aceptada:** mantener `controller` (paquete y skill) y hablar de «capa de presentación» en los textos. Anotado en D-48 (`decisiones-tecnicas.md`).
+2. `git mv k-back-presentation k-back-controller` y reescritos `SKILL.md`, `controller.md`, `dto.md`, `handler.md` y `mapper.md` leyendo antes el código real (`MovieController`, `MovieMapper`, `GlobalExceptionHandler`, `MovieRequest`, `MovieResponse`, `MovieControllerTest`).
+3. **Cambios de fondo respecto al skill antiguo:** el servicio recibe valores sueltos (no `toModel`); el mapper es un `@Component` solo de salida; el POST usa `@ResponseStatus(CREATED)` (sin `Location`); el cuerpo de error es `{ "message": ... }` y no `ProblemDetail`; el handler cubre 404/400/415 y lo demás cae en el 500 de Spring; `@Import` del mapper y del handler en el test `@WebMvcTest`. Los identificadores siguen siendo `PRE-*`.
+4. Commit `ca3c834` en el repo del skill. Sin tests que ejecutar (Markdown).
+5. **Queda abierto:** `ProblemDetail` frente a `{ message }`. Se siguió el código del proyecto; si el profesor quiere `ProblemDetail`, cambiar `PRE-D5` y el proyecto a la vez.
+
+### 2026-11-04 (quinta parte) — fase 2b, subpaso 2: `k-back-domain` y `k-back-persistence`; **2b completa**
+
+1. Leídos los siete archivos de los dos skills y el código real (`Movie`, `MovieNotFoundException`, `MovieService`, `MovieServiceImpl`, `MovieRepository`, `MovieRepositoryImpl`, `MovieDao`, `MovieDaoJdbc`).
+2. **`k-back-domain`:** tipos simples y sin *value objects*; sin *setters*, `getX()`, dos constructores (creación y reconstrucción con `id`); comprobaciones defensivas con `IllegalArgumentException`; relaciones por objeto y unidireccionales (antes «por id»); solo `<Entidad>NotFoundException`; `IllegalStateException` para la relectura fallida; servicio con valores sueltos; el puerto `save` devuelve el id; `@Service` y `@Transactional` en la clase (impureza reconocida).
+3. **`k-back-persistence`:** `JdbcTemplate` + `RowMapper` + `GeneratedKeyHolder` (antes `DataSource` y `PreparedStatement` a mano); `findById` con `query(...).findFirst()`; N+1 como deuda aceptada; esquema por migraciones.
+4. **Decisión de las excepciones de persistencia: no se crean propias** (nueva regla `PER-D9`/`PER-R11`); anotado en D-48. `k-back-module` actualizado.
+5. Commit `ff9f2ad` en el repo del skill. Sin tests que ejecutar (Markdown).
+6. Búsqueda de restos (`grep`) en los cuatro skills `k-back-*`: solo quedan coincidencias intencionadas.
+7. **Tests de integración:** el skill exige tests de DAO/repositorio (PER-R09), pero tu proyecto aún no los tiene (ESTADO §1). Es una diferencia conocida, no un fallo del skill.
+
+### 2026-11-04 (sexta parte) — fase 2c; **fase 2 completa**
+
+1. Leídos `do-code-impl`, `plantilla-entidad.md`, `do-code-review`, `plantillas-proyecto/*`, `contexto.md` y `teoria/*`.
+2. **`do-code-impl`:** orden domain → persistence → controller; checklist con `controller/...`, sin *value objects*, con migración del esquema y el método del handler. **`plantilla-entidad.md`** reescrita: tipos simples, relaciones por objeto y unidireccionales, POST → 201 (sin `Location`), casos de uso con valores sueltos, errores 404 por `NotFoundException`, tests con `@Import`. **`do-code-review`:** una línea (`controller`).
+3. **`plantillas-proyecto`:** `agents.md` (`k-back-controller`), `architecture.md` (`controller`, migraciones), `tech.md` (`JdbcTemplate`, sin JPA).
+4. **`contexto.md`** con aviso de actualización y lista de skills al día; **`teoria/arquitectura.md`** reescrita con el código real; **`teoria/contexto-skills-k-back-do.md`** con las decisiones D1–D12 actualizadas (D6 `ProblemDetail` queda como «abierto»); **`version-1`** y **`version-2`** marcadas como históricas; `contexto-skills-k-do.md` (teoría general) sin cambios.
+5. Comprobado con `grep`: ninguna skill ni plantilla nombra `Movie` (se corrigió una en `model.md`); los restos de `presentation`, `PersistenceAccessException` o *value objects* son solo prohibiciones o ejemplos «mal».
+6. Commit `2b9cd9f` en el repo del skill. `demo-cliente/` queda como ejemplo antiguo, sin tocar, y **sin ejecutar** `mvn test` ahí.
+7. **No probado:** las skills nuevas no se han ejecutado generando una entidad (`/do-code-impl`) ni revisando el proyecto (`/do-code-review`); solo se han reescrito y contrastado con el código leído.
+
+**Siguiente:** fase 3 (Swagger con springdoc 3.2.0), cuando el alumno lo pida. Antes, verificar la versión en Maven Central.
 
 ## 5. Trabajo sin commitear
 
