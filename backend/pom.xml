@@ -19,7 +19,21 @@
 		<springdoc.version>3.2.0</springdoc.version>
 		<!-- ArchUnit 1.5.x es la rama actual; soporta Java 25/26 (1.4.2 y posteriores). Boot no la gestiona. -->
 		<archunit.version>1.5.1</archunit.version>
+		<!-- Spring Modulith 2.1.x es la línea GA para Boot 4.1 (docs 2.1.1; la 2.2.0-RC1 es RC). Boot no la gestiona. -->
+		<modulith.version>2.1.2</modulith.version>
 	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<!-- El BOM ajusta las versiones de todos los artefactos spring-modulith-* -->
+			<dependency>
+				<groupId>org.springframework.modulith</groupId>
+				<artifactId>spring-modulith-bom</artifactId>
+				<version>${modulith.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -55,6 +69,11 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>${springdoc.version}</version>
 		</dependency>
+		<!-- Sello del módulo: @Modulithic/@ApplicationModule se compilan con starter-core -->
+		<dependency>
+			<groupId>org.springframework.modulith</groupId>
+			<artifactId>spring-modulith-starter-core</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -70,6 +89,12 @@
 			<groupId>com.tngtech.archunit</groupId>
 			<artifactId>archunit-junit5</artifactId>
 			<version>${archunit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Verificación del módulo: ApplicationModules + Documenter (sin versión: el BOM manda) -->
+		<dependency>
+			<groupId>org.springframework.modulith</groupId>
+			<artifactId>spring-modulith-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
