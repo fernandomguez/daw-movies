@@ -3,10 +3,13 @@ package com.daw.movies.controller.exception;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.daw.movies.domain.exception.DirectorNotFoundException;
 import com.daw.movies.domain.exception.MovieNotFoundException;
@@ -35,6 +38,27 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	public ErrorResponse handleDirectorNotFound(DirectorNotFoundException ex) {
 		return new ErrorResponse(ex.getMessage());
+	}
+
+	/** El cuerpo no es JSON válido o un campo tiene un tipo imposible (p. ej. un texto donde va un año). */
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ErrorResponse handleUnreadableBody(HttpMessageNotReadableException ex) {
+		return new ErrorResponse("El cuerpo de la petición no es un JSON válido");
+	}
+
+	/** Un parámetro de la URL no tiene el tipo esperado (p. ej. {@code /movies/abc}). */
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+		return new ErrorResponse("El parámetro " + ex.getName() + " tiene un valor no válido");
+	}
+
+	/** La petición no declara {@code Content-Type: application/json}. */
+	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+	@ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+	public ErrorResponse handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+		return new ErrorResponse("El tipo de contenido no está soportado: use application/json");
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

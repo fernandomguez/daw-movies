@@ -44,8 +44,7 @@ public class MovieServiceImpl implements MovieService {
 		Director director = findDirector(directorId);
 		Movie movie = new Movie(title, releaseYear, duration, director);
 		Long id = movieRepository.save(movie);
-		return movieRepository.findById(id)
-				.orElseThrow(() -> new MovieNotFoundException(id));
+		return reload(id);
 	}
 
 	@Override
@@ -54,8 +53,7 @@ public class MovieServiceImpl implements MovieService {
 				.orElseThrow(() -> new MovieNotFoundException(id));
 		Director director = findDirector(directorId);
 		movieRepository.update(id, new Movie(title, releaseYear, duration, director));
-		return movieRepository.findById(id)
-				.orElseThrow(() -> new MovieNotFoundException(id));
+		return reload(id);
 	}
 
 	@Override
@@ -63,6 +61,18 @@ public class MovieServiceImpl implements MovieService {
 		movieRepository.findById(id)
 				.orElseThrow(() -> new MovieNotFoundException(id));
 		movieRepository.deleteById(id);
+	}
+
+	/**
+	 * Vuelve a leer una película que acabamos de escribir.
+	 * <p>
+	 * Si no aparece, no es un 404 (el cliente no ha pedido nada inexistente):
+	 * es un fallo del sistema, así que se lanza {@link IllegalStateException}.
+	 */
+	private Movie reload(Long id) {
+		return movieRepository.findById(id)
+				.orElseThrow(() -> new IllegalStateException(
+						"La película " + id + " no se encuentra justo después de guardarla"));
 	}
 
 	private Director findDirector(Long directorId) {
