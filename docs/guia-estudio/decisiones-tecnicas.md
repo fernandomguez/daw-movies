@@ -146,7 +146,7 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - Se generó en una carpeta temporal y se copiaron `pom.xml`, Maven Wrapper y `src/`. No se copiaron `HELP.md`, `.gitignore` ni `.gitattributes` (se fusionaron con los nuestros). Se quitaron del `pom.xml` las etiquetas vacías (`<url/>`, `<licenses>`, `<developers>`, `<scm>`).
 - Se usa el **Maven Wrapper** (`mvnw.cmd`, Maven 3.10.0): no hace falta instalar Maven y todos usan la misma versión.
 
-## D-29 Anotaciones JPA en las clases del dominio (sin entidad separada) — ✅ Decidido por el alumno (2026-10-20)
+## D-29 Anotaciones JPA en las clases del dominio (sin entidad separada) — ✅ Decidido por el alumno (2026-10-20) · ⚠️ superada por [D-48](#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples) (2026-11-04)
 - **Contexto:** el diseño de la fase 5 separaba `Movie` (dominio en Java puro), `MovieEntity` (JPA) y `MovieResponse` (DTO), con dos mappers.
 - **Alternativas:** (A) dominio en Java puro + entidad JPA separada; (B) anotaciones `jakarta.persistence` (`@Entity`, `@Id`, `@ManyToOne`...) en `Movie`, `Director` y `Actor`; (C) además, Bean Validation (`jakarta.validation`) en el dominio.
 - **Decisión:** B. Bean Validation queda en los DTOs de entrada (fase 18): en el dominio no valida nada por sí sola, y las reglas se comprueban en el constructor.
@@ -356,3 +356,22 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Excepción a D-26:** la dependencia web se adelanta a la fase 16. Se anota como tal; la fase 16 sigue pendiente (controladores, DTO y servicio).
 - **Consecuencia:** `/v3/api-docs` existe pero devuelve `paths: {}` hasta la fase 16. "Try it out" responde `404`: la UI documenta, no ejecuta.
 - **Documentación:** [diario 15A](15A-api-first.md) y [temario 15A](temario/15A-api-first.md).
+
+## D-48 Arquitectura por capas con DAO JDBC y dominio con tipos simples — ✅ Decidida por el alumno con el visto bueno del profesor (2026-11-04)
+- **Contexto:** D-46 (*value objects*) quedó revocada el 2026-11-04 porque el profesor no los quiere; con ella desaparecía el motivo de complicar la persistencia (`AttributeConverter`, `@Embeddable`). Además, el esquema de arquitectura de referencia del profesor usa **DAO + JDBC**, no JPA. D-29 (anotaciones JPA en el dominio) y D-20 (repositorio que delega en Spring Data) partían de JPA. Se abandona JPA en favor de JDBC con DAO.
+- **Decisión:**
+  - El dominio usa **tipos simples** (`String`, `int`, `LocalDate`) y entidades de dominio sin anotaciones de persistencia: `Movie`, `Director` y `Actor` en `com.daw.movies.domain.model`.
+  - La persistencia es **JDBC puro con `JdbcTemplate`**: `MovieDao` (interfaz) y `MovieDaoJdbc` (SQL y `RowMapper`), detrás de `MovieRepositoryImpl`, que implementa el puerto `MovieRepository` del dominio. **No se usa JPA.**
+  - La validación de entrada es **Jakarta Validation** en `MovieRequest`; el dominio solo conserva comprobaciones defensivas de lo que no puede faltar.
+  - Controlador, DTO, mapper de salida y manejador de excepciones viven en `com.daw.movies.controller`.
+- **Alternativas descartadas:**
+  - **JPA + `AttributeConverter`/`@Embeddable` con *value objects*:** más mapeo y configuración, y el profesor no quiere los *value objects*.
+  - ***Value objects* en el dominio** (D-46): revocada.
+  - **JPA con tipos simples:** funcionaría, pero se aparta del esquema DAO + JDBC de la asignatura.
+- **Consecuencias:**
+  - **Impurezas reconocidas:** `MovieServiceImpl` lleva `@Service` y `@Transactional`, así que `domain` depende de anotaciones de Spring; DAO y repositorio se anotan con `@Repository`.
+  - **N+1 en `findAll`:** una consulta para las películas con su director (`JOIN`) y otra por película para sus actores. Se acepta por ahora.
+  - **Reparto sin escribir:** `MovieDaoJdbc` solo lee `movie_actor`; no hay endpoints que lo gestionen.
+  - **Errores sin traducir:** `IllegalArgumentException` y los errores de base de datos no tienen manejador y acaban en `500`.
+  - **Plan:** las fases del plan pensadas para JPA (anotaciones, repositorios Spring Data, conversores) quedan **obsoletas** y hay que replantearlas. D-29 queda superada.
+- **Documentación:** [arquitectura.md](../arquitectura.md).
