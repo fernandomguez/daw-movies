@@ -19,7 +19,7 @@
 | Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Swagger UI en `/swagger-ui.html` y contrato en `/v3/api-docs` (generado desde el código, sin yaml) |
 | Tabla de datos | `director` (6), `actor` (14), `movie` (10), `movie_actor` (24); Flyway en la versión 4 |
 | Cambios sin commitear | ninguno al cierre de la sesión del 2026-11-04 (el repo del skill, `Lorenzo\creador-de-skills`, no tiene remoto: sus commits son solo locales) |
-| Ramas / etiquetas | `main` (local y remota) = nuevo rumbo JDBC, a partir de la fase 10. El camino JPA/OpenAPI de las fases 11 y 15A vive en `origin/jpa-fase-11-15a` y en las etiquetas `fase-11` y `fase-15A`. Existe `backup/antes-de-volver-a-fase-10` y, desde el 2026-11-04, `backup/antes-de-monolito-modular` (copia de `main` `ca44796`, justo antes de la fase 4b). No mezclar sin hablarlo. **`origin` es ahora HTTPS** (`https://github.com/fernandomguez/daw-movies.git`): el SSH de `git push` falló con `Permission denied (publickey)` aunque `ssh -T` funcionaba; para subir desde el asistente hace falta la credencial de `gh` (`gh auth login` ya hecho) |
+| Ramas / etiquetas | `main` (local y remota) = nuevo rumbo JDBC, a partir de la fase 10. El camino JPA/OpenAPI de las fases 11 y 15A vive en `origin/jpa-fase-11-15a` y en las etiquetas `fase-11` y `fase-15A`. Existe `backup/antes-de-volver-a-fase-10` y, desde el 2026-11-04, `backup/antes-de-monolito-modular` (copia de `main` en `cc13a71`, justo antes de la fase 4b). No mezclar sin hablarlo. **`origin` es ahora HTTPS** (`https://github.com/fernandomguez/daw-movies.git`): el SSH de `git push` falló con `Permission denied (publickey)` aunque `ssh -T` funcionaba; para subir desde el asistente hace falta la credencial de `gh` (`gh auth login` ya hecho) |
 
 ### Las fases que quedan (plan aprobado)
 
@@ -505,7 +505,7 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
    - **Rojo controlado:** una clase sonda `domain.model.SondaArquitectura` con un campo `MovieDao` (violación de MOD-R02) → `Tests run: 5, Failures: 1` fallando exactamente `domainNoDependeDeNadie`. Sonda borrada después (verificado con `git status`).
    - `.\mvnw.cmd test -Dtest=ArquitecturaTest` → 5 en verde. `.\mvnw.cmd clean test` → **73 en verde**, `BUILD SUCCESS`. Commit `9ff1fdb`.
 6. Documentado: este archivo (§1: 73 tests, fase 4a ✅, siguiente acción = 4b). `arquitectura.md` y diario/temario de la fase 4 quedan para la 4d.
-7. **A demanda del alumno:** push de los commits de esta sesión (`113bcc8`, `9ff1fdb`, `ca44796`) y creación de la rama de seguridad **`backup/antes-de-monolito-modular`** en `ca44796`, subida a `origin`: el punto exacto antes de mover paquetes en la 4b. Si la modularización sale mal, `git switch backup/antes-de-monolito-modular` vuelve a la casa en orden.
+7. **A demanda del alumno:** push de los commits de esta sesión (`113bcc8`, `9ff1fdb`, `ca44796`) y creación de la rama de seguridad **`backup/antes-de-monolito-modular`** en `cc13a71` (el propio commit de ESTADO), subida a `origin`: el punto exacto antes de mover paquetes en la 4b. Si la modularización sale mal, `git switch backup/antes-de-monolito-modular` vuelve a la casa en orden.
 
 ## 5. Trabajo sin commitear
 
