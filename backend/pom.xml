@@ -17,6 +17,10 @@
 		<java.version>25</java.version>
 		<!-- springdoc 3.x es la rama para Spring Boot 4; Boot no gestiona su versión, por eso va aquí. -->
 		<springdoc.version>3.2.0</springdoc.version>
+		<!-- Jakarta DI (§3.6 de la arquitectura objetivo): @Named en casos de uso, fachada y servicio de dominio. -->
+		<jakarta-inject.version>2.0.1</jakarta-inject.version>
+		<!-- Jakarta Transactions (§3.6): @Transactional (jakarta) en los casos de uso que escriben. Última GA. -->
+		<jakarta-transaction.version>2.0.1</jakarta-transaction.version>
 		<!-- ArchUnit 1.5.x es la rama actual; soporta Java 25/26 (1.4.2 y posteriores). Boot no la gestiona. -->
 		<archunit.version>1.5.1</archunit.version>
 		<!-- Spring Modulith 2.1.x es la línea GA para Boot 4.1 (docs 2.1.1; la 2.2.0-RC1 es RC). Boot no la gestiona. -->
@@ -73,6 +77,16 @@
 		<dependency>
 			<groupId>org.springframework.modulith</groupId>
 			<artifactId>spring-modulith-starter-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.inject</groupId>
+			<artifactId>jakarta.inject-api</artifactId>
+			<version>${jakarta-inject.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.transaction</groupId>
+			<artifactId>jakarta.transaction-api</artifactId>
+			<version>${jakarta-transaction.version}</version>
 		</dependency>
 
 		<dependency>

@@ -2,6 +2,12 @@ spring:
   application:
     name: movies
 
+  # Modulith: solo son módulos los paquetes anotados con @ApplicationModule
+  # (§3.1 de la arquitectura objetivo). Así `app` (la raíz de composición) no
+  # es un módulo y puede ver todo, sin trucos tipo sharedModules.
+  modulith:
+    detection-strategy: explicitly-annotated
+
   # Lee el archivo .env de la raíz del proyecto (el mismo que usa Docker Compose).
   # "optional:" = si no existe, no falla al leerlo.
   # "[.properties]" = se interpreta con el formato CLAVE=valor.

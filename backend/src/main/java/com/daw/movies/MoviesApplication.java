@@ -2,15 +2,14 @@ package com.daw.movies;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.modulith.Modulithic;
 
 /*
- * `config` se declara módulo compartido: para Modulith, cada hijo directo del
- * paquete base es un módulo, y OpenApiConfig es transversal (toda la
- * aplicación), no un dominio de negocio (D-49). Con `catalog` anotado en su
- * package-info como @ApplicationModule, hoy solo hay un módulo real.
+ * §3.1 de la arquitectura objetivo: @SpringBootApplication en el paquete base,
+ * nada más. Los módulos (`catalog`, `ratings`) se declaran en su
+ * `package-info.java` con @ApplicationModule, y `app` (la raíz de composición)
+ * no es módulo porque solo los paquetes anotados se detectan como tales
+ * (`spring.modulith.detection-strategy = explicitly-annotated`).
  */
-@Modulithic(sharedModules = "config")
 @SpringBootApplication
 public class MoviesApplication {
 
