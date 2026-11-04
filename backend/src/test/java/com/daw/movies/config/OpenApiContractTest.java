@@ -24,14 +24,19 @@ class OpenApiContractTest {
 	private MockMvc mockMvc;
 
 	@Test
-	void apiDocsListTheFiveMovieEndpoints() throws Exception {
+	void apiDocsListTheEndpointsOfBothModules() throws Exception {
 		mockMvc.perform(get("/v3/api-docs"))
 				.andExpect(status().isOk())
+				// catalog
 				.andExpect(jsonPath("$.paths['/movies'].get").exists())
 				.andExpect(jsonPath("$.paths['/movies'].post").exists())
 				.andExpect(jsonPath("$.paths['/movies/{id}'].get").exists())
 				.andExpect(jsonPath("$.paths['/movies/{id}'].put").exists())
-				.andExpect(jsonPath("$.paths['/movies/{id}'].delete").exists());
+				.andExpect(jsonPath("$.paths['/movies/{id}'].delete").exists())
+				// ratings
+				.andExpect(jsonPath("$.paths['/movies/{movieId}/ratings'].get").exists())
+				.andExpect(jsonPath("$.paths['/movies/{movieId}/ratings'].post").exists())
+				.andExpect(jsonPath("$.paths['/ratings/{id}'].delete").exists());
 	}
 
 	@Test

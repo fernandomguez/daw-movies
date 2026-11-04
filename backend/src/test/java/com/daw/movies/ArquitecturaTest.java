@@ -55,4 +55,18 @@ class ArquitecturaTest {
 			.should().dependOnClassesThat()
 			.resideInAPackage("..controller.dto..");
 
+	/** D-50: un módulo consume otro solo por su fachada; nada de sus internals. */
+	@ArchTest
+	static final ArchRule losModulosSoloTocanLaFachadaAjena = noClasses()
+			.that().resideInAPackage("..ratings..")
+			.should().dependOnClassesThat()
+			.resideInAnyPackage("..catalog.controller..", "..catalog.domain..", "..catalog.persistence..");
+
+	/** D-50: el grafo de dependencias es direccional; catalog no conoce a ratings. */
+	@ArchTest
+	static final ArchRule catalogNoConoceARatings = noClasses()
+			.that().resideInAPackage("..catalog..")
+			.should().dependOnClassesThat()
+			.resideInAPackage("..ratings..");
+
 }
