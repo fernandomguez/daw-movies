@@ -13,6 +13,7 @@ Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el pr
 | `temario/` | Temas explicativos: **los conceptos** con ejemplos de este proyecto. Cada archivo lleva el número de la fase del plan a la que pertenece, para leerlos en orden de aprendizaje. |
 | [decisiones-tecnicas.md](decisiones-tecnicas.md) | Registro de decisiones: alternativas, elección y motivo. |
 | [glosario.md](glosario.md) | Términos nuevos explicados con lenguaje sencillo (definiciones cortas que enlazan al temario). |
+| [preguntas-monolito-modular.md](preguntas-monolito-modular.md) | Tabla de 13 preguntas para el profesor antes de la fase 4 (monolito modular), con la respuesta por rellenar. |
 | [ESTADO.md](ESTADO.md) | **Parte de situación y bitácora**: dónde estamos, qué comando toca ahora y qué se hizo en cada sesión. Se lee al empezar y se actualiza al terminar cada paso. |
 
 ## Cómo estudiar con esta guía

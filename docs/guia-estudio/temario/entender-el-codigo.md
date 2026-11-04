@@ -26,12 +26,14 @@ Una aplicación web recibe pedidos (peticiones HTTP) y devuelve platos (respuest
                   └─────────────────────────────────────────┘
 ```
 
-| En el restaurante | En el código | Paquete | Qué hace |
-|---|---|---|---|
-| El **camarero** | Controlador | `controller` | Recibe la petición HTTP, la comprueba y devuelve la respuesta |
-| El **jefe de sala** | Servicio | `domain.service` | Decide qué hay que hacer: «¿existe esa película? ¿y su director?» |
-| El **recetario** | Modelo | `domain.model` | Define qué es una `Movie`, un `Director`, un `Actor` |
-| El **almacenista** | Persistencia | `persistence` | Sabe ir a la despensa (la base de datos) a por los datos |
+
+| En el restaurante   | En el código | Paquete          | Qué hace                                                          |
+| ------------------- | ------------ | ---------------- | ----------------------------------------------------------------- |
+| El **camarero**     | Controlador  | `controller`     | Recibe la petición HTTP, la comprueba y devuelve la respuesta     |
+| El **jefe de sala** | Servicio     | `domain.service` | Decide qué hay que hacer: «¿existe esa película? ¿y su director?» |
+| El **recetario**    | Modelo       | `domain.model`   | Define qué es una `Movie`, un `Director`, un `Actor`              |
+| El **almacenista**  | Persistencia | `persistence`    | Sabe ir a la despensa (la base de datos) a por los datos          |
+
 
 > **Regla de oro:** el jefe de sala y el recetario **no saben** cómo es la puerta del restaurante ni cómo es la despensa. Dentro de `domain` no verás nunca un `import` de `controller` ni de `persistence`.
 
@@ -193,13 +195,15 @@ Construye el `MovieResponse` con el director y los actores anidados (solo `id` y
 
 ## 4. Los cinco endpoints
 
-| Método | Ruta | Qué hace | Éxito | Fallos posibles |
-|---|---|---|---|---|
-| `GET` | `/movies` | Lista todas | `200` | — |
-| `GET` | `/movies/{id}` | Una película | `200` | `404` si no existe |
-| `POST` | `/movies` | Crea una | `201` | `400` datos inválidos · `404` si el director no existe |
-| `PUT` | `/movies/{id}` | La reemplaza | `200` | `400` · `404` (película o director) |
-| `DELETE` | `/movies/{id}` | La borra | `204` (sin cuerpo) | `404` |
+
+| Método   | Ruta           | Qué hace     | Éxito              | Fallos posibles                                        |
+| -------- | -------------- | ------------ | ------------------ | ------------------------------------------------------ |
+| `GET`    | `/movies`      | Lista todas  | `200`              | —                                                      |
+| `GET`    | `/movies/{id}` | Una película | `200`              | `404` si no existe                                     |
+| `POST`   | `/movies`      | Crea una     | `201`              | `400` datos inválidos · `404` si el director no existe |
+| `PUT`    | `/movies/{id}` | La reemplaza | `200`              | `400` · `404` (película o director)                    |
+| `DELETE` | `/movies/{id}` | La borra     | `204` (sin cuerpo) | `404`                                                  |
+
 
 ### El recorrido de un `POST /movies`
 
@@ -256,11 +260,13 @@ Al contrato del dominio se le llama **puerto** y a la clase que lo cumple, **ada
 
 ### 5.3 ¿Por qué dos capas finas: Repositorio y DAO?
 
-| | Repositorio | DAO |
-|---|---|---|
-| Habla en lenguaje de… | el negocio («guardar una película») | las tablas («insertar una fila») |
-| Dónde está su interfaz | `domain` | `persistence` |
-| Hoy | pasa la llamada al DAO | contiene el SQL |
+
+|                        | Repositorio                         | DAO                              |
+| ---------------------- | ----------------------------------- | -------------------------------- |
+| Habla en lenguaje de…  | el negocio («guardar una película») | las tablas («insertar una fila») |
+| Dónde está su interfaz | `domain`                            | `persistence`                    |
+| Hoy                    | pasa la llamada al DAO              | contiene el SQL                  |
+
 
 Hoy el repositorio es un simple «pasamanos». Se mantiene porque separa **lo que el dominio necesita** de **cómo se consigue**. Si mañana hay otro DAO (por ejemplo, para una API externa), el servicio no se entera.
 
@@ -306,12 +312,14 @@ Se ve de un vistazo qué necesita la clase, y en un test se le puede pasar un re
 
 ### 5.8 ¿Por qué JDBC y no JPA?
 
-| | JDBC (`JdbcTemplate`) | JPA / Hibernate |
-|---|---|---|
-| El SQL | lo escribes tú, a la vista | lo genera la herramienta |
-| Código | más | menos |
-| «Magia» | poca | mucha |
-| Para aprender | ves qué pasa en la base | se oculta |
+
+|               | JDBC (`JdbcTemplate`)      | JPA / Hibernate          |
+| ------------- | -------------------------- | ------------------------ |
+| El SQL        | lo escribes tú, a la vista | lo genera la herramienta |
+| Código        | más                        | menos                    |
+| «Magia»       | poca                       | mucha                    |
+| Para aprender | ves qué pasa en la base    | se oculta                |
+
 
 Es la decisión **D-48**: primero entender el SQL; la «magia» vendría después.
 
@@ -362,14 +370,16 @@ El dominio lanza excepciones que **no saben nada de HTTP**. Una sola clase las t
 
 ## 8. Deuda reconocida (lo que no es perfecto)
 
-| Cosa | Qué pasa | Por qué lo aceptamos |
-|---|---|---|
-| **N+1 consultas** | `findAll` lanza 1 consulta + 1 por cada película para sus actores. Con 10 películas, 11 consultas | Es sencillo de leer; se optimizaría con un `JOIN` único si hiciera falta |
-| **`create` relee la película** | Guarda y vuelve a leer: una consulta extra. Si no la encuentra, lanza `IllegalStateException` (un `500`, no un `404`: no es culpa del cliente) | Devuelve la película completa con muy poco código |
-| **`domain` usa Spring** | `MovieServiceImpl` lleva `@Service` y `@Transactional` | Práctico y habitual; es una «impureza» reconocida |
-| **Errores sin tratar** | Un fallo de base de datos o un `IllegalArgumentException` del modelo dan `500` | Un JSON mal formado, un id como `/movies/abc` y un `Content-Type` incorrecto **ya están tratados** (400 / 415) |
-| **El modelo no valida año ni duración** | `new Movie("Alien", -5, -5, director)` compila | Lo comprueban el DTO (año entre 1888 y el año actual + 10, duración > 0) y los `CHECK` de la base |
-| **Reparto de solo lectura** | La API no permite añadir actores a una película | No se pidió |
+
+| Cosa                                    | Qué pasa                                                                                                                                       | Por qué lo aceptamos                                                                                           |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **N+1 consultas**                       | `findAll` lanza 1 consulta + 1 por cada película para sus actores. Con 10 películas, 11 consultas                                              | Es sencillo de leer; se optimizaría con un `JOIN` único si hiciera falta                                       |
+| **`create` relee la película**          | Guarda y vuelve a leer: una consulta extra. Si no la encuentra, lanza `IllegalStateException` (un `500`, no un `404`: no es culpa del cliente) | Devuelve la película completa con muy poco código                                                              |
+| **`domain` usa Spring**                 | `MovieServiceImpl` lleva `@Service` y `@Transactional`                                                                                         | Práctico y habitual; es una «impureza» reconocida                                                              |
+| **Errores sin tratar**                  | Un fallo de base de datos o un `IllegalArgumentException` del modelo dan `500`                                                                 | Un JSON mal formado, un id como `/movies/abc` y un `Content-Type` incorrecto **ya están tratados** (400 / 415) |
+| **El modelo no valida año ni duración** | `new Movie("Alien", -5, -5, director)` compila                                                                                                 | Lo comprueban el DTO (año entre 1888 y el año actual + 10, duración &gt; 0) y los `CHECK` de la base           |
+| **Reparto de solo lectura**             | La API no permite añadir actores a una película                                                                                                | No se pidió                                                                                                    |
+
 
 ---
 
@@ -385,30 +395,38 @@ El dominio lanza excepciones que **no saben nada de HTTP**. Una sola clase las t
 
 **1. ¿Qué trabajo tiene cada capa?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 `controller`: recibir la petición HTTP, validarla y devolver la respuesta. `domain`: las reglas y los casos de uso del negocio. `persistence`: hablar con la base de datos.
+
 </details>
 
 **2. ¿Por qué `domain` no importa nada de `controller` ni de `persistence`?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Porque el negocio debe poder existir sin saber cómo se le llama ni dónde se guarda. Si dependiera de ellas, cambiar la puerta (HTTP) o la despensa (la base) obligaría a tocar el negocio.
+
 </details>
 
 **3. ¿Qué es la inversión de dependencias y dónde se aplica aquí?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Que el código de alto nivel dependa de una **interfaz** y no de una clase concreta. Se aplica en dos sitios: `MovieServiceImpl` usa la interfaz `MovieRepository` (no `MovieRepositoryImpl`), y `MovieRepositoryImpl` usa la interfaz `MovieDao` (no `MovieDaoJdbc`).
+
 </details>
 
 **4. ¿Por qué `MovieNotFoundException` no devuelve directamente un 404?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Porque el dominio no debe saber de HTTP. La excepción dice «no existe esa película»; el `GlobalExceptionHandler`, que está en la capa de la puerta, decide que eso se traduce en `404`.
+
 </details>
 
 **5. ¿Qué devuelve `findById` del repositorio y por qué?**
@@ -420,72 +438,92 @@ Un `Optional<Movie>`: puede contener la película o estar vacío. Obliga a decid
 
 **6. ¿Para qué sirve un `RowMapper`?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details" open>
+<summary>Respuesta</summary>
 
 Para convertir **una fila** del resultado SQL en **un objeto Java** (por ejemplo, una fila de `movie` + `director` en un `Movie`). Se llama una vez por cada fila.
+
 </details>
 
 **7. ¿Por qué `MovieRequest` usa `Integer` en lugar de `int`?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details" open>
+<summary>Respuesta</summary>
 
 Porque un `int` nunca es `null`: si el JSON no trae el campo, valdría `0` y no se detectaría. Con `Integer` el campo ausente es `null` y `@NotNull` lo rechaza con un `400`.
+
 </details>
 
 **8. ¿Qué pasa si hago `POST /movies` con un `directorId` que no existe?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 La validación del cuerpo pasa (es un número positivo). El servicio busca el director, no lo encuentra y lanza `DirectorNotFoundException`. El `GlobalExceptionHandler` la convierte en `404`. No se inserta nada.
+
 </details>
 
 **9. En `PUT /movies/9999` con un director también inexistente, ¿qué error recibo y por qué?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Un `404` por la **película**. El servicio comprueba primero que la película existe y solo después busca el director; la primera excepción que se lanza es la que sale.
+
 </details>
 
 **10. ¿Qué es el problema N+1 y dónde está en este código?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Hacer 1 consulta para traer la lista y luego N consultas más, una por elemento. Está en `MovieDaoJdbc.findAll`: una consulta para las películas y otra por cada película para sus actores. Con 10 películas son 11 consultas.
+
 </details>
 
 **11. ¿Por qué hay Repositorio y DAO si el repositorio solo pasa la llamada?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Porque el repositorio es el **puerto del dominio** (lenguaje del negocio) y el DAO es la **implementación de acceso a datos** (lenguaje de tablas). Aunque hoy sea un pasamanos, aísla al servicio de cómo se consiguen los datos.
+
 </details>
 
 **12. Si mañana cambiamos MariaDB por otra base de datos, ¿qué clases tocarías?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Solo las de `persistence`: sobre todo `MovieDaoJdbc` (el SQL) y, si hiciera falta, el controlador de base de datos y las migraciones. El controlador, el servicio y el modelo no cambian.
+
 </details>
 
 **13. ¿Por qué `getActors()` devuelve una copia inmutable?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Para que nadie de fuera pueda modificar el reparto saltándose `addActor`. Quien quiera añadir un actor tiene que pasar por el método que controla el modelo.
+
 </details>
 
 **14. ¿Qué diferencia hay entre `MovieRequest` y `MovieResponse`?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 `MovieRequest` es el JSON que **entra** (4 campos con validaciones, con `directorId`). `MovieResponse` es el JSON que **sale** (con `id` y el director y los actores anidados). Son distintos a propósito: la entrada pide menos de lo que la salida muestra.
+
 </details>
 
 **15. ¿Qué hace `@Transactional` en el servicio y por qué importa en `create`?**
 
-<details><summary>Respuesta</summary>
+<details class="orca-details">
+<summary>Respuesta</summary>
 
 Agrupa las operaciones del caso de uso en una transacción: o se completan todas o se deshacen todas. En `create` hay varias (buscar director, insertar, releer); si una falla, no queda nada a medias en la base.
+
 </details>
 
 ---

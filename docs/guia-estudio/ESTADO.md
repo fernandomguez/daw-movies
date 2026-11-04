@@ -36,7 +36,7 @@ Plan completo: `C:\Users\ferna\.claude\plans\vamos-a-cambiar-el-drifting-pond.md
 
 ### La siguiente acción, exacta
 
-1. **Fase 1c** (limpieza de los restos de docs; ver la tabla) y/o **fase 4a** (`test: add ArchUnit layer rules`, antes de mover ningún paquete). Verificar antes la versión de ArchUnit y de Spring Modulith para Spring Boot 4.
+1. **Antes de la fase 4:** el alumno lleva al profesor las [preguntas sobre el monolito modular](preguntas-monolito-modular.md) (13 preguntas en tabla, con la columna «Respuesta» vacía); sus respuestas se anotan ahí y en D-49. Después, **fase 1c** (limpieza de los restos de docs; ver la tabla) y/o **fase 4a** (`test: add ArchUnit layer rules`, antes de mover ningún paquete). Verificar antes la versión de ArchUnit y de Spring Modulith para Spring Boot 4.
 2. Para subir cambios desde el asistente: `origin` es HTTPS; el `git push` normal funciona con `git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin main` (el SSH de Git falló en la sesión del 2026-11-04). Desde tu terminal, `git push` también debería valer.
 3. **No se empieza ninguna fase sin que el alumno lo pida.**
 
