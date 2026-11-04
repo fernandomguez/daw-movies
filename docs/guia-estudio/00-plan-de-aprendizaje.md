@@ -2,6 +2,7 @@
 
 > **Estado:** aprobado el 2026-10-19. Revisado el 2026-10-20: dominio con anotaciones JPA y `@Service` (D-19, D-29); la fase 13 se elimina.
 > **Revisado el 2026-10-28** tras leer el temario del profesor ([DWS](https://cesguiro.es/doku.php/clase/daw/dws/start)): se añade la fase 15A (API First), el paso 18.5 (`ProblemDetail`), el 14.6 (`open-in-view`) y el Bloque F (fases 25–29). El proyecto es un **monolito clásico en capas** y pasará a modular **solo si la aplicación lo requiere** (D-45). La fase 10 adopta *value objects* (D-46).
+> **Giro del 2026-11-04:** el profesor no quiere *value objects* (D-46 revocada) y el proyecto pasó de JPA a una **arquitectura por capas con JDBC** (DAO + `JdbcTemplate`, D-48). Las fases JPA 11 a 14 y la 15A original quedan **superadas o replanteadas** (marcadas abajo, sin borrar) y se añaden las fases 30 a 34 (bloque G). El resto del documento conserva la historia; lo marcado con (histórico) ya no refleja el código.
 > **Regla de trabajo:** solo trabajamos en el siguiente paso pendiente. No se avanza sin confirmación explícita.
 
 Leyenda: 🔴 imprescindible · 🟡 recomendable · ⚪ opcional
@@ -118,16 +119,20 @@ Depende de: 8.
 ## Bloque C — Java y persistencia
 
 ### Fase 10 🔴 Modelo de dominio
+> **Replanteada el 2026-11-04:** los pasos 10.2 y 10.3 (*value objects*) quedan **superados** (D-46 revocada) y el 10.4 se reescribió con tipos simples y sin constructor protegido para JPA. Ver el [diario](10-modelo-de-dominio.md#giro-del-2026-11-04).
+
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 10.1 Modelo anémico vs. rico | Datos frente a datos + comportamiento | Elección justificada para nuestro problema |
-| 10.2 *Value objects*: qué son y cuáles necesitamos | Tipos propios frente a primitivos (*primitive obsession*); reglas alineadas con el esquema (D-46) | Diseño de `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` |
-| 10.3 *Value objects* con TDD | Test en rojo primero; constructor compacto que valida | Los seis `record` con sus tests |
-| 10.4 Entidades y relaciones | `Director`, `Actor` y `Movie` con los *value objects*, getters y constructor protegido para JPA (D-29); relaciones unidireccionales | Clases de dominio |
+| ~~10.2~~ *(superado)* *Value objects*: qué son y cuáles necesitamos | Tipos propios frente a primitivos (*primitive obsession*); reglas alineadas con el esquema (D-46) | Diseño de `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` |
+| ~~10.3~~ *(superado)* *Value objects* con TDD | Test en rojo primero; constructor compacto que valida | Los seis `record` con sus tests |
+| 10.4 Entidades y relaciones | `Director`, `Actor` y `Movie` con tipos simples y getters; relaciones unidireccionales (reescrito el 2026-11-04) | Clases de dominio |
 
 Depende de: 5, 3.
 
-### Fase 11 🔴 Fundamentos de JPA y entidades
+### ~~Fase 11 🔴 Fundamentos de JPA y entidades~~ — Superada (D-48, 2026-11-04)
+> El proyecto usa JDBC, no JPA. Se conserva la tabla como historia; el tema queda como teoría en [temario/11](temario/11-introduccion-jpa.md).
+
 Punto de partida: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.md).
 
 | Paso | Concepto | Resultado esperado |
@@ -141,7 +146,9 @@ Punto de partida: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.m
 
 Depende de: 8, 10.
 
-### Fase 12 🔴 Repositorios y adaptadores de persistencia
+### Fase 12 🔴 Repositorios y adaptadores de persistencia — Replanteada (D-48)
+> **Replanteada:** el puerto `MovieRepository` (12.2) y la inyección (12.5) **se mantienen**; en lugar de Spring Data JPA (12.3) hay un **DAO JDBC** (`MovieDao` + `MovieDaoJdbc` con `JdbcTemplate`) y `MovieRepositoryImpl` hace de adaptador (12.4). Las filas de abajo son la versión original *(histórico)*.
+
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 12.1 DAO frente a Repositorio | Acceso a datos pensado desde la tabla vs. desde el dominio | Elección justificada (avance en [temario/05](temario/05-arquitectura-tres-capas-dip.md), sección 10) |
@@ -155,7 +162,9 @@ Depende de: 11.
 ### ~~Fase 13 Mapeos entre persistencia y dominio~~ — Eliminada (D-29, 2026-10-20)
 Con las anotaciones JPA en las clases del dominio ya no existen `MovieEntity` ni `MovieEntityMapper`, así que no hay nada que mapear entre persistencia y dominio. Los conceptos de mapeo (campos copiados, calculados y omitidos) se estudian en la fase 15 con el mapper dominio → DTO. La comparación con la entidad separada se ve en el paso 11.2.
 
-### Fase 14 🔴 Consultas de información relacionada y problemas habituales
+### ~~Fase 14 🔴 Consultas de información relacionada y problemas habituales~~ — Superada (D-48)
+> Los conceptos de Hibernate (logs de SQL, `JOIN FETCH`, `LazyInitializationException`, `open-in-view`) no aplican a JDBC. Queda vigente la idea del **problema N+1**, que se estudia con JDBC (ver fase 30).
+
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
 | 14.1 Ver el SQL que genera Hibernate | Logs de SQL | Consultas visibles |
@@ -178,7 +187,9 @@ Depende de: 12.
 
 Depende de: 12.
 
-### Fase 15A 🟡 API First: el contrato antes del código
+### Fase 15A 🟡 API First: el contrato antes del código — Replanteada
+> **Replanteada el 2026-11-04:** el contrato OpenAPI y Swagger UI (D-47) se hicieron como estaban previstos, pero la parte de Swagger se vuelve a tratar en la fase 33 sobre el código real. Lo escrito abajo es el plan original.
+
 Se inserta entre la 15 y la 16 sin renumerar el resto, para no invalidar las referencias a las fases 16–24.
 **Adelantada el 2026-10-28** (15A.1 y 15A.2) a petición del alumno, para poder ver la interfaz de los endpoints: [diario 15A](15A-api-first.md). No depende de la fase 15: las rutas ya estaban decididas en D-36.
 
@@ -271,7 +282,21 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 ### Fase 29 ⚪ Serverless: lambda local
 **No encaja en este proyecto**: nuestra API es un servidor HTTP permanente, no una función por evento. Se haría como ejercicio aparte con SAM o Docker, sin tocar el repositorio. Se anota para que la cobertura del temario quede completa, no para hacerlo aquí.
 
+## Bloque G — Fases nuevas tras el giro a JDBC (2026-11-04)
+
+Añadido tras el cambio de rumbo (D-48). Ya existe el código del paso 0 (controlador, servicio, repositorio, DAO JDBC, `MovieRequest`, mapper y manejador de excepciones) con 23 tests en verde. Las fases se **detallarán cuando toque** cada una; aquí solo el índice.
+
+| Fase | Contenido | Prioridad |
+|---|---|---|
+| 30. Entender el código | Recorrer una petición de `MovieController` a MariaDB y volver; `JdbcTemplate`, `RowMapper`, DAO frente a repositorio, el problema N+1 en `findAll` | 🔴 |
+| 31. Tests | Tests del servicio (con un repositorio simulado), del DAO y del controlador; revisión de qué cubre cada uno | 🔴 |
+| 32. Skill del proyecto | Escribir una *skill* (carpeta `skills`, ver `base-standards.md`) con las convenciones de capas | 🟡 |
+| 33. Swagger | Revisar springdoc y el contrato `openapi.yaml` contra el código real (retoma 15A.3) | 🟡 |
+| 34. Monolito modular `catalog` | Reorganizar en un módulo `catalog` (retoma la fase 25 con el código nuevo) | 🟡 |
+
 ## Mapa de dependencias (resumen)
+
+*(Mapa original, histórico: las fases 11 a 14 están superadas; ver el bloque G.)*
 
 ```
 1 → 2 → 3 ─┬→ 4 ─┐
@@ -294,9 +319,9 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 |---|---|---|
 | DWS 01 Arquitecturas | 5, 25 | 🟡 capas hechas; modular en 25 |
 | DWS 02 API First | 15A | 🟡 contrato y Swagger UI hechos (D-47); falta implementarlo (fase 16) y 15A.3 |
-| DWS 03 Validación e invariancias | 10.2–10.3, 18.2, 18.5 | ✅ *value objects* adoptados (D-46) |
+| DWS 03 Validación e invariancias | 18.2, 18.5 | 🟡 Jakarta Validation en `MovieRequest`; sin *value objects* (D-46 revocada) |
 | DWS 04 Monolito modular y Modulith | 25 | ⏳ añadida |
-| DWS 05 Persistencia JPA | 11–14, 19 | 🟡 entidad = dominio (D-29), sin MapStruct |
+| DWS 05 Persistencia JPA | 11–14 (superadas), 19 | 🟠 el proyecto usa JDBC/DAO (D-48); JPA queda como teoría |
 | DWS 06 JWT y 07 Spring Security | 24 | ⏳ recomendable |
 | DWS 08 Eventos y mensajería | 26 | ⏳ añadida |
 | DWS 09 Logs e instrumentación | 27 | ⏳ añadida |
@@ -308,4 +333,4 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 | Prog 11 Hilos en Tomcat | 28 | ⏳ |
 | Prog 12 Login con tokens | 24 | ⏳ |
 
-**Nota sobre *value objects*:** el profesor los pide y se adoptan en la fase 10 (D-46): `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` son `record` con constructor compacto. El coste llega en la fase 11 (`AttributeConverter` y `@Embeddable`).
+**Nota sobre *value objects* (histórico):** el profesor los pidió y se adoptaron en la fase 10 (D-46), pero el 2026-11-04 indicó que no los quiere y la decisión se revocó. El dominio usa tipos simples y las reglas de entrada están en `MovieRequest` con Jakarta Validation.

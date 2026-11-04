@@ -338,7 +338,17 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 3. Docker Desktop estaba cerrado: `Start-Process` + espera; `docker compose up -d --wait` → `movies-mariadb-1` **healthy** en el 3307.
 4. `.\mvnw.cmd clean test` → **23 tests en verde** (`DatabaseConnectionTests` 1, `ActorTest` 6, `DirectorTest` 6, `MovieTest` 8, `FlywayMigrationTests` 1, `MoviesApplicationTests` 1), `BUILD SUCCESS`. No hay tests de controller, service ni DAO.
 
-**Siguiente:** paso 1 (revisar y entender el código), cuando el alumno lo pida.
+**Paso 1 (en curso, tres agentes en paralelo + ajustes del alumno):**
+1. Tests nuevos de `MovieServiceImpl` (Mockito) y `MovieController` (`@WebMvcTest`); `pom.xml` gana `spring-boot-starter-webmvc-test` (en Boot 4 `@WebMvcTest` ya no viene en `spring-boot-starter-test`).
+2. `docs/arquitectura.md` reescrito con la arquitectura real; D-48 añadida; D-29 marcada como superada. D-20 sin marcar (decisión pendiente).
+3. Temarios 10 y 11, diario 10, plan (fases 30–34), glosario y READMEs adaptados al giro (value objects y JPA marcados como históricos).
+4. Nuevo temario [entender-el-codigo.md](temario/entender-el-codigo.md) (recorrido de una petición, esquemas y 15 preguntas).
+5. Ajustes pedidos por el alumno, con TDD (rojo: 5 fallos + 1 error; verde): `@MaxYearsAhead(10)` en el año de `MovieRequest`; `create`/`update` lanzan `IllegalStateException` (500) y no `MovieNotFoundException` al releer; el `GlobalExceptionHandler` trata JSON mal formado (400), id no numérico (400) y `Content-Type` incorrecto (415).
+6. `.\mvnw.cmd clean test` → **55 tests en verde** (19 controlador, 13 servicio, 6+6+8 modelo, 3 de integración), `BUILD SUCCESS`.
+
+**Pendiente de revisar (informe de los agentes):** swagger/`openapi.yaml` ya no existen (se retoma en la fase 33); `temario/05` sección 11, `temario/15A` y diarios 05–07 y 15A siguen con referencias antiguas; glosario con `Puerto` duplicado.
+
+**Siguiente:** revisar los cambios de los agentes y comitear por temas (con confirmación del alumno).
 
 ## 5. Trabajo sin commitear
 

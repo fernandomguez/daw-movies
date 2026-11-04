@@ -1,7 +1,10 @@
 # 11 — Introducción a JPA
 
-> **Fase del plan:** 11 (Fundamentos de JPA y entidades).
-> **Estado:** introducción conceptual, explicada por adelantado en la fase 1. Actualizada el 2026-10-20: las anotaciones JPA van en las clases del dominio (`Director`, `Movie`, `Actor`), sin entidades separadas (D-29). El código de este tema es **ilustrativo**: todavía no existe en el proyecto. **Ampliado el 2026-10-31** (sesión del paso 10.4) con el recorrido fila ↔ objeto, el reparto de responsabilidades JPA/Hibernate/Spring Boot/Spring Data, *dirty checking* y una guía de búsqueda. Se completará con el código real en la fase 11.
+> **AVISO (2026-11-04): este tema es teórico. El proyecto NO usa JPA.**
+> Tras el cambio de rumbo (D-48), la persistencia se hace con **JDBC**: un DAO (`MovieDao` / `MovieDaoJdbc`) con `JdbcTemplate`, detrás del puerto `MovieRepository`. No hay `@Entity`, ni Hibernate, ni Spring Data JPA, ni `AttributeConverter` en el código. Las fases JPA 11 a 14 del plan quedaron superadas.
+> Se conserva como **tema de teoría** (JPA es muy usado en el mundo real y conviene conocerlo) y como comparación con lo que sí hacemos. Todo el código de abajo es **ilustrativo** y no existe en el repositorio. Las referencias a *value objects* y *converters* que aparecían aquí se han quitado o marcado como histórico (D-46 revocada).
+>
+> Para ver cómo se hace en este proyecto, mira el [tema 10](10-modelo-de-dominio.md) (sección «El dominio y la persistencia hoy») y el tema 05.
 
 ## Objetivo
 
@@ -22,12 +25,12 @@ Tabla director
 
 ```java
 Director nolan = new Director(
-        new PersonName("Christopher", "Nolan"),
-        new BirthDate(LocalDate.of(1970, 7, 30)),
+        "Christopher", "Nolan",
+        LocalDate.of(1970, 7, 30),
         null);                      // sin biografía
 ```
 
-El `id` no se pasa al constructor: lo asigna la base al guardar (por eso `getId()` es `null` hasta entonces). Los datos no son `String` sueltos sino *value objects* (fase 10, D-46): ahí está el reto que resolverá la fase 11.
+El `id` no se pasa al constructor: lo asigna la base al guardar (por eso `getId()` es `null` hasta entonces). El reto es siempre el mismo: pasar de la fila al objeto y del objeto a la fila. JPA lo automatiza; en este proyecto lo hacemos a mano con JDBC (ver más abajo).
 
 ### Cómo sería sin JPA
 
@@ -65,7 +68,7 @@ public class Director {
 
 Al pedir "dame el director 1", JPA genera el `SELECT`, lee la fila y devuelve un objeto `Director` relleno con los datos de Nolan.
 
-> **Simplificación didáctica.** Este ejemplo usa `String` y `LocalDate` para ver solo la idea de las anotaciones. El `Director` real (paso 10.4) guarda `PersonName name`, `BirthDate birthDate` y `Biography biography`, y JPA no sabe guardar esos tipos por sí solo: hace falta un `AttributeConverter` (un valor → una columna: `Title`, `BirthDate`…) o `@Embeddable` (un valor → varias columnas: `PersonName`). Es el coste de D-46, y se paga en la fase 11.
+> **Ilustrativo.** Este código **no está en el proyecto**: el `Director` real es una clase sin anotaciones y la fila se convierte en objeto con un `RowMapper` de `JdbcTemplate`.
 
 A este tipo de herramienta se le llama **ORM** (*Object-Relational Mapping*): traduce entre **objetos** y tablas **relacionales**.
 
@@ -83,7 +86,7 @@ En nuestro proyecto, Spring Boot 4.1.1 trae **Hibernate 7.4.5**, que implementa 
 
 ## 4. Las relaciones de nuestro proyecto en SQL y en JPA
 
-Las relaciones que diseñaremos en SQL (fase 3) tienen su equivalente en JPA (fase 11):
+Las relaciones que diseñaremos en SQL (fase 3) tienen su equivalente en JPA (ilustrativo):
 
 | En la base de datos | En JPA | Significado |
 |---|---|---|
@@ -121,16 +124,18 @@ Por ejemplo, con estos datos, cargar *Inception* daría un `Movie` cuyo `directo
 ## 5. Dos reglas de este proyecto
 
 1. **JPA no crea nuestras tablas.** Las crea **Flyway** con SQL que escribimos nosotros. JPA solo lee y escribe datos. Por eso configuraremos Hibernate para que **no modifique el esquema** (`ddl-auto` en `none` o `validate`).
-2. **Las anotaciones JPA van en las clases del dominio** (D-29). `Director` es a la vez el modelo de negocio y la entidad JPA: no hay una `Director` separada ni un mapper entre las dos. Se diseña primero pensando en el negocio (fase 10) y en la fase 11 se le añaden las anotaciones. Lo que **no** sale nunca de la API es la entidad: el JSON se construye con DTOs (fase 15).
+2. *(Histórico, superado por D-48.)* La decisión D-29 era poner las anotaciones JPA en las clases del dominio. **Ya no se aplica**: el dominio es Java puro y la persistencia usa JDBC. Lo que sigue siendo cierto: la entidad nunca sale por la API; el JSON se construye con DTOs.
 
-## 6. ¿Por qué JPA va en la fase 11 y no antes?
+## 6. ¿Por qué JPA iba en la fase 11 y no antes? (histórico)
+
+> Las fases JPA se replantearon (D-48); el razonamiento sigue siendo útil para estudiar JPA.
 
 - Primero entendemos las tablas y las relaciones con **SQL puro** (fases 3, 8 y 9). Así, JPA solo será aprender a *describir en Java* algo que ya conocemos, y no "magia".
 - Primero diseñamos el **dominio** (fase 10), para no acabar copiando la estructura de las tablas en nuestro modelo de negocio. Después le añadimos las anotaciones JPA, adaptando lo mínimo.
 
-## 7. El viaje de una fila a un objeto (con nuestro diseño)
+## 7. El viaje de una fila a un objeto (con JPA, ilustrativo)
 
-Con `Movie` anotada (fase 11) y el repositorio (fase 12), esta llamada:
+Si `Movie` estuviera anotada y hubiera un repositorio de Spring Data (no es el caso aquí), esta llamada:
 
 ```java
 Movie movie = movieRepository.findById(3L).orElseThrow();
@@ -146,19 +151,14 @@ SELECT id, title, release_year, duration_minutes, director_id
 FROM movie WHERE id = 3;
 ```
 
-3. **Crea el objeto vacío** con el constructor `protected` y **rellena los campos por reflexión**.
-4. **Cada campo pasa por su converter**:
-
-```java
-movie.title = titleConverter.convertToEntityAttribute("Inception");  // new Title("Inception")
-```
-
+3. **Crea el objeto vacío** con un constructor sin argumentos y **rellena los campos por reflexión**.
+4. **Convierte cada columna** al tipo del campo (texto a `String`, fecha a `LocalDate`...).
 5. **Carga las relaciones**: el director con otro `SELECT` (o un `JOIN`, según la configuración) y, si se piden, los actores a través de `movie_actor`.
-6. **Devuelve un `Movie` del dominio**, con sus *value objects* reales. No hay `MovieEntity` ni copia intermedia.
+6. **Devuelve un `Movie`**. No hay `MovieEntity` ni copia intermedia.
 
-Al guardar, el camino es el inverso: el converter traduce cada valor a columna y Hibernate genera el `INSERT`/`UPDATE` con parámetros.
+Al guardar, el camino es el inverso: Hibernate genera el `INSERT`/`UPDATE` con parámetros.
 
-**La consecuencia práctica:** el objeto que sale del repositorio ya es el del dominio. Puedes llamar a `movie.getDirector().fullName()` sin mapear nada, y Hibernate "vigila" los cambios del objeto (*dirty checking*): si cambias algo dentro de una transacción, genera el `UPDATE` al cerrar sin necesidad de `save`.
+**La consecuencia práctica (con JPA):** el objeto que sale del repositorio ya es el del dominio. Puedes llamar a `movie.getDirector().fullName()` sin mapear nada, y Hibernate "vigila" los cambios del objeto (*dirty checking*): si cambias algo dentro de una transacción, genera el `UPDATE` al cerrar sin necesidad de `save`.
 
 ## 8. Qué escribes tú y qué no se ve
 
@@ -174,10 +174,9 @@ Son cuatro piezas, no una:
 | Tú escribes | Lo hace el framework |
 |---|---|
 | Anotaciones en las clases | Construir el mapa clase ↔ tabla |
-| Los converters | Llamarlos en cada lectura/escritura |
-| La interfaz del repositorio (fase 12) | Implementarla en tiempo de ejecución |
-| Servicio y controladores (fase 16) | Abrir/cerrar conexión, sesión y transacción |
-| Consultas cuando no basta (fase 14) | Convertir el resultado en objetos |
+| La interfaz del repositorio | Implementarla en tiempo de ejecución |
+| Servicio y controladores | Abrir/cerrar conexión, sesión y transacción |
+| Consultas cuando no basta | Convertir el resultado en objetos |
 | Migraciones SQL (fase 8, ya hechas) | Crear tablas: eso es **Flyway**, no Hibernate |
 
 **Hoy** Hibernate arranca pero no mapea nada: en los logs de los tests aparece `Initialized JPA EntityManagerFactory` y `Found 0 JPA repository interfaces`. En cuanto existan entidades y repositorios, empezará a generar SQL.
@@ -214,13 +213,12 @@ El tema se llama **ORM** (*Object-Relational Mapping*) o **mapeo objeto-relacion
 | Las tres piezas | `JPA vs Hibernate diferencia` |
 | El mapeo | `Spring Boot JPA entidades @Entity @Id @Column` |
 | El repositorio | `Spring Data JPA repositorio findById` |
-| Los converters | `JPA AttributeConverter ejemplo` |
 | Las relaciones | `JPA @ManyToOne @ManyToMany JoinTable` |
 | Lo que no se ve | `Hibernate entity lifecycle explained` / `ciclo de vida de una entidad JPA` |
 
 Tres avisos:
 
-1. **Casi todos los tutoriales usan entidad separada + mapper.** Verás `MovieEntity`, Lombok y clases `Mapper`. Es el diseño alternativo a D-29, no el nuestro.
+1. **Casi todos los tutoriales de JPA usan entidad separada + mapper.** Verás `MovieEntity`, Lombok y clases `Mapper`. Nada de eso se usa en este proyecto.
 2. **Mira la fecha y los imports.** Si usan `javax.persistence`, son anteriores a 2022; el proyecto usa `jakarta.persistence` (Spring Boot 3+).
 3. **No busques "inyectar SQL en Java"**: el término correcto es ORM o mapeo objeto-relacional.
 
@@ -244,3 +242,6 @@ JPA es la especificación (las reglas y anotaciones); Hibernate es la implementa
 
 **¿Por qué no dejamos que Hibernate cree las tablas?**
 Porque el esquema lo gestionamos con migraciones de Flyway versionadas; si Hibernate también lo modificara, habría dos responsables del mismo esquema y perderíamos el control de los cambios.
+
+**¿Qué hacemos en este proyecto en lugar de JPA?**
+Usamos JDBC con un DAO: `MovieDaoJdbc` ejecuta el SQL con `JdbcTemplate` y convierte cada fila en objeto con un `RowMapper`; `MovieRepositoryImpl` adapta el DAO al puerto `MovieRepository` del dominio (D-48). Se escribe más código a mano, pero se ve cada consulta y no hay magia.

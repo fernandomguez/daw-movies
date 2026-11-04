@@ -1,5 +1,7 @@
 # Fase 10 — Modelo de dominio
 
+> **Aviso (2026-11-04):** los pasos 10.2, 10.3 y 10.4 de este diario describen una versión con *value objects* y con JPA que fue **superada**. Lo que sigue vigente y por qué está en la sección final [Giro del 2026-11-04](#giro-del-2026-11-04). El texto antiguo se conserva como historia.
+>
 > Estado: **completa** (2026-10-28 a 2026-10-31). Conceptos: [temario/10-modelo-de-dominio.md](temario/10-modelo-de-dominio.md).
 
 ## En pocas palabras
@@ -316,3 +318,47 @@ No se guardan en la base (fases 11 y 12), no comprueban que el director exista (
 ## Siguiente paso
 
 **Fase 11, paso 11.1** (qué es JPA y qué es Hibernate), cuando el alumno lo pida. La fase 10 queda cerrada.
+
+---
+
+## Giro del 2026-11-04
+
+> Esta sección se añade al final y **no borra nada** de lo anterior: el diario cuenta lo que se hizo en su día, y esto cuenta por qué cambió.
+
+### Qué pasó
+
+El profesor indicó que **no quiere *value objects*** en el proyecto. Al revisar el código a la vez, el proyecto dejó de ser «dominio con anotaciones JPA» y pasó a una **arquitectura por capas con JDBC**. Piensa en una casa en obras: los cimientos (Docker, Flyway, el esquema) se quedan; cambian las paredes del dominio y la persistencia.
+
+### Qué queda superado
+
+| Antes (diario) | Ahora |
+|---|---|
+| Paso 10.2: seis *value objects* (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`) | **Superado.** D-46 revocada. |
+| Paso 10.3: los seis `record` con TDD y la clase `Texts` | **Superado.** Se eliminaron. |
+| Paso 10.4: entidades con *value objects* y `protected Director()` para JPA | **Superado.** Se reescribieron con tipos simples y sin constructor vacío. |
+| «55 tests en verde» | Quedan **23** (los de los *value objects* se fueron con ellos; los de las entidades se reescribieron). |
+| D-29: el dominio es también la entidad JPA | **Superada** (ver D-48). No hay JPA. |
+
+### Qué queda vigente
+
+- La decisión D-44: modelo **rico moderado**, sin setters, `fullName()` calculado, biografía opcional (D-37).
+- La idea de **invariante** y la diferencia entre validación de entrada y regla de dominio.
+- Las relaciones unidireccionales (`Movie` conoce a su director y a su reparto) y que `getActors()` devuelva una copia inmutable.
+- Que `Director` y `Actor` sean clases separadas (D-11).
+- Que las entidades no tengan `equals`/`hashCode` todavía.
+
+### Cómo es el dominio ahora
+
+- `Movie`, `Director` y `Actor` usan `String`, `int`, `LocalDate` y `Long`.
+- El constructor solo comprueba que no falte lo imprescindible (por ejemplo, título y director no `null`).
+- Un segundo constructor, con `id`, sirve para reconstruir la entidad desde una fila.
+- Las reglas de entrada (título no en blanco, año desde 1888, duración positiva) viven en `MovieRequest`, con Jakarta Validation.
+- Los datos pasan por las capas `controller`, `domain` (con `MovieService` y el puerto `MovieRepository`) y `persistence` (`MovieRepositoryImpl` y `MovieDaoJdbc` con `JdbcTemplate`).
+
+### Qué se aprendió
+
+Que un patrón correcto en teoría (*value objects*) puede no encajar con lo que pide el curso, y que cambiar de rumbo es normal si se documenta. También que usar tipos simples tiene un coste: el constructor de `Movie` ya no impide `new Movie("Alien", -5, -5, director)`; esa regla se defiende en el DTO y en los `CHECK` de la base.
+
+### Documentos relacionados
+
+Decisiones [D-44](decisiones-tecnicas.md), [D-46 (revocada)](decisiones-tecnicas.md) y D-48 en `decisiones-tecnicas.md`; tema [10](temario/10-modelo-de-dominio.md); y el [plan](00-plan-de-aprendizaje.md), donde las fases JPA aparecen como superadas.

@@ -2,7 +2,9 @@
 
 > **Fase del plan:** 10 (modelo de dominio). Diario: [10-modelo-de-dominio.md](../10-modelo-de-dominio.md).
 >
-> **Completo:** cubre los pasos 10.1 (anémico frente a rico), 10.2 (*value objects*), 10.3 (TDD de los tipos) y 10.4 (entidades y relaciones).
+> **Actualizado el 2026-11-04:** el profesor no quiere *value objects* (D-46 revocada) y el proyecto pasó de JPA a JDBC con DAO (D-48). El dominio usa **tipos simples**; las reglas de entrada están en el DTO con Jakarta Validation. Lo antiguo queda marcado *(histórico)*.
+>
+> **Cubre:** anémico frente a rico, invariantes, entidades y relaciones, y entidad frente a DTO.
 
 ## 1. Qué es el modelo de dominio
 
@@ -16,7 +18,7 @@ No es lo mismo que:
 | Ejemplo | `Movie` con su `Director` | `movie` con `director_id` | `MovieResponse` con `director.fullName` |
 | Cambia por | Una regla de negocio | Una migración | Un cambio del contrato |
 
-El modelo de dominio no debe estar diseñado "a imagen" de la tabla: primero se piensa el negocio y después la persistencia se adapta. En este proyecto se decidió que las clases de dominio **sean también** las entidades JPA (D-29), así que hay una concesión: JPA impondrá un constructor sin argumentos y campos no `final`.
+El modelo de dominio no debe estar diseñado "a imagen" de la tabla: primero se piensa el negocio y después la persistencia se adapta. En este proyecto las clases de dominio son Java puro: no llevan anotaciones de persistencia. El SQL vive aparte, en la capa `persistence` (D-48). *(Histórico: D-29 las habría convertido en entidades JPA, con constructor vacío y campos no `final`; esa idea quedó superada.)*
 
 > **El modelo de dominio no decide la forma del proyecto.** Son ejes distintos: cuántas aplicaciones se despliegan, cómo se organiza el código por dentro y qué dependencias se permiten entre capas.
 
@@ -90,7 +92,7 @@ public class Movie {
 
 Ahora `new Movie("", -5)` falla en el acto. No existe un objeto `Movie` inválido.
 
-> En este proyecto los campos **no** son `final` porque JPA los rellena por reflexión (D-29). La idea es la misma: el único camino "normal" para crear el objeto es el constructor que valida.
+> En este proyecto los campos tampoco son `final` (hay dos constructores y el `id` se asigna en el segundo), pero no hay setters. La idea es la misma: el único camino normal para crear el objeto es el constructor.
 
 ### Comparación
 
@@ -100,7 +102,7 @@ Ahora `new Movie("", -5)` falla en el acto. No existe un objeto `Movie` inválid
 | Objetos inválidos | Posibles | Imposibles por el constructor |
 | Cuándo se descubre el error | Al guardar o al leer | Al crear el objeto |
 | Código de la clase | Muy corto | Más largo |
-| Encaja con frameworks | Muy bien | Bien (JPA pone condiciones) |
+| Encaja con frameworks | Muy bien | Bien |
 | Cuándo tiene sentido | Dominio trivial, solo CRUD, reglas que dependen de la base | Reglas estables que deben cumplirse siempre |
 
 No es una guerra religiosa: un DTO o una clase de configuración son anémicos por naturaleza. La pregunta es si **el concepto del negocio** tiene reglas que merezca la pena proteger.
@@ -111,267 +113,214 @@ Un **invariante** es una condición que se cumple durante toda la vida del objet
 
 | Invariante | Dónde se comprueba |
 |---|---|
-| Una película tiene título | Constructor de `Movie` + `title NOT NULL` |
-| La duración es mayor que cero | Constructor + `chk_movie_duration_positive` |
-| El año no es anterior a 1888 | Constructor + `chk_movie_release_year` |
+| Una película tiene título | Constructor de `Movie` (no `null`) + `@NotBlank` en `MovieRequest` + `title NOT NULL` |
+| La duración es mayor que cero | `@Positive` en `MovieRequest` + `chk_movie_duration_positive` |
+| El año no es anterior a 1888 | `@Min(1888)` en `MovieRequest` + `chk_movie_release_year` |
 | Toda película tiene director | Constructor + `director_id NOT NULL` + FK |
-| Una persona tiene nombre y apellidos | Constructores + `NOT NULL` |
-| La fecha de nacimiento no es futura | Solo el constructor (la base no puede con un `CHECK` estable) |
+| Una persona tiene nombre, apellido y fecha | Constructores (no `null`) + `NOT NULL` |
+| La fecha de nacimiento no es futura | No se comprueba hoy (pendiente; la base no puede con un `CHECK` estable) |
 
-"Válido por construcción" significa que **no hay forma de obtener un objeto que viole el invariante** usando la API pública de la clase: el constructor lo comprueba y no hay setters que lo rompan después.
+"Válido por construcción" significa que **no hay forma de obtener un objeto que viole el invariante** usando la API pública de la clase: el constructor lo comprueba y no hay setters que lo rompan después. Con tipos simples esto se cumple para lo que el constructor comprueba (que no falte nada); el resto de reglas se defienden en el DTO y en la base (sección 5).
 
 ### No confundir validación de entrada con invariante
 
 | | Validación de entrada | Invariante del dominio |
 |---|---|---|
 | Qué comprueba | Que el JSON tiene la forma esperada | Que el dato tiene sentido para el negocio |
-| Dónde | DTO de entrada (`@NotBlank`, `@Positive`), fase 18 | Constructor de la clase |
+| Dónde | DTO de entrada (`@NotBlank`, `@Positive`) con Jakarta Validation | Constructor de la clase |
 | Mensaje | "El campo título es obligatorio" | "El título no puede estar vacío" |
 | ¿Se puede saltar? | Sí: otro cliente de la API | No: no hay objeto sin pasar por el constructor |
 
-Las dos existen y se complementan. Bean Validation no sustituye al constructor, y el constructor no sabe nada de JSON.
+Las dos existen y se complementan. Jakarta Validation no sustituye al constructor, y el constructor no sabe nada de JSON.
 
 ## 4. Lo que el modelo rico no resuelve
 
 El modelo rico **no** lo puede todo:
 
-- **Reglas que necesitan la base:** "el director con id 7 existe", "no hay dos películas con el mismo título". Necesitan el repositorio (fase 12) y el servicio (fase 16).
+- **Reglas que necesitan la base:** "el director con id 7 existe", "no hay dos películas con el mismo título". Necesitan el repositorio y el servicio (`MovieServiceImpl`).
 - **Reglas entre varios objetos:** "un actor no puede estar dos veces en la misma película" se puede evitar en `Movie.addActor`, pero la garantía definitiva es la PK compuesta de la base (D-14).
 - **Identidad y `equals`/`hashCode`:** la identidad real es el `id` que asigna la base. Un objeto recién creado no lo tiene. Por eso no se implementan todavía.
-- **Persistencia:** guardar y recuperar es trabajo de JPA (fase 11) y del repositorio (fase 12), no del dominio.
+- **Persistencia:** guardar y recuperar es trabajo del repositorio y el DAO JDBC, no del dominio.
 - **Concurrencia:** dos usuarios cambiando la misma fila a la vez. Se verá más adelante.
 
-## 5. La decisión de este proyecto (D-44 y D-46)
 
-**Modelo rico moderado con *value objects***, elegido por el alumno y confirmado con el profesor:
+## 5. La decisión de este proyecto (D-44, con D-46 revocada)
 
-- **Value objects** en lugar de primitivos: `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` (D-46).
-- Constructor que valida las reglas conocidas.
+> **Cambio de rumbo (2026-11-04).** Este tema hablaba de *value objects* (D-46). El profesor **no los quiere** en este proyecto y la decisión se revocó. Lo que queda aquí es lo que **sigue siendo cierto**; lo antiguo está marcado como *(histórico)*.
+
+**Modelo rico moderado con tipos simples**, elegido por el alumno (D-44):
+
+- Campos con tipos de siempre: `String`, `int`, `LocalDate`, `Long`.
+- **Constructor que comprueba lo que no puede faltar** (por ejemplo, que el título y el director no sean `null`).
 - **Sin setters.**
-- `fullName()` calculado (no se guarda), delegando en `PersonName`.
-- Biografía opcional: `null` cuando no hay, y el texto en blanco se normaliza a `null` al entrar en el sistema (mapper de la fase 17, DTO de la 18).
-- **Sin** `equals`/`hashCode`, **sin** Bean Validation en el dominio, **sin** servicios de dominio todavía.
+- `fullName()` calculado (no se guarda).
+- Biografía opcional: `null` cuando no hay (D-37).
+- **Sin** `equals`/`hashCode` todavía y **sin** servicios de dominio.
 
-El "moderado" es importante: no se convierte el dominio en una jaula. Si en la fase 17 hace falta cambiar un dato, se añadirá un método con nombre de negocio (`changeDuration`, `assignDirector`...) que vuelva a comprobar lo que tenga que comprobar. No se abrirán setters genéricos.
+El "moderado" es importante: no se convierte el dominio en una jaula. Si hace falta cambiar un dato, se añadirá un método con nombre de negocio (`changeDuration`, `assignDirector`...), no un setter genérico.
 
-### Los *value objects* (D-46)
+### Dónde viven ahora las reglas
 
-Un **value object** es un tipo pequeño, inmutable y comparado por valor, que representa un concepto del negocio y protege sus invariantes al construirse. Sustituye la *primitive obsession*: en vez de un `String` que puede ser cualquier cosa, un `Title` que solo puede ser un título válido.
+Antes (histórico) cada regla vivía en un *value object*: `Title` comprobaba que el título no estuviera en blanco, `ReleaseYear` que el año fuera 1888 o más, etc. Ahora las reglas de **entrada** viven en el DTO de entrada, con **Jakarta Validation**:
 
 ```java
-public record Title(String value) {
-
-	public Title {
-		value = Texts.requireText(value, "El título", 255);
-	}
-
-}
+public record MovieRequest(
+        @NotBlank @Size(max = 255) String title,
+        @NotNull @Min(1888) Integer releaseYear,
+        @NotNull @Positive Integer duration,
+        @NotNull @Positive Long directorId) { }
 ```
 
-`Texts` es un auxiliar **de paquete** que recorta, comprueba que no quede en blanco y mide; así los tres tipos de texto (`Title`, cada parte de `PersonName` y `Biography`) comparten las mismas reglas sin copiarlas. El mensaje es «no puede estar en blanco», que concuerda con cualquier sustantivo (el título, la biografía); «vacío» habría dejado mal una de las dos frases.
+Piensa en la **puerta de un edificio**: el DTO es el portero que revisa a cada visitante (la petición HTTP). Dentro, la entidad solo se asegura de lo mínimo: que nadie entre sin lo imprescindible.
 
-El cuerpo del constructor compacto se ejecuta en **toda** vía de creación: `new`, un mapper, JPA al hidratar, un test. Eso es lo que las anotaciones de Jakarta Validation **no** hacen fuera de una petición HTTP.
-
-| Value object | Regla | Columna del esquema |
+| Regla | Dónde se comprueba | Última defensa |
 |---|---|---|
-| `Title` | no vacío, ≤ 255, sin espacios sobrantes | `movie.title VARCHAR(255)` |
-| `ReleaseYear` | ≥ 1888 | `movie.release_year` + `CHECK` |
-| `DurationMinutes` | > 0 | `movie.duration_minutes` + `CHECK` |
-| `PersonName` | nombre y apellidos no vacíos, ≤ 100 cada uno; `fullName()` | `first_name`/`last_name VARCHAR(100)` |
-| `BirthDate` | no nula, no futura | `birth_date DATE` |
-| `Biography` | no vacía si existe; sin biografía = `null` (no un objeto vacío) | `biography TEXT NULL` (D-37) |
+| Título no en blanco, hasta 255 | `@NotBlank` + `@Size` en `MovieRequest` | `title VARCHAR(255) NOT NULL` |
+| Año desde 1888 | `@Min(1888)` en `MovieRequest` | `chk_movie_release_year` |
+| Duración positiva | `@Positive` en `MovieRequest` | `chk_movie_duration_positive` |
+| El director no puede faltar | `@NotNull` en el DTO **y** constructor de `Movie` | `director_id NOT NULL` + FK |
+| Nombre, apellido y fecha de una persona | Constructor de `Director` y `Actor` | `NOT NULL` |
 
-Las reglas **no se inventan**: son las del esquema que ya existe (fase 3) más la fecha de nacimiento no futura. Si el esquema cambia, el value object tiene que cambiar con él.
+> **Matiz honesto.** El constructor de `Movie` **no** comprueba el año ni la duración: son `int`, y esas reglas se comprueban en `MovieRequest` y, por detrás, en los `CHECK` de la base. Por tanto, `new Movie("Alien", -5, -5, director)` compila y se ejecuta. Es el precio de usar tipos simples: la protección está en la puerta (el DTO) y en el último muro (la base), no en cada objeto. Con *value objects* sí era imposible, y esa fue su ventaja *(histórico)*.
 
-Dos detalles del diseño que se deciden en el paso 10.2 y conviene tener presentes:
+### Los *value objects* (histórico, D-46 revocada)
 
-- **`IllegalArgumentException` para todo valor inválido**, también para `null`. Un único tipo de excepción que la fase 18 traducirá a `400`; un `NullPointerException` se confundiría con un fallo de programación.
-- **`trim()` antes de medir**: `"  Alien  "` tiene 5 letras, no 9. `ReleaseYear` y `DurationMinutes` no tienen tope superior porque el esquema no lo pone; inventarlo rechazaría datos válidos.
+Un **value object** es un tipo pequeño, inmutable y comparado por valor que representa un concepto del negocio (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`). Se diseñaron y se escribieron con TDD en los pasos 10.2 y 10.3, pero **se eliminaron** en el giro del 2026-11-04. Conviene conocer la idea (es un patrón habitual), pero **no forman parte del código actual**. Qué se hizo y por qué se quitó está en el [diario 10, sección «Giro del 2026-11-04»](../10-modelo-de-dominio.md#giro-del-2026-11-04).
 
-El diseño completo, con la justificación de cada decisión, está en el [diario 10, paso 10.2](../10-modelo-de-dominio.md#102-value-objects-qué-son-y-cuáles-necesitamos).
+### Cómo se comparan las dos opciones
 
-**Cómo se escribió (paso 10.3):** con TDD. Primero los seis tests en `src/test/java/com/daw/movies/domain/model/` (28 tests), que no compilaron porque los tipos no existían —el rojo esperado—; después los `record` y la clase `Texts` hasta dejar los **35 tests** del proyecto en verde. El primer intento dejó un test rojo por la concordancia del mensaje («La biografía no puede estar vacío»), y se corrigió el mensaje, no el test. El detalle está en el [diario 10, paso 10.3](../10-modelo-de-dominio.md#103-los-seis-value-objects-con-tdd).
-
-**Coste en la fase 11:** JPA no guarda un `Title` tal cual. Habrá que mapearlo con un `AttributeConverter` (un valor → una columna) o, en `PersonName`, con `@Embeddable` (dos columnas). Ese es el precio de tener tipos propios; se paga una vez, en la capa de persistencia.
+| | Tipos simples (hoy) | *Value objects* (histórico) |
+|---|---|---|
+| Campo título | `String title` | `Title title` |
+| Dónde se valida el formato | DTO (`MovieRequest`) | Constructor de cada tipo |
+| Objeto inválido posible | Sí, si alguien salta el DTO | No |
+| Código | Poco | Más clases y más tests |
+| Persistencia | `JdbcTemplate` lee y escribe tipos normales | Habría hecho falta convertir cada tipo |
+| Lo que pide el profesor | Sí | No |
 
 ### ¿Qué sería un modelo rico "completo"?
 
-"Moderado" no es un término de manual: es la etiqueta de este proyecto para decir "rico en lo que el dominio necesita hoy, sin la infraestructura de DDD". Un modelo rico completo añadiría:
+"Moderado" no es un término de manual: es la etiqueta de este proyecto para decir "rico en lo que el dominio necesita hoy, sin toda la infraestructura de DDD". Un modelo rico completo añadiría:
 
 | Pieza | Qué es | ¿En el proyecto? |
 |---|---|---|
-| Factorías | `Movie.create(...)` en vez del constructor | No: el constructor ya garantiza los invariantes |
-| Servicios de dominio | Reglas que cruzan varios objetos ("el director existe") | Llegan con el repositorio (12) y el servicio (16) |
-| Eventos de dominio | Avisos de "película creada" para otros módulos | No hay otros módulos que escuchar (fase 26 si se hace) |
-| Agregados | `Movie` como raíz y la participación como entidad con identidad | La fase opcional 23 añade el personaje a `movie_actor` |
-| `equals`/`hashCode` por `id` | Igualdad de entidad | El `id` es `null` hasta guardar (fase 11/14) |
-| Dominio separado de JPA | `MovieEntity` + mapper | Descartado en D-29 |
+| Factorías | `Movie.create(...)` en vez del constructor | No |
+| Servicios de dominio | Reglas que cruzan varios objetos ("el director existe") | Lo hace `MovieServiceImpl` con el repositorio |
+| Eventos de dominio | Avisos de "película creada" | No (fase 26 opcional) |
+| Agregados | `Movie` como raíz y la participación como entidad con identidad | Fase opcional 23 |
+| `equals`/`hashCode` por `id` | Igualdad de entidad | No todavía: el `id` es `null` hasta guardar |
 
-La regla práctica: **cada pieza se añade cuando resuelve un problema real**, no porque suene a arquitectura avanzada. Los *value objects* entran ahora porque el profesor los pide y porque resuelven un problema concreto: que un título inválido no pueda existir en ningún sitio.
+La regla práctica: **cada pieza se añade cuando resuelve un problema real**, no porque suene a arquitectura avanzada.
 
-### La alternativa: entidad JPA separada + mapper (D-29)
+### El dominio y la persistencia hoy (D-48)
 
-D-29 descartó separar el dominio de la entidad JPA. Así sería el otro diseño:
+El dominio ya no lleva anotaciones de persistencia: `Movie`, `Director` y `Actor` son Java puro. La persistencia queda fuera, detrás de un **puerto**:
 
-```java
-// Dominio: Java puro, sin jakarta.persistence
-public class Director {
-    private final PersonName name;
-    private final BirthDate birthDate;
-    private final Biography biography;
-
-    public Director(PersonName name, BirthDate birthDate, Biography biography) { ... }
-}
-
-// Persistencia: solo la forma de la tabla
-@Entity
-@Table(name = "director")
-class DirectorEntity {
-    @Id private Long id;
-    @Column(name = "first_name") private String firstName;
-    @Column(name = "last_name")  private String lastName;
-    @Column(name = "birth_date") private LocalDate birthDate;
-    @Column(name = "biography")  private String biography;
-
-    protected DirectorEntity() { }
-}
-
-// Mapper: traduce en los dos sentidos
-class DirectorMapper {
-    Director toDomain(DirectorEntity e) {
-        return new Director(
-                new PersonName(e.firstName, e.lastName),
-                new BirthDate(e.birthDate),
-                e.biography == null ? null : new Biography(e.biography));
-    }
-
-    DirectorEntity toEntity(Director d) { ... }
-}
+```
+MovieController  →  MovieService  →  MovieRepository (puerto, en domain)
+                                            ↑ implementa
+                                     MovieRepositoryImpl  →  MovieDao  ←  MovieDaoJdbc (JdbcTemplate)
 ```
 
-| | Entidad = dominio (D-29, el proyecto) | Entidad separada + mapper |
-|---|---|---|
-| Clases por concepto | 1 | 3 (dominio + entidad + mapper) |
-| ¿El dominio importa JPA? | Sí | No: Java puro |
-| ¿El dominio se parece a la tabla? | Un poco (constructor vacío, campos no `final`) | No |
-| Duplicación de campos | No | Sí, dos veces |
-| Riesgo principal | JPA impone restricciones al dominio | Mapper desincronizado al añadir una columna |
-| Conversión de *value objects* | `AttributeConverter` / `@Embeddable` | Lo mismo, más el mapper |
-| Identidad | El objeto y la fila son "lo mismo" | Dos objetos para la misma fila |
-| Cuándo compensa | Dominio pequeño, una aplicación | Dominio grande, reutilizado, varios módulos |
+- `MovieRepository` (interfaz) vive en `domain/repository`: el dominio dice qué necesita.
+- `MovieRepositoryImpl` y `MovieDaoJdbc` viven en `persistence`: ejecutan el SQL con `JdbcTemplate`.
+- Las clases del dominio **no** conocen ni la tabla ni el SQL.
 
-**Lo que no cambia:** el DTO de la API y su mapper (fase 15) existen en los dos diseños. La entidad **no es un DTO**: la entidad representa una fila; el DTO, el JSON. Con mappers hay tres capas (tabla → entidad → dominio → DTO); con D-29, dos (tabla → dominio → DTO).
+(Antes de este giro, D-29 decidía que las clases del dominio fueran también entidades JPA; esa decisión quedó superada. Ver el tema 11 y el diario.)
 
 ## 6. Cómo sigue la fase
 
-| Paso | Qué añade |
-|---|---|
-| 10.2 | Qué es un *value object* y diseño de los seis del dominio (D-46) |
-| 10.3 | Los seis `record` con TDD: primero el test en rojo, después el constructor compacto. ✅ Hecho (35 tests en verde) |
-| 10.4 | `Director`, `Actor` y `Movie` con los *value objects*, getters, `fullName()` y constructor protegido para JPA; relaciones unidireccionales. ✅ Hecho (20 tests nuevos; 55 en verde) |
+| Paso | Qué añadió | Estado actual |
+|---|---|---|
+| 10.2 | Diseño de seis *value objects* | Superado (histórico) |
+| 10.3 | Los seis `record` con TDD | Superado: se eliminaron |
+| 10.4 | `Director`, `Actor` y `Movie` | Vigente, **reescritas con tipos simples** |
 
 ### Las entidades (paso 10.4)
 
-Las tres clases son **entidades**, no *value objects*: su identidad es el `id` que asigna la base de datos, no sus campos. Por eso son clases normales (no `record`) y todavía no tienen `equals`/`hashCode`.
+Las tres clases son **entidades**: su identidad es el `id` que asigna la base de datos, no sus campos. Por eso son clases normales (no `record`) y todavía no tienen `equals`/`hashCode`.
 
 ```java
 public class Director {
 	private Long id;
-	private PersonName name;
-	private BirthDate birthDate;
-	private Biography biography;
+	private String firstName;
+	private String lastName;
+	private LocalDate birthDate;
+	private String biography;
 
-	protected Director() { }   // solo para JPA (fase 11)
+	public Director(String firstName, String lastName, LocalDate birthDate, String biography) {
+		if (firstName == null) throw new IllegalArgumentException("El nombre del director es obligatorio");
+		// ... apellido y fecha igual; biography puede ser null (D-37)
+	}
 
-	public Director(PersonName name, BirthDate birthDate, Biography biography) {
-		if (name == null) throw new IllegalArgumentException("El nombre del director es obligatorio");
-		// ... fecha obligatoria; biography puede ser null (D-37)
+	/** Reconstrucción desde la base de datos: con el id. */
+	public Director(Long id, String firstName, String lastName, LocalDate birthDate, String biography) {
+		this(firstName, lastName, birthDate, biography);
+		this.id = id;
 	}
 
 	public String fullName() {
-		return name.fullName();   // delega: no se guarda repetido
+		return firstName + " " + lastName;   // calculado: no se guarda repetido
 	}
 }
 ```
 
+Hay **dos constructores**: uno para crear un director nuevo (sin `id`, lo asignará la base) y otro para reconstruirlo desde una fila (con `id`). Piensa en un carné: al rellenarlo no tiene número; el número lo pone la oficina al registrarlo.
+
 `Movie` añade las dos relaciones, **unidireccionales**:
 
-- `Director director` — muchas películas pueden tener el mismo director; la película conoce al director, no al revés.
-- `List<Actor> actors` — el reparto; `getActors()` devuelve una copia inmutable y solo se modifica con `addActor`.
+- `Director director`: muchas películas pueden tener el mismo director; la película conoce al director, no al revés.
+- `List<Actor> actors`: el reparto; `getActors()` devuelve una copia inmutable y solo se modifica con `addActor`.
 
-El constructor de la entidad **solo comprueba lo que cruza campos** (que las piezas no sean `null`). Las reglas de cada valor (255 caracteres, año ≥ 1888, duración > 0...) ya las garantiza su *value object*. Sin `equals` todavía, `addActor` no detecta duplicados: la garantía es la PK compuesta de `movie_actor` (D-14).
+Sin `equals` todavía, `addActor` no detecta duplicados: la garantía es la PK compuesta de `movie_actor` (D-14).
 
 #### Un ejemplo completo: crear *Inception*
 
 ```java
-Director nolan = new Director(
-        new PersonName("Christopher", "Nolan"),
-        new BirthDate(LocalDate.of(1970, 7, 30)),
-        new Biography("Director, guionista y productor británico-estadounidense."));
+Director nolan = new Director("Christopher", "Nolan",
+        LocalDate.of(1970, 7, 30),
+        "Director, guionista y productor británico-estadounidense.");
 
-Actor dicaprio = new Actor(
-        new PersonName("Leonardo", "DiCaprio"),
-        new BirthDate(LocalDate.of(1974, 11, 11)),
+Actor dicaprio = new Actor("Leonardo", "DiCaprio",
+        LocalDate.of(1974, 11, 11),
         null);                       // sin biografía: es válido
 
-Movie inception = new Movie(
-        new Title("  Inception  "),  // se guarda como "Inception"
-        new ReleaseYear(2010),
-        new DurationMinutes(148),
-        nolan);
-
+Movie inception = new Movie("Inception", 2010, 148, nolan);
 inception.addActor(dicaprio);
 ```
 
-- El **director es obligatorio**: el constructor de `Movie` lanza `IllegalArgumentException` si es `null`. No se crea uno nuevo por película: el mismo `nolan` puede dirigir varias.
-- Los **actores son opcionales**: una película puede empezar con el reparto vacío (`startsWithoutActors`).
-- "Creado antes" significa **existente en memoria**, no guardado en la base: en esta fase no hay persistencia. Que el director exista en la base lo comprobará el servicio (fase 16) y lo garantiza la FK.
+- El **director es obligatorio**: el constructor de `Movie` lanza `IllegalArgumentException` si es `null`.
+- Los **actores son opcionales**: una película puede empezar con el reparto vacío.
+- "Creado antes" significa **existente en memoria**, no guardado. Que el director exista en la base lo comprueba el servicio (con `findDirectorById`) y lo garantiza la FK.
 
-#### `Value object` frente a entidad
+#### Entidad frente a DTO
 
-| | `Value object` (`Title`) | Entidad (`Movie`) |
+| | Entidad (`Movie`) | DTO (`MovieRequest`, `MovieResponse`) |
 |---|---|---|
-| Representa | Un **valor** | Una **cosa con identidad** |
-| Identidad | Su propio texto | El `id` de la base |
-| Igualdad | Por valor (`record`) | Por `id` (aún sin implementar) |
-| ¿Mutable? | No | Sí: el reparto crece |
-| En Java | `record` | Clase con getters |
-| Ejemplo | Dos `Title("Alien")` son el mismo valor | Dos películas homónimas son dos películas |
+| Representa | Una **cosa del negocio con identidad** | Un **mensaje** que viaja por la API |
+| Dónde vive | `domain/model` | `controller/dto` |
+| Reglas | Lo mínimo que no puede faltar | Validación de entrada (Jakarta Validation) en `MovieRequest` |
+| Forma | Clase con getters | `record` |
+| Referencias | `Movie` guarda un `Director` entero | `MovieRequest` solo trae `directorId` |
+| Cambia por | Una regla de negocio | Un cambio del contrato de la API |
 
-Por eso `Title` es `record` y `Movie` no: un `record` es `final`, sus campos son `final` y no tiene constructor vacío, así que no puede ser una entidad JPA.
+El `MovieMapper` (en `controller/mapper`) traduce entre ambos. La entidad no sale nunca por HTTP tal cual.
 
-#### La reflexión y el `protected Director()`
+#### Reflexión y constructor vacío (histórico)
 
-**Reflexión** es la capacidad de Java de inspeccionar y modificar clases en tiempo de ejecución: crear objetos, leer y escribir campos privados e invocar métodos sin que el compilador los conozca. JPA la usa para rellenar una entidad desde una fila:
+Con JPA, Hibernate creaba la entidad con un constructor vacío `protected` y escribía los campos por **reflexión** (la capacidad de Java de leer y escribir campos privados en tiempo de ejecución). Por eso la versión con JPA tenía `protected Director() { }` y campos no `final`.
 
-```java
-// Simplificación de lo que hace Hibernate al leer una fila
-Director director = Director.class.getDeclaredConstructor().newInstance(); // vacío
-Field name = Director.class.getDeclaredField("name");
-name.setAccessible(true);                                                  // salta "private"
-name.set(director, new PersonName("Christopher", "Nolan"));
-```
-
-De ahí las dos concesiones de D-29:
-
-- **Constructor sin argumentos**: Hibernate primero crea el objeto vacío, porque todavía no ha leído la fila.
-- **Campos no `final`**: los escribe después, por reflexión.
-
-Se declara `protected` porque la especificación JPA exige que ese constructor sea `public` o `protected`. `protected` permite usarlo a la persistencia (y al mismo paquete, donde están los tests) pero **no al código de otras capas**: un `new Director()` en el servicio no compila. Si fuera `public`, cualquiera podría crear un director vacío e inválido.
-
-> Al hidratar, Hibernate **no pasa por el constructor de `Director`**: usa el vacío y la reflexión. Las comprobaciones de la entidad no se ejecutan al leer; las de los *value objects* sí, porque el converter los construye. Lo que falte lo cubren `NOT NULL` y las FK.
-
-Después, la fase 11 añade JPA a estas mismas clases (D-29) y mapea los *value objects*; la fase 17 usará el constructor para crear películas desde la API.
+**Ya no aplica.** Con JDBC, la fila se convierte en objeto con un `RowMapper` que llama al constructor normal (el que lleva `id`). No hay constructor vacío, ni reflexión, ni Hibernate. Esto es una ventaja: al leer de la base, **sí** se ejecutan las comprobaciones del constructor.
 
 ## Lo que tienes que recordar
 
 1. **Modelo de dominio ≠ tabla ≠ DTO.** Cada uno responde a una pregunta distinta.
 2. **Anémico** = datos + setters, reglas fuera. **Rico** = datos + reglas dentro.
-3. Un **invariante** es una condición que siempre se cumple; "válido por construcción" significa que el constructor la garantiza y no hay setters que la rompan.
-4. **Validación de entrada** (DTO, Bean Validation) y **regla de dominio** (constructor) son cosas distintas y se complementan.
+3. Un **invariante** es una condición que siempre se cumple. Con tipos simples, el constructor garantiza lo mínimo (que no falte nada) y el resto se defiende en dos sitios: el DTO y la base.
+4. **Validación de entrada** (DTO, Jakarta Validation) y **regla de dominio** (constructor) son cosas distintas y se complementan.
 5. El modelo rico **no** sustituye a la base ni al repositorio: las reglas que necesitan datos externos van en el servicio.
-6. En este proyecto: rico moderado, sin setters, sin `equals` todavía y con JPA en la fase 11.
-7. **Un *value object* no es un DTO ni una entidad**: representa un valor del negocio, es inmutable, se compara por valor y no tiene identidad propia.
+6. En este proyecto: rico moderado, tipos simples, sin setters, sin `equals` todavía y **sin JPA** (JDBC con DAO, D-48).
+7. **Los *value objects* se probaron y se retiraron** (D-46 revocada): es un patrón válido, pero no forma parte del proyecto.
 
 ## Preguntas de repaso
 
@@ -379,89 +328,89 @@ Después, la fase 11 añade JPA a estas mismas clases (D-29) y mapea los *value 
 
 <details><summary>Respuesta</summary>
 
-El anémico solo tiene campos, getters y setters: las reglas viven en los servicios. El rico tiene un constructor que valida (y comportamiento), de modo que no se puede crear un objeto inválido. En el proyecto se eligió el rico moderado (D-44).
+El anémico solo tiene campos, getters y setters: las reglas viven en los servicios. El rico tiene un constructor que comprueba lo que no puede faltar (y comportamiento), de modo que no se puede crear un objeto sin lo imprescindible. En el proyecto se eligió el rico moderado (D-44).
 </details>
 
 **2. ¿Qué es un invariante? Pon un ejemplo del proyecto.**
 
 <details><summary>Respuesta</summary>
 
-Una condición que se cumple durante toda la vida del objeto. Ejemplo: `duration_minutes > 0`; el constructor de `DurationMinutes` lanza `IllegalArgumentException` si la duración es 0 o negativa, así que `Movie` nunca recibe un valor imposible, y el `CHECK` de la tabla lo impide aunque se inserte por SQL.
+Una condición que se cumple durante toda la vida del objeto. Ejemplo: toda película tiene director; el constructor de `Movie` lanza `IllegalArgumentException` si es `null`, y la base lo respalda con `director_id NOT NULL` y la FK.
 </details>
 
 **3. ¿Por qué no hay setters en `Movie`?**
 
 <details><summary>Respuesta</summary>
 
-Porque un setter permitiría romper los invariantes después de crear el objeto (`setDurationMinutes(-5)`). Para cambiar un dato se creará un método con nombre de negocio que valide lo necesario, o un objeto nuevo (fase 17).
+Porque un setter permitiría romper los invariantes después de crear el objeto (por ejemplo, poner el director a `null`). Para cambiar un dato se creará un método con nombre de negocio, o un objeto nuevo.
 </details>
 
-**4. Si el constructor ya valida, ¿para qué sirve el `CHECK` de la base?**
+**4. Si el DTO ya valida, ¿para qué sirve el `CHECK` de la base?**
 
 <details><summary>Respuesta</summary>
 
-Porque la base es la última barrera: los datos pueden llegar por SQL, por un script o por otra aplicación. El constructor protege a los objetos Java; el `CHECK` protege a la tabla. Son dos defensas para el mismo invariante.
+Porque la base es la última barrera: los datos pueden llegar por SQL, por un script o por otra aplicación. `@Positive` en `MovieRequest` protege la entrada de la API; `chk_movie_duration_positive` protege la tabla. Son dos defensas para la misma regla.
 </details>
 
 **5. ¿Dónde se comprueba que el director de una película existe?**
 
 <details><summary>Respuesta</summary>
 
-En el constructor no se puede: haría falta consultar la base. Se comprueba en el servicio (fase 16) con el repositorio (fase 12); la FK `fk_movie_director` es la garantía final. El constructor solo exige que el director no sea `null`.
+En el constructor no se puede: haría falta consultar la base. Lo comprueba el servicio, que llama a `MovieRepository.findDirectorById` y lanza `DirectorNotFoundException` si no existe; la FK `fk_movie_director` es la garantía final.
 </details>
 
 **6. ¿Por qué no se implementan `equals` y `hashCode` todavía?**
 
 <details><summary>Respuesta</summary>
 
-Porque la identidad de una entidad es su `id`, que asigna la base al guardar. Dos objetos recién creados tienen `id == null`; compararlos por `id` los haría "iguales" a todos, y compararlos por campos haría que dos personas distintas con el mismo nombre fueran la misma. Se decidirá cuando JPA lo exija (fase 11/14).
+Porque la identidad de una entidad es su `id`, que asigna la base al guardar. Dos objetos recién creados tienen `id == null`; compararlos por `id` los haría "iguales" a todos, y compararlos por campos haría que dos personas distintas con el mismo nombre fueran la misma. Se decidirá cuando haga falta.
 </details>
 
-**7. ¿Bean Validation en el dominio o en el DTO?**
+**7. ¿Dónde se valida la entrada: en el dominio o en el DTO?**
 
 <details><summary>Respuesta</summary>
 
-En el DTO de entrada (fase 18): valida la forma de la petición antes de llegar al dominio y produce mensajes de error HTTP. El dominio valida sus invariantes en el constructor. D-29 descarta Bean Validation en el dominio.
+En el DTO de entrada (`MovieRequest`) con Jakarta Validation (`@NotBlank`, `@Min`, `@Positive`...): comprueba la forma de la petición antes de llegar al dominio y produce el error HTTP. El dominio solo conserva comprobaciones defensivas de lo que no puede faltar.
 </details>
 
-**8. ¿Por qué `new Title("")` no se puede ni escribir, y qué gana el proyecto con eso?**
+**8. Con tipos simples, ¿se puede crear `new Movie("Alien", -5, -5, director)`? ¿Qué lo impide en la práctica?**
 
 <details><summary>Respuesta</summary>
 
-Porque el constructor compacto del `record` lanza `IllegalArgumentException` si el valor está vacío: no existe ningún `Title` inválido, venga el dato de un DTO, de un mapper, de un test o de JPA. Se gana que la regla esté escrita una vez y que el compilador distinga un título de un nombre, aunque los dos sean texto en la base (D-46).
+Sí, el constructor no comprueba el año ni la duración. En la práctica lo impiden dos barreras: `MovieRequest` rechaza esos valores antes de que lleguen al dominio y los `CHECK` de la base rechazan la fila. Es el coste de no usar *value objects*.
 </details>
 
-**9. ¿Por qué `Title` se compara por su texto y `Movie` no?**
+**9. ¿Por qué `Movie` no se compara por sus campos?**
 
 <details><summary>Respuesta</summary>
 
-Porque el `Title` es un **valor**: dos títulos con el mismo texto son intercambiables, y `equals` lo refleja. La `Movie` es una **entidad**: su identidad es el `id` que asigna la base, no sus campos; dos películas con el mismo título y el mismo director siguen siendo dos filas distintas. Por eso `equals`/`hashCode` de la entidad se deciden en la fase 11/14 y no ahora.
+Porque es una **entidad**: su identidad es el `id` que asigna la base, no sus campos. Dos películas con el mismo título y director siguen siendo dos filas distintas.
 </details>
 
-**10. ¿Qué ventaja tiene escribir el test antes que el `record`? Pon un ejemplo real del paso 10.3.**
+**10. ¿Qué es un *value object* y por qué ya no está en el proyecto?**
 
 <details><summary>Respuesta</summary>
 
-Obliga a decidir el comportamiento antes de la implementación y detecta fallos que el compilador no ve. En el paso 10.3, `BiographyTest.rejectsBlankText` falló con «La biografía no puede estar vacío»: el código compilaba y funcionaba, pero el mensaje tenía la concordancia rota. Como el test estaba escrito antes, el fallo salió en el primer verde; se corrigió el mensaje («no puede estar en blanco») y no la prueba.
+Un tipo pequeño, inmutable y comparado por valor que protege su regla al construirse (por ejemplo, un `Title` que no admite texto en blanco). Se diseñó en la fase 10 (D-46), pero el profesor no lo quiere en este proyecto y la decisión se revocó el 2026-11-04: las reglas de entrada pasaron a Jakarta Validation en los DTO.
 </details>
 
-**11. ¿Cuándo un concepto es un *value object* y cuándo una entidad? Pon un ejemplo del proyecto.**
+**11. ¿Por qué `Movie` tiene dos constructores?**
 
 <details><summary>Respuesta</summary>
 
-Es un *value object* si se identifica por su **valor** y no cambia: `Title("Alien")`. Es una entidad si tiene **identidad propia** y su estado puede cambiar: `Movie`, cuya identidad es el `id` de la base y cuyo reparto crece. Por eso `Title` es un `record` (inmutable, igualdad por valor) y `Movie` es una clase con getters (mutable, igualdad por `id`, aún sin implementar).
+Uno sin `id`, para crear una película nueva (el `id` lo asignará la base), y otro con `id`, para reconstruirla desde una fila. El segundo delega en el primero, así las comprobaciones se escriben una sola vez.
 </details>
 
-**12. ¿Por qué el constructor vacío de `Director` es `protected` y qué papel juega la reflexión?**
+**12. ¿Dónde acaba el SQL, y qué sabe el dominio de él?**
 
 <details><summary>Respuesta</summary>
 
-JPA exige un constructor sin argumentos porque Hibernate crea primero el objeto **vacío** y después escribe los campos por **reflexión** (puede saltarse `private`). La especificación exige que sea `public` o `protected`; se elige `protected` para que la persistencia pueda usarlo pero el código de otras capas no pueda hacer `new Director()` y crear un director vacío e inválido. Al hidratar, Hibernate no pasa por el constructor que valida: las comprobaciones de la entidad no se ejecutan al leer; las de los *value objects* sí, porque el converter los construye.
+El SQL está en `MovieDaoJdbc` (capa `persistence`, con `JdbcTemplate`). El dominio solo conoce la interfaz `MovieRepository` (el puerto) y no sabe nada de tablas ni de SQL. Eso es la inversión de dependencias: el dominio define lo que necesita y la persistencia lo implementa.
 </details>
 
-**13. ¿Qué diferencia hay entre el diseño del proyecto (D-29) y el de entidad JPA separada + mapper?**
+**13. ¿Qué diferencia hay entre una entidad y un DTO?**
 
 <details><summary>Respuesta</summary>
 
-Con D-29, `Movie` es a la vez dominio y entidad: lleva las anotaciones JPA y el objeto que devuelve el repositorio ya es el del dominio. El coste es que el dominio importa `jakarta.persistence` y acepta constructor vacío y campos no `final`. Con entidad separada hay tres clases por concepto (`Movie`, `MovieEntity`, `MovieMapper`), el dominio queda en Java puro, pero hay que copiar los campos y un mapper desincronizado produce errores silenciosos. En los dos diseños el DTO de la API y su mapper (fase 15) siguen existiendo: la entidad no es un DTO.
+La entidad (`Movie`) representa una cosa del negocio con identidad y vive en el dominio; el DTO (`MovieRequest`/`MovieResponse`) es el mensaje que viaja por la API y vive en el controlador. `MovieMapper` traduce entre ambos. Por ejemplo, el `MovieRequest` trae solo `directorId`, mientras que `Movie` guarda el `Director` completo.
 </details>

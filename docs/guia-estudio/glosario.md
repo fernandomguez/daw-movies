@@ -4,7 +4,7 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Acoplamiento**: grado en que una clase depende de otras. Mucho acoplamiento = un cambio en una clase rompe muchas otras.
 
-**Adaptador**: clase que implementa un puerto del dominio usando una tecnología concreta. Ejemplo: `MovieRepositoryAdapter` implementa `MovieRepository` con JPA. En otros proyectos y apuntes la misma clase se llama `MovieRepositoryImpl`: es el mismo papel con otro nombre (ver D-22). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md).
+**Adaptador**: (histórico: el ejemplo con JPA ya no aplica; hoy la clase equivalente es `MovieRepositoryImpl`, que implementa el puerto con un DAO JDBC.) clase que implementa un puerto del dominio usando una tecnología concreta. Ejemplo: `MovieRepositoryAdapter` implementa `MovieRepository` con JPA. En otros proyectos y apuntes la misma clase se llama `MovieRepositoryImpl`: es el mismo papel con otro nombre (ver D-22). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md).
 
 **Atributo**: característica de una entidad (título, año, duración). Ver [temario/02](temario/02-entidades-atributos-y-relaciones.md).
 
@@ -32,7 +32,7 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Contenedor**: ejecución aislada y desechable de una imagen, con su propio estado. Ejemplo: `movies-mariadb-1`. Ver [temario/04](temario/04-docker-compose-mariadb.md).
 
-**DAO (*Data Access Object*)**: patrón de acceso a datos pensado desde la base de datos: normalmente una clase por tabla con métodos CRUD (`insert`, `update`, `delete`, `findById`). En este proyecto usamos **Repositorio** en su lugar. Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), sección 10.
+**DAO (*Data Access Object*)**: patrón de acceso a datos pensado desde la base de datos: normalmente una clase por tabla con métodos CRUD (`insert`, `update`, `delete`, `findById`). **En este proyecto sí lo usamos desde el 2026-11-04 (D-48):** `MovieDao` es la interfaz y `MovieDaoJdbc` la implementación con `JdbcTemplate`; el repositorio (`MovieRepositoryImpl`) los usa por detrás. Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), sección 10.
 
 **DIP (principio de inversión de dependencias)**: el dominio no depende de la persistencia; ambos dependen de una interfaz que define el dominio. La flecha de dependencia pasa a apuntar hacia el dominio.
 
@@ -46,15 +46,15 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Entidad (modelo conceptual)**: "cosa" del problema con identidad propia, de la que guardamos varias y que tiene datos propios: película, director, actor. No confundir con la *entidad JPA* (una clase Java anotada con `@Entity`).
 
-**Entidad JPA**: clase Java anotada con `@Entity` que refleja una tabla; cada objeto corresponde a una fila. En este proyecto las entidades son las propias clases del dominio (`Movie`, `Director`, `Actor`), sin una `MovieEntity` separada (D-29). En otros proyectos sí se separan.
+**Entidad JPA** **(OBSOLETO desde 2026-11-04, D-48/D-46)**: clase Java anotada con `@Entity` que refleja una tabla; cada objeto corresponde a una fila. En este proyecto las entidades son las propias clases del dominio (`Movie`, `Director`, `Actor`), sin una `MovieEntity` separada (D-29). En otros proyectos sí se separan.
 
-**`AttributeConverter`**: interfaz de JPA que traduce un valor entre su forma Java y su forma en columna (`Title` ↔ `VARCHAR`). Es el "mapper" pequeño que se escribe **por *value object***, no por entidad (fase 11).
+**`AttributeConverter`** **(OBSOLETO desde 2026-11-04, D-48/D-46)** (no hay JPA ni *value objects*): interfaz de JPA que traduce un valor entre su forma Java y su forma en columna (`Title` ↔ `VARCHAR`). Es el "mapper" pequeño que se escribe **por *value object***, no por entidad (fase 11).
 
 **Persistence context (contexto de persistencia)**: conjunto de objetos que Hibernate mantiene durante una sesión o transacción. Dentro de él, una fila se representa por **un solo objeto**, y los cambios se detectan sin llamar a `save`.
 
 **Dirty checking**: mecanismo por el que Hibernate compara el estado actual de los objetos del *persistence context* con el que leyó y genera un `UPDATE` al cerrar la transacción si algo cambió.
 
-**Persistence ignorance**: principio de diseñar el dominio sin conocer la persistencia. Con D-29 se cumple **solo en parte**: las clases del dominio llevan anotaciones JPA. El diseño alternativo (entidad separada + mapper) sí lo cumple del todo.
+**Persistence ignorance**: principio de diseñar el dominio sin conocer la persistencia. Hoy se cumple casi del todo: las clases del dominio no llevan anotaciones de persistencia (el SQL está en `persistence`). *(Histórico: con D-29 se cumplía solo en parte.)*
 
 **Git**: sistema de control de versiones: guarda la historia del proyecto en *commits*. Ver [temario/06](temario/06-proyecto-spring-boot-y-git.md).
 
@@ -68,7 +68,7 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Healthcheck**: comprobación periódica que Docker ejecuta para saber si el servicio de un contenedor funciona (`healthy`) o no (`unhealthy`).
 
-**Hibernate**: la implementación de JPA que usa Spring Boot. JPA son las reglas; Hibernate es el programa que hace el trabajo real y genera el SQL.
+**Hibernate** (histórico: no se usa en el proyecto): la implementación de JPA que usa Spring Boot. JPA son las reglas; Hibernate es el programa que hace el trabajo real y genera el SQL.
 
 **Imagen (Docker)**: plantilla de solo lectura con un programa ya instalado, identificada por nombre y etiqueta. Ejemplo: `mariadb:12.3`.
 
@@ -84,15 +84,15 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Juego de caracteres (*charset*)**: conjunto de caracteres que se pueden guardar. `utf8mb4` admite cualquier carácter Unicode (tildes, eñes, emojis).
 
-**JPA (*Jakarta Persistence API*)**: especificación (conjunto de reglas y anotaciones) para traducir automáticamente entre filas de una tabla y objetos Java. Ejemplo: una clase `DirectorEntity` marcada con `@Entity` y `@Table(name = "director")` permite leer la fila de Nolan y obtener un objeto ya relleno, sin escribir el `SELECT` a mano. En este proyecto JPA **no crea las tablas** (eso lo hace Flyway): solo lee y escribe datos. Se estudia en la fase 11. Explicación completa: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.md).
+**JPA (*Jakarta Persistence API*)** (teoría; no se usa en el proyecto): especificación (conjunto de reglas y anotaciones) para traducir automáticamente entre filas de una tabla y objetos Java. Ejemplo: una clase `DirectorEntity` marcada con `@Entity` y `@Table(name = "director")` permite leer la fila de Nolan y obtener un objeto ya relleno, sin escribir el `SELECT` a mano. **El proyecto no usa JPA** (D-48): se conserva como teoría. Aun así, las tablas las crea Flyway. Explicación completa: [temario/11-introduccion-jpa.md](temario/11-introduccion-jpa.md).
 
-**Java puro (dominio)**: clases que solo usan Java y su biblioteca estándar, sin anotaciones ni `import` de frameworks (Spring, JPA, Jackson, Bean Validation). Se prueban con un simple `new`. En este proyecto el dominio **no** es Java puro estricto: lleva anotaciones JPA y `@Service` (D-19, D-29). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), secciones 3 y 11.
+**Java puro (dominio)**: clases que solo usan Java y su biblioteca estándar, sin anotaciones ni `import` de frameworks (Spring, JPA, Jackson, Bean Validation). Se prueban con un simple `new`. En este proyecto el dominio es casi Java puro: las entidades no llevan anotaciones; solo el servicio usa `@Service` y `@Transactional` (D-19). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), secciones 3 y 11.
 
 **JWT (*JSON Web Token*)**: "pase" firmado que el servidor entrega al usuario tras hacer login. El cliente lo envía en cada petición para demostrar quién es, sin repetir la contraseña. Se usa con Spring Security (fase opcional 24).
 
 **LTS (*Long-Term Support*)**: versión con soporte durante varios años. Java 25 y MariaDB 12.3 son LTS.
 
-**Mapper**: clase que convierte un objeto de una capa en el de otra al cruzar una frontera. En este proyecto hay uno: `MovieDtoMapper` (dominio ↔ DTO). El `MovieEntityMapper` (entidad ↔ dominio) del diseño inicial desapareció al poner JPA en el dominio (D-29). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), secciones 8 y 11.
+**Mapper**: clase que convierte un objeto de una capa en el de otra al cruzar una frontera. En este proyecto hay uno: `MovieMapper` (en `controller/mapper`, DTO ↔ dominio). El `MovieEntityMapper` del diseño inicial nunca existió. Para convertir una fila en objeto se usa un `RowMapper` (ver más abajo). Ver [temario/05](temario/05-arquitectura-tres-capas-dip.md), secciones 8 y 11.
 
 **Ciclo de vida (Maven)**: lista ordenada de fases (`validate`, `compile`, `test`, `package`, `verify`, `install`). Al pedir una fase, Maven ejecuta antes todas las anteriores.
 
@@ -108,7 +108,7 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Migración (Flyway)**: archivo SQL versionado que cambia el esquema de la base de datos de forma ordenada y repetible.
 
-**Modelo de dominio**: clases que representan el negocio y sus reglas (`Movie`, `Director`, `Actor`). En este proyecto llevan anotaciones JPA (D-29), pero no Spring Web, Spring Data ni Jackson.
+**Modelo de dominio**: clases que representan el negocio y sus reglas (`Movie`, `Director`, `Actor`). En este proyecto son Java simple, sin anotaciones de persistencia ni de Spring Web.
 
 **Muchos a muchos (N:M)**: cada elemento de un lado puede relacionarse con varios del otro, y viceversa. Película–actor. En una base de datos relacional necesita una tabla intermedia.
 
@@ -154,7 +154,7 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Spring Security**: módulo de Spring que controla quién puede entrar a la aplicación (autenticación) y qué puede hacer (autorización). Fase opcional 24.
 
-**Spring Data JPA**: capa de Spring sobre JPA que genera automáticamente métodos habituales (`findById`, `findAll`, `save`...) a partir de una interfaz.
+**Spring Data JPA** (histórico: no se usa): capa de Spring sobre JPA que genera automáticamente métodos habituales (`findById`, `findAll`, `save`...) a partir de una interfaz.
 
 **Relación**: conexión entre entidades ("un director dirige películas"). Si llega a tener datos propios (p. ej., el nombre del personaje), pasa a tratarse como entidad.
 
@@ -262,15 +262,15 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Invariante**: condición que un objeto debe cumplir **siempre**, desde que se crea hasta que se destruye. Ejemplo: una duración de película siempre es mayor que cero. Si el objeto se puede construir violándola, no es una invariante, es una recomendación.
 
-**`Value object` (objeto de valor)**: tipo pequeño e **inmutable** que representa un concepto del negocio y se compara **por su valor**, no por identidad. Protege su invariante en el constructor, así que un `Title` vacío no puede existir. En este proyecto: `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` (D-46).
+**`Value object` (objeto de valor)** **(OBSOLETO desde 2026-11-04, D-48/D-46)**, D-46 revocada: el profesor no lo quiere; tipo pequeño e **inmutable** que representa un concepto del negocio y se compara **por su valor**, no por identidad. Protege su invariante en el constructor, así que un `Title` vacío no puede existir. Se probaron `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography` en la fase 10 y se eliminaron.
 
-**`Primitive obsession`**: usar tipos genéricos (`String`, `int`, `LocalDate`) para conceptos del dominio. El compilador no distingue un título de un nombre, y la regla ("no vacío", "mayor que 0") queda suelta en cada sitio que use el dato. Se corrige con *value objects*.
+**`Primitive obsession`** (histórico: hoy se acepta usar tipos simples): usar tipos genéricos (`String`, `int`, `LocalDate`) para conceptos del dominio. El compilador no distingue un título de un nombre, y la regla ("no vacío", "mayor que 0") queda suelta en cada sitio que use el dato. Se corregía con *value objects*; en este proyecto se defiende con Jakarta Validation en el DTO.
 
-**`record`**: clase inmutable de Java que genera constructor, accesores (`title.value()`), `equals`, `hashCode` y `toString`. No tiene setters. Su **constructor compacto** permite validar sin repetir la asignación de campos.
+**`record`** (se sigue usando en los DTO, p. ej. `MovieRequest`): clase inmutable de Java que genera constructor, accesores (`title.value()`), `equals`, `hashCode` y `toString`. No tiene setters. Su **constructor compacto** permite validar sin repetir la asignación de campos.
 
-**Constructor compacto**: forma de un `record` para validar o normalizar sus componentes sin escribir el constructor completo: `public Title { if (...) throw ...; value = value.trim(); }`. Se ejecuta en **toda** creación del objeto.
+**Constructor compacto** (histórico: lo usaban los *value objects*): forma de un `record` para validar o normalizar sus componentes sin escribir el constructor completo: `public Title { if (...) throw ...; value = value.trim(); }`. Se ejecuta en **toda** creación del objeto.
 
-**Reflexión (Java)**: capacidad de un programa para inspeccionar y modificar clases en **tiempo de ejecución**: crear objetos, leer y escribir campos privados o invocar métodos sin que el compilador los conozca. JPA la usa para rellenar una entidad desde una fila: crea el objeto con el constructor sin argumentos y escribe cada campo. Por eso las entidades necesitan ese constructor y campos no `final`, y por eso `Director()` es `protected`: lo usa la persistencia, no el código normal.
+**Reflexión (Java)** (histórico en este proyecto: la usaba Hibernate): capacidad de un programa para inspeccionar y modificar clases en **tiempo de ejecución**: crear objetos, leer y escribir campos privados o invocar métodos sin que el compilador los conozca. JPA la usa para rellenar una entidad desde una fila: crea el objeto con el constructor sin argumentos y escribe cada campo. Con JDBC ya no hace falta: las entidades no tienen constructor vacío.
 
 **OpenAPI**: estándar para describir una API HTTP en YAML o JSON (rutas, parámetros, cuerpos, respuestas y esquemas). Antes se llamaba *Swagger Specification*. En este proyecto, `src/main/resources/static/openapi.yaml` (OAS 3.0.3) es el contrato de la v1 (D-47).
 
@@ -281,3 +281,19 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 **API First (*contract first*)**: escribir el contrato de la API **antes** que el código. El contrato manda: si el código no coincide, se corrige el código. Lo contrario es *code first*, donde el documento se genera después y puede no reflejar lo acordado.
 
 **`operationId`**: nombre único de una operación dentro del documento OpenAPI (`listMovies`). Lo usan Swagger UI y los generadores de clientes.
+
+## Términos del giro a JDBC (2026-11-04)
+
+**DAO (*Data Access Object*)**: clase que sabe hablar con la base de datos para una tabla. Es como el **almacenero** de una tienda: sabe en qué estante está cada cosa, pero no decide qué se vende. Ejemplo: `MovieDaoJdbc`.
+
+**`JdbcTemplate`**: clase de Spring que ejecuta SQL por JDBC y se encarga de abrir y cerrar la conexión y de tratar los errores. Tú escribes la consulta; ella hace el trabajo repetitivo. Ver [temario/07](temario/07-conexion-jdbc-datasource.md).
+
+**`RowMapper`**: pieza pequeña que convierte **una fila** del resultado de una consulta en **un objeto** Java (por ejemplo, una fila de `movie` en un `Movie`). Es lo que, con JPA, hacía Hibernate solo.
+
+**Puerto (arquitectura)**: interfaz que define el dominio para decir qué necesita del exterior, sin saber cómo se hace. Hoy: `MovieRepository`. Su implementación (`MovieRepositoryImpl`) vive en `persistence`. Es como una toma de corriente: al dominio le da igual qué cable hay detrás.
+
+**Problema N+1**: se hace **1** consulta para traer una lista y luego **N** consultas más, una por elemento, para traer sus datos relacionados. Ejemplo: cargar 10 películas y hacer 10 consultas más para sus directores. Es lento. Se resuelve trayendo todo con un `JOIN`. Puede ocurrir también con JDBC si el `RowMapper` consulta dentro del bucle.
+
+**Jakarta Validation (*Bean Validation*)**: conjunto de anotaciones (`@NotBlank`, `@Min`, `@Positive`, `@Size`) que declaran las reglas de un dato de entrada. En este proyecto están en `MovieRequest` y se activan con `@Valid` en el controlador.
+
+**`@Transactional`**: anotación que agrupa las operaciones de un método en una sola transacción: o salen todas bien o se deshace todo. Está en `MovieServiceImpl`.
