@@ -108,6 +108,7 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Alternativas:** (A) Repositorio: interfaz definida por el dominio (`MovieRepository`) e implementada por un adaptador con Spring Data; (B) DAO: interfaz en la persistencia (`MovieDao` + `MovieDaoImpl`) que usa directamente el servicio.
 - **Decisión:** A. Con DAO, el servicio dependería de la persistencia, que es justo lo que la DIP evita. Se justificará con código en el paso 12.1.
 - **Explicación:** [temario/05](temario/05-arquitectura-tres-capas-dip.md), secciones 8 y 10.
+- **Nota (2026-11-04):** se mantiene, **no** queda superada por [D-48](#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples). El puerto `MovieRepository` sigue en el dominio; lo único que cambia es la tecnología del adaptador, que delega en el **DAO JDBC** (`MovieRepositoryImpl` → `MovieDao`) en lugar de Spring Data.
 
 ## D-21 Servicio como interfaz + implementación (`MovieService` + `MovieServiceImpl`) — ⏳ Pendiente (se decide en la fase 16)
 - **Alternativas:** (A) una sola clase `MovieService`; (B) interfaz + `Impl`, muy habitual en clase.
@@ -116,6 +117,7 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 ## D-22 Nombre del adaptador: `MovieRepositoryAdapter` (no `MovieRepositoryImpl`) — ✅ Decidido
 - **Alternativas:** `MovieRepositoryAdapter` o `MovieRepositoryImpl`. Las dos cumplen el mismo papel: implementar el puerto `MovieRepository`.
 - **Decisión:** `Adapter`. Coincide con el vocabulario de puertos y adaptadores del tema 5 y dice más que `Impl`: traduce entre el dominio y Spring Data/JPA. Además, Spring Data da un significado especial al sufijo `Impl` (implementaciones de métodos personalizados de repositorios), así que evitarlo previene confusiones.
+- **Nota (2026-11-04):** en el código real la clase se llama `MovieRepositoryImpl` (`persistence.repository.impl`). Al adoptar el DAO JDBC el sufijo `Impl` volvió a ser natural y desapareció la ambigüedad con Spring Data que motivó esta decisión.
 
 ## D-23 Seguridad con JWT — ✅ Añadida al plan como fase opcional 24
 - **Motivo:** el alumno lo verá en clase. Va al final porque necesita la API terminada (depende de la fase 18).

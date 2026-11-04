@@ -118,7 +118,7 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **ORM (*Object-Relational Mapping*)**: técnica o herramienta que traduce entre objetos (Java) y tablas relacionales (SQL). JPA/Hibernate es un ORM.
 
-**Puerto (arquitectura)**: interfaz definida por el dominio que expresa lo que necesita del exterior. Ejemplo: `MovieRepository`. No confundir con un puerto de red.
+**Puerto (arquitectura)**: interfaz que define el dominio para decir qué necesita del exterior, sin saber cómo se hace. Hoy: `MovieRepository`. Su implementación (`MovieRepositoryImpl`) vive en `persistence`. Es como una toma de corriente: al dominio le da igual qué cable hay detrás. No confundir con un puerto de red.
 
 **Publicar un puerto**: conectar un puerto de tu ordenador con uno del contenedor. `"3307:3306"` = el 3307 de Windows lleva al 3306 del contenedor.
 
@@ -289,8 +289,6 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 **`JdbcTemplate`**: clase de Spring que ejecuta SQL por JDBC y se encarga de abrir y cerrar la conexión y de tratar los errores. Tú escribes la consulta; ella hace el trabajo repetitivo. Ver [temario/07](temario/07-conexion-jdbc-datasource.md).
 
 **`RowMapper`**: pieza pequeña que convierte **una fila** del resultado de una consulta en **un objeto** Java (por ejemplo, una fila de `movie` en un `Movie`). Es lo que, con JPA, hacía Hibernate solo.
-
-**Puerto (arquitectura)**: interfaz que define el dominio para decir qué necesita del exterior, sin saber cómo se hace. Hoy: `MovieRepository`. Su implementación (`MovieRepositoryImpl`) vive en `persistence`. Es como una toma de corriente: al dominio le da igual qué cable hay detrás.
 
 **Problema N+1**: se hace **1** consulta para traer una lista y luego **N** consultas más, una por elemento, para traer sus datos relacionados. Ejemplo: cargar 10 películas y hacer 10 consultas más para sus directores. Es lento. Se resuelve trayendo todo con un `JOIN`. Puede ocurrir también con JDBC si el `RowMapper` consulta dentro del bucle.
 

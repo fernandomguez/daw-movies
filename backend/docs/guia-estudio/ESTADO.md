@@ -13,7 +13,7 @@
 | Dato | Valor |
 |---|---|
 | Rumbo actual | Arquitectura por capas con JDBC: `controller` (con `dto`, `mapper`, `handler`), `domain` (`model`, `service`, `repository`, `exception`), `persistence` (`dao`, `repository.impl`) |
-| Paso en curso | Fases 0, 1, 2 y 3 hechas (skill actualizado; Swagger con springdoc 3.2.0 y `OpenApiConfig`). Quedan la **1c** (limpieza de docs) y la **4** (monolito modular). Divergencia con `origin/main` ya resuelta |
+| Paso en curso | Fases 0–3 y la **1c de docs, hechas**. Quedan: los **tests del DAO/repositorio con base de datos real** (quedaron fuera de la 1c) y la **4** (monolito modular). Divergencia con `origin/main` ya resuelta; `main` lleva además el frontend Angular (`f1fb4ce`, `2079b79`, `e814b1d`) |
 | Último commit | `main` local = `origin/main` (el nuevo rumbo JDBC). El 2026-11-04 se **intercambiaron las ramas en GitHub** con `gh api .../branches/<rama>/rename`: el `main` viejo (camino JPA, fases 11 y 15A) es ahora **`origin/jpa-fase-11-15a`** (`2d58690`) y la rama `nuevo-rumbo-jdbc` pasó a llamarse `main` (rama por defecto, puesta con `gh repo edit --default-branch main`). Etiquetas `fase-01`…`fase-15A` y `backup/antes-de-volver-a-fase-10` sin cambios |
 | Tests | **58 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo (6+6+8), 3 de contrato OpenAPI y 3 de integración. Los 6 que arrancan la aplicación necesitan Docker; el resto no |
 | Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Swagger UI en `/swagger-ui.html` y contrato en `/v3/api-docs` (generado desde el código, sin yaml) |
@@ -29,7 +29,7 @@ Plan completo: `C:\Users\ferna\.claude\plans\vamos-a-cambiar-el-drifting-pond.md
 |---|---|---|
 | **0** ✅ | Que compile y los tests pasen | `d75cffc` |
 | **1** ✅ | Entender el código, tests de servicio y controlador, `arquitectura.md` real, D-48, docs sin *value objects* ni JPA | `8b1a1dd`, `7ad36c1`, `0b6f567`, `339cb5d`, `f7877e6` |
-| **1c** ⏳ (limpieza) | Matices que dejaron los agentes: `entender-el-codigo.md` aún dice «entre 1888 y 2100» (debe ser «año actual + 10»); glosario con `Puerto` duplicado; `temario/05` §11 y diarios 05–07 con referencias a JPA; decidir si D-20 queda superada. *(El diario y el temario 15A ya no existen en `main`: están en `jpa-fase-11-15a`; los enlaces vivos se apuntaron allí.)* Faltan también los tests del DAO y del repositorio con base de datos real | `docs: fix leftovers after the new direction` |
+| **1c** ✅ (docs, 2026-11-04) | Registro temario 05 (banner + nota en la «decisión final» + sección 11 histórica + notas en value objects y fase 11), diarios 05–07 con nota histórica, glosario con un solo `Puerto`, D-20 (**se mantiene**, con nota) y D-22 (`Impl` real anotada), DTO de `entender-el-codigo.md` con `@AssertTrue`, nota del año en §1. *(El diario y el temario 15A ya no existen en `main`: están en `jpa-fase-11-15a`; los enlaces vivos se apuntaron allí.)* Los **tests del DAO y del repositorio con base de datos real** quedan pendientes, como tarea propia | `docs: fix leftovers after the new direction` |
 | **2** ✅ Skill (`40b0bb1`, `ca3c834`, `ff9f2ad`, `2b9cd9f` en el repo del skill, sin remoto) | Actualizar `C:\Users\ferna\Desktop\FP DAW\2o curso\Lorenzo\creador-de-skills` para que replique **esta** arquitectura. **Primero comprobar si esa carpeta es un repositorio git** (si no, no hay commits ahí). Renombres: `presentation` → `controller`, `domain.models` → `domain.model`, `domain.exceptions` → `domain.exception`; mapper → `controller.mapper`; advice → `controller.handler`. En las skills solo `<Entidad>` y `<paquete.raíz>`, nunca `Movie` | **2a** `k-back-module` (árbol, reglas `MOD-R`, ArchUnit) · **2b** renombrar `k-back-presentation` a `k-back-controller` + `k-back-domain` + `k-back-persistence` (decidir dónde van las excepciones de persistencia) · **2c** `do-code-impl`, `do-code-review`, plantillas y `teoria/`. `demo-cliente/` se deja como ejemplo antiguo |
 | **3** ✅ Swagger (`3f3dbc2`; el contrato sale del código, sin yaml: ver la bitácora y D-47) | springdoc **3.2.0** (rama de Spring Boot 4; verificar en Maven Central). `OpenApiConfig` en `com.daw.movies.config`, **fuera** de las capas, para que haya un único Swagger UI cuando haya varios módulos. Probar los 5 endpoints con «Try it out» contra `seed.sql` | **3a** `feat: add springdoc and OpenApiConfig` · **3b** `test: add OpenAPI contract test` (`/v3/api-docs` lista los 5 endpoints) · **3c** `docs: record Swagger manual checks` |
 | **4** Monolito modular | Un único módulo **`catalog`** ahora; después `stock`, `order`, `user`… Estructura `com.daw.movies.catalog.{controller,domain,persistence}`; `MoviesApplication` y `config` en la raíz. Spring Modulith + ArchUnit (versión para Boot 4 a verificar). Riesgo D-45: si `Director`/`Actor` se separan en otro módulo, relacionar por id | **4a** `test: add ArchUnit layer rules` (antes de mover nada) · **4b** `refactor: move code into catalog module` (solo `package` e imports) · **4c** `feat: add Spring Modulith verification` · **4d** `docs: D-49 modular monolith` + ajustar el skill a `<paquete.raíz>.<módulo>` |
@@ -44,7 +44,7 @@ Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` 
 
 ### Decisiones y rarezas ya conocidas (no volver a descubrirlas)
 
-- **Año de estreno:** `@Min(1888)` y `@MaxYearsAhead(10)` (año actual + 10; anotación propia, `@Max` solo admite números fijos).
+- **Año de estreno:** `@Min(1888)` y el método `isReleaseYearValid()` con `@AssertTrue` en `MovieRequest` (año actual + 10; `@Max` solo admite números fijos; la anotación propia `@MaxYearsAhead` se quitó en `6f0fbea`).
 - **500 deliberado:** si `create`/`update` no encuentran la película justo después de guardarla → `IllegalStateException` (no un 404).
 - **`GlobalExceptionHandler`:** 404 (película/director), 400 (validación, JSON mal formado, id no numérico), 415 (`Content-Type` no JSON). Un fallo de base de datos o un `IllegalArgumentException` siguen dando 500.
 - **`PUT /movies/{id}`:** comprueba primero la película y después el director; si ambos fallan solo se ve el 404 de la película.
@@ -470,9 +470,22 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 
 **Siguiente (sin ejecutar):** fase 1c y/o fase 4 del backend (preguntas y ArchUnit), cuando el alumno lo pida.
 
+### 2026-11-04 (undécima parte) — fase 1c: limpieza de la documentación después del giro
+
+1. Commits previos de casa: `ece8a0b` (token muerto `--card-outline-width`, verificado que nada lo usaba) y `1dcde3b` (la décima parte de este archivo asentada).
+2. Línea base de la 1c verificada contra el disco: el texto «entre 1888 y 2100» ya no existía en `entender-el-codigo.md` (había quedado como «año actual + 10», aunque su extracto de `MovieRequest` seguía sin mostrar el método con `@AssertTrue`).
+3. `temario/05`: banner con el giro definitivo (D-19/D-29 superadas por D-48, enlace a `arquitectura.md`), nota histórica en la «decisión al final», sección 11 marcada como histórica (el `@Service` se mantiene) y notas históricas en el bloque de value objects (D-46 revocada) y en «Entidad JPA y objeto de dominio».
+4. Diarios 05–07: nota histórica en cada uno (el código real ya no tiene JPA ni Hibernate; `spring-boot-starter-jdbc` entrega el `DataSource` y el esquema lo lleva Flyway).
+5. Glosario: las dos entradas `Puerto` fusionadas en una (quedó la de la lista general, con el texto más rico; borrada la de la sección «giro a JDBC»).
+6. Decisión D-20: **se mantiene, no superada** (nota en D-20): el puerto `MovieRepository` sigue en el dominio y el adaptador delega ahora en el DAO JDBC (`MovieRepositoryImpl` → `MovieDao`) y no en Spring Data. Extra del mismo repaso: **D-22** decidió `MovieRepositoryAdapter` pero en el código vive `MovieRepositoryImpl`; anotado en D-22 como histórico.
+7. `entender-el-codigo.md` (§5.5): extracto de `MovieRequest` actualizado con el método `isReleaseYearValid` y una frase que explica por qué `@Max` no valía.
+8. §1 actualizado: fila «Paso en curso», fila 1c ✅ y la nota del año (`@AssertTrue`, sin `@MaxYearsAhead`, que se quitó en `6f0fbea`).
+9. Los **tests del DAO y del repositorio con base de datos real** quedan como tarea propia pendiente, fuera de esta fase.
+10. No se ejecutó `mvnw clean test`: solo se tocaron `.md` (mismo precedente que al cerrar la 15A); la última ejecución en verde fue **58** de la décima parte.
+
 ## 5. Trabajo sin commitear
 
-Ninguno tras el commit `refactor: replace MaxYearsAhead...` + `refactor: move project root up...` + el commit del frontend de la décima parte. El §1 de arriba manda.
+Ninguno. Los tres commits de la undécima parte y de casa (`style` del token muerto, la décima parte de este archivo y el arreglo de los restos) están subidos al historial local. El §1 de arriba manda.
 
 ### Commits locales desde la fase 10 (más reciente primero)
 

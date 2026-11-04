@@ -26,3 +26,5 @@ En [decisiones-tecnicas.md](decisiones-tecnicas.md): D-18 (paquetes por capa) y 
 ## Revisión posterior (fase 6, 2026-10-20)
 
 El alumno cambió dos puntos del diseño: las clases del dominio llevarán **anotaciones JPA** (desaparecen `MovieEntity` y `MovieEntityMapper`) y los servicios llevarán **`@Service`**. Ver D-19 y D-29 en [decisiones-tecnicas.md](decisiones-tecnicas.md) y la sección 11 del [temario/05](temario/05-arquitectura-tres-capas-dip.md). La fase 13 del plan se elimina.
+
+> ⚠️ **Histórico (2026-11-04):** lo anterior refleja la decisión de entonces. Con [D-48](decisiones-tecnicas.md) el proyecto ya no usa JPA ni Hibernate: dominio en Java puro, DAO JDBC y adaptador `MovieRepositoryImpl`. El diseño vigente está en [`arquitectura.md`](arquitectura.md).

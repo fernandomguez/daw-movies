@@ -305,10 +305,16 @@ public record MovieRequest(
         @NotBlank @Size(max = 255) String title,
         @NotNull @Min(1888) Integer releaseYear,
         @NotNull @Positive Integer duration,
-        @NotNull @Positive Long directorId) { }
+        @NotNull @Positive Long directorId) {
+
+    @AssertTrue(message = "releaseYear no puede estar a más de 10 años del actual")
+    public boolean isReleaseYearValid() {
+        return releaseYear == null || releaseYear <= Year.now().getValue() + 10;
+    }
+}
 ```
 
-Es la **puerta de entrada**: se rechaza lo inválido antes de tocar el negocio. Los límites salen del esquema SQL (`VARCHAR(255)`, `CHECK release_year >= 1888`, `CHECK duration_minutes > 0`).
+Es la **puerta de entrada**: se rechaza lo inválido antes de tocar el negocio. Los límites salen del esquema SQL (`VARCHAR(255)`, `CHECK release_year >= 1888`, `CHECK duration_minutes > 0`). El tope superior no cabe en una anotación fija (`@Max` solo admite números literales), así que vive en el método `isReleaseYearValid` con `@AssertTrue`.
 
 > **Por qué `Integer` y no `int`:** con `int`, un campo ausente valdría `0` y nadie lo notaría. Con `Integer` puede ser `null`, y `@NotNull` lo detecta.
 

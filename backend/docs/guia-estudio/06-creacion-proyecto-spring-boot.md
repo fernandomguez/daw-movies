@@ -264,5 +264,5 @@ Se crearon `target/classes`, `target/test-classes`, `target/surefire-reports` (i
 - Repositorio Git con un commit por fase (D-30) y subido a GitHub.
 - Proyecto Spring Boot 4.1.1 / Java 25 generado con Initializr, con Maven Wrapper y solo las dependencias mínimas (D-26).
 - Plan de dependencias para el resto del proyecto, con los nombres reales de Boot 4 (D-26, D-27).
-- Diseño revisado: dominio con JPA y `@Service` (D-19, D-29).
+- Diseño revisado: dominio con JPA y `@Service` (D-19, D-29). *(histórico desde 2026-11-04: [D-48](decisiones-tecnicas.md) retiró JPA; dominio Java puro y DAO JDBC)*
 - Primer test (`contextLoads`) en verde: **`Tests run: 1, Failures: 0, Errors: 0`**.

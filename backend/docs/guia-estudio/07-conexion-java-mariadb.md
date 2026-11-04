@@ -6,6 +6,8 @@
 
 > Este archivo es el **diario** de la fase: comandos y salidas reales. Para **entender** los conceptos, lee primero el [tema 07](temario/07-conexion-jdbc-datasource.md), que tiene también las preguntas de repaso.
 
+> ⚠️ **Histórico (2026-11-04):** este diario registra la fase tal y como se hizo entonces, con `spring-boot-starter-data-jpa` en el proyecto. Con [D-48](decisiones-tecnicas.md), JPA y Hibernate salieron del proyecto: la conexión la entrega `spring-boot-starter-jdbc` (el `DataSource`) y el esquema lo gestiona Flyway.
+
 1. **7.1** Añadimos las librerías para trabajar con bases de datos y el driver de MariaDB. El test se puso en **rojo a propósito**: Spring intentaba conectar y no sabía a dónde.
 2. **7.2** Escribimos en `application.yaml` a dónde conectar. El usuario y la contraseña se leen de `.env`, así que no están en el código. De paso descubrimos que Hibernate escribía la contraseña en el log, y lo tapamos.
 3. **7.3** Configuramos Hibernate para que **no toque las tablas** (`ddl-auto: validate`); eso será trabajo de Flyway. Con TDD: primero el test en rojo, después el ajuste y verde.

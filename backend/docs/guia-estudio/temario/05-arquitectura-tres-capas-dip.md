@@ -2,7 +2,9 @@
 
 > **Fase del plan:** 5. Tema **teórico**: el código que aparece es **ilustrativo** (todavía no existe en el proyecto). Las clases reales se crearán a partir de la fase 6, una a una.
 
-> ⚠️ **Cambio de diseño (2026-10-20).** Este tema explica la versión **estricta** de la arquitectura: dominio en Java puro, con `MovieEntity` y `MovieEntityMapper` separados. En la fase 6 se decidió una versión más práctica: **anotaciones JPA en las clases del dominio y `@Service` en los servicios** (D-19, D-29). Todo lo que se explica aquí sigue sirviendo para entender las capas, pero el proyecto real será como se describe en la [sección 11, "Cambio de diseño"](#11-cambio-de-diseño-dominio-con-jpa-y-service-d-19-y-d-29).
+> ⚠️ **Cambio de diseño (2026-10-20).** Este tema explica la versión **estricta** de la arquitectura: dominio en Java puro, con `MovieEntity` y `MovieEntityMapper` separados. En la fase 6 se decidió una versión más práctica: **anotaciones JPA en las clases del dominio y `@Service` en los servicios** (D-19, D-29). Todo lo que se explica aquí sigue sirviendo para entender las capas, pero el proyecto real fue como se describe en la [sección 11, "Cambio de diseño"](#11-cambio-de-diseño-dominio-con-jpa-y-service-d-19-y-d-29).
+
+> ⚠️ **Giro definitivo (2026-11-04):** D-19 y D-29 quedaron **superadas por [D-48](../decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples)**. El dominio es Java puro (**sin JPA**) y la persistencia es un **DAO JDBC** (`JdbcTemplate`) debajo del puerto `MovieRepository`. La sección 11 es **histórica**; el diseño vigente está en [`arquitectura.md`](../arquitectura.md).
 
 ## Objetivo
 
@@ -113,6 +115,8 @@ public class Movie {
 **"A propósito"** significa que es una **decisión**, no un descuido: aceptamos tener más clases (y mappers) a cambio de un dominio que se prueba solo y no cambia cuando cambia la tecnología (D-18, D-20). Las anotaciones de Spring en los servicios (`@Service`) son la última pieza de esta decisión (D-19).
 
 > **Qué se decidió al final:** el proyecto usa un término medio. Las clases del dominio llevan anotaciones **JPA** (`jakarta.persistence`), que es un estándar y no Spring, y los servicios llevan `@Service`. Siguen sin llevar Spring Web, Spring Data, Jackson ni Bean Validation. Ver la [sección 11](#11-cambio-de-diseño-dominio-con-jpa-y-service-d-19-y-d-29).
+>
+> ⚠️ **Histórico (2026-11-04):** [D-48](../decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples) abandonó el JPA del dominio (D-29 superada): Java puro de nuevo y DAO JDBC. El `@Service` de los servicios sí se mantiene.
 
 **Forma rápida de comprobarlo:** en el paquete `domain` no puede haber ningún `import` que empiece por `org.springframework`, `jakarta.persistence`, `jakarta.validation`, `com.fasterxml.jackson` ni `tools.jackson` (sección 7).
 
@@ -665,15 +669,17 @@ En este proyecto usamos **Repositorio**: `MovieRepository` es la interfaz que de
 - **Anémico:** las clases del dominio solo tienen datos (atributos, getters y setters). Las reglas están en los servicios. Ejemplo: `movie.setDurationMinutes(-5)` se acepta, y es el servicio quien tiene que acordarse de comprobarlo.
 - **Rico:** las clases tienen datos **y** comportamiento: protegen sus propias reglas. Ejemplo: el constructor de `Movie` lanza una excepción si la duración no es positiva, así que no puede existir una película inválida.
 
-**Decidido en la fase 10:** modelo **rico moderado** con *value objects* (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`), sin setters (D-44 y D-46). Las reglas de cada valor viven en su `record`; el constructor de `Movie`, `Director` o `Actor` solo comprueba que no falte ninguna pieza. Está explicado en el [tema 10](10-modelo-de-dominio.md).
+**Decidido en la fase 10:** modelo **rico moderado** con *value objects* (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`), sin setters (D-44 y D-46). Las reglas de cada valor viven en su `record`; el constructor de `Movie`, `Director` o `Actor` solo comprueba que no falte ninguna pieza. Está explicado en el [tema 10](10-modelo-de-dominio.md). *(Histórico desde 2026-11-04: D-46 quedó **revocada**; dominio con tipos simples, [D-48](../decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples).)*
 
 ### Otros conceptos
 
-- **Entidad JPA y objeto de dominio (fase 11):** en el diseño estricto eran dos clases (`MovieEntity` y `Movie`). En el proyecto real son la misma, `Movie` con anotaciones JPA (D-29). La comparación se ve en el paso 11.2.
+- **Entidad JPA y objeto de dominio (fase 11):** en el diseño estricto eran dos clases (`MovieEntity` y `Movie`). En el proyecto real son la misma, `Movie` con anotaciones JPA (D-29). La comparación se ve en el paso 11.2. *(Histórico desde 2026-11-04: superado por [D-48](../decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples); el proyecto actual nunca llegó a la fase 11: dominio Java puro y DAO JDBC, ver [`arquitectura.md`](../arquitectura.md).)*
 - **Mappers (fase 15):** clases que copian datos entre dominio ↔ DTO. El mapper entidad ↔ dominio del diseño estricto ya no existe.
 - **DTO (fases 15 y 17):** objeto que define la forma del JSON que entra o sale de la API.
 
 ## 11. Cambio de diseño: dominio con JPA y `@Service` (D-19 y D-29)
+
+> ⚠️ **Histórico (2026-11-04).** Esta sección cuenta el diseño con JPA adoptado el 2026-10-20. Con [D-48](../decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples) ya no hay JPA ni Hibernate en el proyecto (D-29 superada); el `@Service` de los servicios **sí** se mantiene.
 
 En la fase 6, el alumno eligió una versión más práctica del diseño, más parecida a la que se usa en clase:
 
