@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual (2026-11-04, tras el giro a JDBC):** el proyecto pasó de JPA a una **arquitectura por capas con JDBC** (D-48) y el profesor no quiere *value objects* (D-46 revocada): `controller` (con `dto/`, `mapper/` y `handler/`), `domain` (`model`, `service`, `repository`, `exception`) y `persistence` (DAO `MovieDao`/`MovieDaoJdbc` con `JdbcTemplate`, y `MovieRepositoryImpl`), más `config/` (fuera de las capas) con la configuración de Swagger. `Movie`, `Director` y `Actor` usan tipos simples; las reglas de entrada están en `MovieRequest` con Jakarta Validation. Hay **58 tests en verde**. Hecho en el giro: entender el código y sus tests (fase 30/31), **skill `creador-de-skills` actualizado** (32) y **Swagger generado desde el código** con springdoc 3.2.0 (33). Pendiente: el monolito modular `catalog` (34) y limpiar restos de documentación. Las fases JPA 11–14 quedan superadas y viven en la rama `jpa-fase-11-15a`. Los datos de prueba se cargan aparte con `db/testdata/seed.sql`.
+> **Estado actual (2026-11-04, monolito modular):** el proyecto pasó de JPA a una **arquitectura por capas con JDBC** (D-48) y el profesor no quiere *value objects* (D-46 revocada). Desde la fase 4 (D-49) todo vive en el **módulo Spring Modulith `catalog`**: `com.daw.movies.catalog.{controller, domain, persistence}`, arranque y `config/` en la raíz (`@Modulithic(sharedModules = "config")`; la verificación en `ModulithTest`, la barrera ArchUnit en `ArquitecturaTest`). Hecho en el giro: entender el código y sus tests (30/31), skill `creador-de-skills` actualizado (32), **Swagger desde el código** (33) y **monolito modular** (34: módulo `catalog` + Modulith). Hay **75 tests en verde**. La arquitectura objetivo (JPA, fachadas, casos de uso, `internal/…`) está en [`docs/arquitectura-monolito.md`](docs/arquitectura-monolito.md) y se adoptará por temas del temario («el profesor no quiere JPA todavía: no lo hemos dado»). Las fases JPA 11–14 quedan superadas y viven en la rama `jpa-fase-11-15a`. Los datos de prueba se cargan aparte con `db/testdata/seed.sql`.
 
 ---
 
@@ -58,9 +58,9 @@ Versiones elegidas y verificadas en fuentes oficiales en la fase 1 ([detalle](do
 | 33 | `springdoc-openapi-starter-webmvc-ui` (3.2.0, propiedad `springdoc.version`) | Contrato OpenAPI generado desde el código y Swagger UI | ✅ en el `pom.xml` (en 15A se hizo con un `openapi.yaml` escrito a mano; el profesor no lo quiere en `resources`) |
 | 16 | `spring-boot-starter-webmvc` (+ `-test`) | Controladores REST, Tomcat embebido, JSON | ✅ en el `pom.xml` |
 | 18 | `spring-boot-starter-validation` | Jakarta Validation (`@NotBlank`, `@Valid`) en `MovieRequest` | ✅ en el `pom.xml` |
-| 19 | `spring-boot-testcontainers`, `testcontainers-junit-jupiter`, `testcontainers-mariadb` | Tests de integración con un MariaDB real y desechable | ⏳ |
+| 19 | `spring-boot-testcontainers`, `testcontainers-junit-jupiter`, `testcontainers-mariadb` | Tests de integración con un MariaDB real y desechable | ⏳ *(los tests JDBC actuales van contra el MariaDB de compose, no Testcontainers)* |
 | 24 | `spring-boot-starter-security` + librería JWT | Seguridad | 🟡 |
-| 25 | Spring Modulith (`spring-modulith-starter-*`) y `archunit-junit5` | Verificación de módulos y de dependencias (versiones por comprobar en la fase 25) | ⏳ |
+| 25→34 | Spring Modulith (`spring-modulith-bom` **2.1.2** en `dependencyManagement`, `spring-modulith-starter-core` y `-starter-test` del BOM) y `archunit-junit5` **1.5.1** (property `archunit.version`) | Verificación de módulos y de dependencias | ✅ en el `pom.xml` (fase 4: `ModulithTest`, `ArquitecturaTest`; versiones verificadas en Maven Central) |
 | 27 | `spring-boot-starter-actuator` | Métricas y salud | ⚪ (revisa D-27) |
 
 **Descartadas** (D-27): Lombok (oculta el código que queremos aprender; usaremos `record`), DevTools, Docker Compose Support (haría sola la configuración que se aprende en la fase 7), H2 (su SQL no es el de MariaDB) y Actuator (se revisa en la fase 27). Explicación completa: [temario 06, «Referencia: plan de dependencias»](docs/guia-estudio/temario/06-proyecto-spring-boot-y-git.md#referencia-plan-de-dependencias).
@@ -89,7 +89,7 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | | ~~14. Consultas de información relacionada y problemas habituales~~ | Superada (D-48); el N+1 se estudia con JDBC |
 | D. API | 15. DTOs de salida y mapeo dominio → DTO | ⏳ |
 | | 15A. API First: el contrato antes del código | 🟠 Replanteada: resuelta en la fase 33 con el contrato generado desde el código |
-| G. Tras el giro a JDBC | 30. Entender el código ✅ · 31. Tests ✅ · 32. Skill ✅ · 33. Swagger ✅ · 34. Monolito modular `catalog` ⏳ | Ver el [plan](docs/guia-estudio/00-plan-de-aprendizaje.md) |
+| G. Tras el giro a JDBC | 30. Entender el código ✅ · 31. Tests ✅ · 32. Skill ✅ · 33. Swagger ✅ · 34. Monolito modular `catalog` ✅ (4b `b299efc`, 4c `c04db2c`, 4d este) | Ver el [plan](docs/guia-estudio/00-plan-de-aprendizaje.md) y la [arquitectura objetivo](docs/arquitectura-monolito.md) |
 | | 16. Servicio y controladores REST de lectura | ⏳ |
 | | 17. Operaciones de escritura y transacciones | ⏳ |
 | | 18. Validaciones y manejo de excepciones | ⏳ |
@@ -158,16 +158,20 @@ docker compose up -d          # los tests se conectan a MariaDB: tiene que estar
 Resultado esperado de `test`:
 
 ```
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ArquitecturaTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ModulithTest
 [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.config.OpenApiContractTest
-[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.controller.MovieControllerTest
+[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.controller.MovieControllerTest
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.DatabaseConnectionTests
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.ActorTest
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.DirectorTest
-[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.MovieTest
-[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.service.impl.MovieServiceImplTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.domain.model.ActorTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.domain.model.DirectorTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.domain.model.MovieTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.domain.service.impl.MovieServiceImplTest
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.FlywayMigrationTests
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
-[INFO] Tests run: 58, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.persistence.dao.impl.jdbc.MovieDaoJdbcTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.persistence.repository.impl.MovieRepositoryImplTest
+[INFO] Tests run: 75, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
@@ -509,23 +513,28 @@ daw-movies/
 ├── pom.xml                ← proyecto Maven: Java 25, Spring Boot 4.1.1, dependencias
 ├── mvnw, mvnw.cmd, .mvn/  ← Maven Wrapper (Maven 3.10.0)
 ├── src/
-│   ├── main/java/com/daw/movies/MoviesApplication.java   ← clase de arranque
-│   ├── main/java/com/daw/movies/config/                  ← OpenApiConfig (Swagger; fuera de las capas)
-│   ├── main/java/com/daw/movies/controller/              ← MovieController, dto/, mapper/, handler/
-│   ├── main/java/com/daw/movies/domain/                  ← model/ (Movie, Director, Actor), service/, repository/ (puerto), exception/
-│   ├── main/java/com/daw/movies/persistence/             ← dao/ (MovieDao, MovieDaoJdbc), repository/impl/ (MovieRepositoryImpl)
-│   ├── main/resources/application.yaml                    ← configuración (sin secretos: los lee de .env)
-│   ├── main/resources/db/migration/                       ← migraciones Flyway (V1–V4: las cuatro tablas)
-│   ├── main/resources/db/testdata/seed.sql                ← datos de prueba (no lo ejecuta Flyway, D-42)
+│   ├── main/java/com/daw/movies/MoviesApplication.java       ← clase de arranque (@Modulithic: módulo compartido "config")
+│   ├── main/java/com/daw/movies/config/                      ← OpenApiConfig (Swagger; módulo compartido, fuera de las capas)
+│   ├── main/java/com/daw/movies/catalog/                     ← package-info.java: sello del módulo (@ApplicationModule)
+│   ├── main/java/com/daw/movies/catalog/controller/          ← MovieController, dto/, mapper/, handler/
+│   ├── main/java/com/daw/movies/catalog/domain/              ← model/ (Movie, Director, Actor), service/, repository/ (puerto), exception/
+│   ├── main/java/com/daw/movies/catalog/persistence/         ← dao/ (MovieDao, MovieDaoJdbc), repository/impl/ (MovieRepositoryImpl)
+│   ├── main/resources/application.yaml                        ← configuración (sin secretos: los lee de .env)
+│   ├── main/resources/db/migration/                           ← migraciones Flyway (V1–V4: las cuatro tablas)
+│   ├── main/resources/db/testdata/seed.sql                    ← datos de prueba (no lo ejecuta Flyway, D-42)
 │   ├── test/java/com/daw/movies/MoviesApplicationTests.java
-│   ├── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB
-│   ├── test/java/com/daw/movies/FlywayMigrationTests.java   ← Flyway crea flyway_schema_history
-│   ├── test/java/com/daw/movies/config/                     ← OpenApiContractTest (contrato Swagger)
-│   ├── test/java/com/daw/movies/controller/                 ← MovieControllerTest (@WebMvcTest)
-│   ├── test/java/com/daw/movies/domain/model/               ← tests de las entidades (sin Spring ni base de datos)
-│   └── test/java/com/daw/movies/domain/service/impl/        ← MovieServiceImplTest (Mockito)
+│   ├── test/java/com/daw/movies/ModulithTest.java             ← verify() y Documenter de Spring Modulith
+│   ├── test/java/com/daw/movies/ArquitecturaTest.java         ← 5 reglas ArchUnit (MOD-R01–R05)
+│   ├── test/java/com/daw/movies/DatabaseConnectionTests.java  ← conexión a MariaDB
+│   ├── test/java/com/daw/movies/FlywayMigrationTests.java     ← Flyway crea flyway_schema_history
+│   ├── test/java/com/daw/movies/config/                       ← OpenApiContractTest (contrato Swagger)
+│   ├── test/java/com/daw/movies/catalog/controller/           ← MovieControllerTest (@WebMvcTest)
+│   ├── test/java/com/daw/movies/catalog/domain/               ← tests de entidades (sin Spring) y MovieServiceImplTest (Mockito)
+│   └── test/java/com/daw/movies/catalog/persistence/          ← MovieDaoJdbcTest y MovieRepositoryImplTest (contra MariaDB real)
 └── docs/
-    └── guia-estudio/      ← plan, fases, temario, decisiones y glosario
+    ├── arquitectura.md             ← la arquitectura real del módulo catalog (D-48 + D-49)
+    ├── arquitectura-monolito.md    ← arquitectura objetivo (skill monolito-modular; JPA más adelante)
+    └── guia-estudio/               ← plan, fases, temario, decisiones y glosario
 ```
 
 ---

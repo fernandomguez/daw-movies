@@ -1,7 +1,9 @@
 # Arquitectura del proyecto (ejemplo con `Movie`)
 
 > Describe la arquitectura **real** del código en `src/main/java/com/daw/movies`, no un ideal. Paquete raíz: `com.daw.movies`.
-> Decisión que la respalda: [D-48](guia-estudio/decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples). Código en inglés; documentación en español.
+> Decisión que la respalda: [D-48](guia-estudio/decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples) (capas con DAO JDBC) y [D-49](guia-estudio/decisiones-tecnicas.md#d-49-monolito-modular-módulo-catalog-con-spring-modulith) (el módulo `catalog` con Spring Modulith). Código en inglés; documentación en español.
+>
+> La arquitectura objetivo de futuro (JPA, fachadas, casos de uso) está en [arquitectura-monolito.md](arquitectura-monolito.md); se adopta por temas del temario.
 >
 > Esta arquitectura no se debe tocar. Son apuntes del profesor y se debe mantener así. (Ya se ha tocado con la carpeta config, revisar si está bien)
 
@@ -11,50 +13,53 @@
 
 ```text
 com.daw.movies
-├── MoviesApplication                   ← arranque de Spring Boot
+├── MoviesApplication                   ← arranque de Spring Boot (+ @Modulithic: `config` es módulo compartido)
 │
-├── config                              ← configuración de toda la aplicación (fuera de las capas)
+├── config                              ← configuración de toda la aplicación (fuera de las capas; módulo compartido)
 │   └── OpenApiConfig                   ← título y versión del contrato OpenAPI (springdoc lo genera del código)
 │
-├── controller                          ← capa de entrada (HTTP)
-│   ├── MovieController                 ← API REST en /movies
-│   ├── dto
-│   │   ├── request
-│   │   │   └── MovieRequest            ← datos que entran (con Jakarta Validation)
-│   │   └── response
-│   │       └── MovieResponse           ← datos que salen (con DirectorView y ActorView)
-│   ├── mapper
-│   │   └── MovieMapper                 ← dominio → MovieResponse
-│   └── handler
-│       └── GlobalExceptionHandler      ← excepciones → respuestas HTTP
-│
-├── domain                              ← núcleo de negocio
-│   ├── model
-│   │   ├── Movie
-│   │   ├── Director
-│   │   └── Actor
-│   ├── exception
-│   │   ├── MovieNotFoundException
-│   │   └── DirectorNotFoundException
-│   ├── service
-│   │   ├── MovieService                ← interfaz (casos de uso)
-│   │   └── impl
-│   │       └── MovieServiceImpl        ← lógica de negocio y transacciones
-│   └── repository
-│       └── MovieRepository             ← interfaz (puerto) del repositorio
-│
-└── persistence                         ← acceso a datos
-    ├── repository
-    │   └── impl
-    │       └── MovieRepositoryImpl     ← implementa MovieRepository, usa el DAO
-    └── dao
-        ├── MovieDao                    ← interfaz del DAO
-        └── impl
-            └── jdbc
-                └── MovieDaoJdbc        ← JDBC puro con JdbcTemplate
+└── catalog                             ← MÓDULO Spring Modulith «Catalog» (sellado en package-info con @ApplicationModule)
+    ├── controller                      ← capa de entrada (HTTP)
+    │   ├── MovieController             ← API REST en /movies
+    │   ├── dto
+    │   │   ├── request
+    │   │   │   └── MovieRequest        ← datos que entran (con Jakarta Validation)
+    │   │   └── response
+    │   │       └── MovieResponse       ← datos que salen (con DirectorView y ActorView)
+    │   ├── mapper
+    │   │   └── MovieMapper             ← dominio → MovieResponse
+    │   └── handler
+    │       └── GlobalExceptionHandler   ← excepciones → respuestas HTTP
+    │
+    ├── domain                          ← núcleo de negocio
+    │   ├── model
+    │   │   ├── Movie
+    │   │   ├── Director
+    │   │   └── Actor
+    │   ├── exception
+    │   │   ├── MovieNotFoundException
+    │   │   └── DirectorNotFoundException
+    │   ├── service
+    │   │   ├── MovieService            ← interfaz (casos de uso)
+    │   │   └── impl
+    │   │       └── MovieServiceImpl    ← lógica de negocio y transacciones
+    │   └── repository
+    │       └── MovieRepository         ← interfaz (puerto) del repositorio
+    │
+    └── persistence                     ← acceso a datos
+        ├── repository
+        │   └── impl
+        │       └── MovieRepositoryImpl ← implementa MovieRepository, usa el DAO
+        └── dao
+            ├── MovieDao                ← interfaz del DAO
+            └── impl
+                └── jdbc
+                    └── MovieDaoJdbc    ← JDBC puro con JdbcTemplate
 ```
 
 No hay JPA, ni *value objects* (D-46 revocada), ni entidades de persistencia separadas: las clases de `domain.model` son las que construye el DAO y las que consume el mapper.
+
+**Módulo Spring Modulith (D-49):** `catalog` es el único módulo real y va sellado en su `package-info.java`; `config` es *módulo compartido* (`@Modulithic`). La verificación vive en `ModulithTest` (`verify()` + `Documenter`) y las reglas de ArchUnit en `ArquitecturaTest` (comodines `..domain..`... para que sigan valiendo en el módulo). Hoy no hay fachada: `catalog` no ofrece ni consume nada de otros módulos.
 
 ---
 

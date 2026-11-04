@@ -2,7 +2,7 @@
 
 > **Para qué sirve este archivo:** es el parte de situación. Se lee **al empezar cualquier sesión** (humano o asistente de IA) y se **actualiza al terminar cada paso**, antes de cerrar. Así se puede empezar de cero, sin memoria de la conversación anterior, sin inventar nada.
 >
-> Última actualización: **2026-11-04** (decimotercera parte).
+> Última actualización: **2026-11-04** (decimocuarta parte).
 
 ---
 
@@ -12,10 +12,10 @@
 
 | Dato | Valor |
 |---|---|
-| Rumbo actual | Arquitectura por capas con JDBC: `controller` (con `dto`, `mapper`, `handler`), `domain` (`model`, `service`, `repository`, `exception`), `persistence` (`dao`, `repository.impl`) |
-| Paso en curso | Fases 0–3 y la **1c de docs, hechas**. **Frontend Angular terminado y verificado** (décima/undécima/duodécima partes). Quedan: los **tests del DAO/repositorio con base de datos real** (quedaron fuera de la 1c) y la **4** (monolito modular) |
-| Último commit | `ca44796` (`docs: record persistence integration tests and ArchUnit 4a in ESTADO`). Todo el `main` local está **subido** (el push de las 22:00 + los 4 de la sesión: `113bcc8`, `9ff1fdb`, `ca44796`). (Historia del cambio de ramas, 2026-11-04: se **intercambiaron las ramas en GitHub** con `gh api .../branches/<rama>/rename`: el `main` viejo (camino JPA, fases 11 y 15A) es ahora **`origin/jpa-fase-11-15a`** (`2d58690`) y la rama `nuevo-rumbo-jdbc` pasó a llamarse `main` (rama por defecto, puesta con `gh repo edit --default-branch main`). Etiquetas `fase-01`…`fase-15A` y `backup/antes-de-volver-a-fase-10` sin cambios |
-| Tests | **73 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo (6+6+8), 3 de contrato OpenAPI, **10 de persistencia** (6 DAO + 4 repositorio, decimotercera parte), **5 de ArchUnit** (`ArquitecturaTest`, fase 4a) y 3 de integración. Los 16 que arrancan la aplicación o tocan la BD necesitan Docker; el resto no |
+| Rumbo actual | Monolito modular: módulo **`catalog`** de Spring Modulith con capas JDBC dentro (D-48 + D-49): `com.daw.movies.catalog.{controller,domain,persistence}`, `MoviesApplication` y `config` en la raíz (`config` = módulo compartido) |
+| Paso en curso | **Fase 4 completa** (4a ArchUnit `9ff1fdb` · 4b módulo `catalog` `b299efc` · 4c Modulith `c04db2c` · 4d doc D-49). También hechas: fases 0–3, 1c, tests de persistencia y el **frontend Angular**. El plan del giro (fases 30–34) **está cerrado**. Próxima pieza de fondo: la migración a **JPA** cuando el temario la permita ([arquitectura-monolito.md](../arquitectura-monolito.md)) |
+| Último commit | `c04db2c` (`feat: add Spring Modulith verification (fase 4c)`), más el commit de docs de la 4d. Todo lo anterior está subido a `origin/main` (`4d098be`); el tramo de la fase 4 queda por subir hasta que el alumno lo confirme. (Historia del cambio de ramas, 2026-11-04: se **intercambiaron las ramas en GitHub** con `gh api .../branches/<rama>/rename`: el `main` viejo (camino JPA, fases 11 y 15A) es ahora **`origin/jpa-fase-11-15a`** (`2d58690`) y la rama `nuevo-rumbo-jdbc` pasó a llamarse `main` (rama por defecto, puesta con `gh repo edit --default-branch main`). Etiquetas `fase-01`…`fase-15A` y `backup/antes-de-volver-a-fase-10` sin cambios |
+| Tests | **75 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo (6+6+8), 3 de contrato OpenAPI, 10 de persistencia (6 DAO + 4 repositorio), **5 de ArchUnit** (`ArquitecturaTest`) y **2 de Modulith** (`ModulithTest`: `verify()` + `Documenter`, sin context de Spring). Los 16 que arrancan la aplicación o tocan la BD necesitan Docker; ArchUnit y Modulith no |
 | Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Swagger UI en `/swagger-ui.html` y contrato en `/v3/api-docs` (generado desde el código, sin yaml) |
 | Tabla de datos | `director` (6), `actor` (14), `movie` (10), `movie_actor` (24); Flyway en la versión 4 |
 | Cambios sin commitear | ninguno al cierre de la sesión del 2026-11-04 (el repo del skill, `Lorenzo\creador-de-skills`, no tiene remoto: sus commits son solo locales) |
@@ -32,13 +32,15 @@ Plan completo: `C:\Users\ferna\.claude\plans\vamos-a-cambiar-el-drifting-pond.md
 | **1c** ✅ (docs, 2026-11-04) | Registro temario 05 (banner + nota en la «decisión final» + sección 11 histórica + notas en value objects y fase 11), diarios 05–07 con nota histórica, glosario con un solo `Puerto`, D-20 (**se mantiene**, con nota) y D-22 (`Impl` real anotada), DTO de `entender-el-codigo.md` con `@AssertTrue`, nota del año en §1. *(El diario y el temario 15A ya no existen en `main`: están en `jpa-fase-11-15a`; los enlaces vivos se apuntaron allí.)* Los **tests del DAO y del repositorio con base de datos real** ya existen (decimotercera parte, `113bcc8`) | `docs: fix leftovers after the new direction` |
 | **2** ✅ Skill (`40b0bb1`, `ca3c834`, `ff9f2ad`, `2b9cd9f` en el repo del skill, sin remoto) | Actualizar `C:\Users\ferna\Desktop\FP DAW\2o curso\Lorenzo\creador-de-skills` para que replique **esta** arquitectura. **Primero comprobar si esa carpeta es un repositorio git** (si no, no hay commits ahí). Renombres: `presentation` → `controller`, `domain.models` → `domain.model`, `domain.exceptions` → `domain.exception`; mapper → `controller.mapper`; advice → `controller.handler`. En las skills solo `<Entidad>` y `<paquete.raíz>`, nunca `Movie` | **2a** `k-back-module` (árbol, reglas `MOD-R`, ArchUnit) · **2b** renombrar `k-back-presentation` a `k-back-controller` + `k-back-domain` + `k-back-persistence` (decidir dónde van las excepciones de persistencia) · **2c** `do-code-impl`, `do-code-review`, plantillas y `teoria/`. `demo-cliente/` se deja como ejemplo antiguo |
 | **3** ✅ Swagger (`3f3dbc2`; el contrato sale del código, sin yaml: ver la bitácora y D-47) | springdoc **3.2.0** (rama de Spring Boot 4; verificar en Maven Central). `OpenApiConfig` en `com.daw.movies.config`, **fuera** de las capas, para que haya un único Swagger UI cuando haya varios módulos. Probar los 5 endpoints con «Try it out» contra `seed.sql` | **3a** `feat: add springdoc and OpenApiConfig` · **3b** `test: add OpenAPI contract test` (`/v3/api-docs` lista los 5 endpoints) · **3c** `docs: record Swagger manual checks` |
-| **4** Monolito modular | Un único módulo **`catalog`** ahora; después `stock`, `order`, `user`… Estructura `com.daw.movies.catalog.{controller,domain,persistence}`; `MoviesApplication` y `config` en la raíz. Spring Modulith + ArchUnit (versión para Boot 4 a verificar). Riesgo D-45: si `Director`/`Actor` se separan en otro módulo, relacionar por id | **4a** ✅ `test: add ArchUnit layer rules (fase 4a)` (`9ff1fdb`: 5 reglas, ArchUnit **1.5.1**, rojo controlado con sonda) · **4b** ⏳ `refactor: move code into catalog module` (solo `package` e imports) · **4c** `feat: add Spring Modulith verification` (versión para Boot 4 a verificar) · **4d** `docs: D-49 modular monolith` + ajustar el skill a `<paquete.raíz>.<módulo>` |
+| **4** ✅ Monolito modular | Un único módulo **`catalog`** ahora; después `stock`, `order`, `user`… Estructura `com.daw.movies.catalog.{controller,domain,persistence}`; `MoviesApplication` y `config` en la raíz. Spring Modulith + ArchUnit. Riesgo D-45: si `Director`/`Actor` se separan en otro módulo, relacionar por id | **4a** ✅ `9ff1fdb` (ArchUnit 1.5.1, 5 reglas, rojo controlado con sonda) · **4b** ✅ `b299efc` (solo `package` e imports; ArchUnit tocó en verde sin cambios) · **4c** ✅ `c04db2c` (BOM 2.1.2 + starters del BOM; `package-info` sellado; `@Modulithic(sharedModules = "config")`; `ModulithTest` en verde a la primera + `Documenter` genera la doc) · **4d** ✅ D-49, `arquitectura-monolito.md` (arquitectura objetivo), README y `ESTADO.md` al día; el skill `k-back-module` ajustado en su repo |
 
 ### La siguiente acción, exacta
 
-1. **Fase 4b** (siguiente subpaso de la 4, cuando el alumno lo pida): `refactor: move code into catalog module` (solo `package` e imports; las 5 reglas de `ArquitecturaTest` con comodines `..domain..`/`..controller..`/`..persistence..` siguen valiendo). La **4a ya está hecha** (commit `9ff1fdb`), con rojo controlado con una clase sonda borrada. Spring Modulith se verifica en la 4c.
-2. Para subir cambios desde el asistente: `origin` es HTTPS; el `git push` normal funciona con `git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin main`. **Ya se usó con éxito** (22:00, `a79e06a..ed55526`).
-3. **No se empieza ninguna fase sin que el alumno lo pida.**
+1. **El plan del giro está cerrado** (fases 0–4). Lo que sigue ya no es del plan viejo sino del temario:
+   - **JPA** (tema 05 del profesor): la migración a la [arquitectura objetivo](../arquitectura-monolito.md) — `internal/persistence` con entidades, dominio enriquecido, casos de uso y, con un segundo módulo, `api/facade`. **No se empieza sin que el profesor dé el tema y el alumno lo pida.**
+   - Mientras tanto queda libre: los avisos si el profesor quiere revisar la 4 (`ModulithTest` genera la doc de módulos con `Documenter`), y el temario/guía al día.
+2. Para subir cambios desde el asistente: `git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin main` (funcionó tres veces, la última `cc13a71..4d098be`).
+3. Punto de retorno de toda la fase 4: rama `backup/antes-de-monolito-modular` (`cc13a71`).
 
 Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` (los 3 tests de integración lo necesitan; el resto no). Si Docker está cerrado: `Start-Process "C:\Users\ferna\AppData\Local\Programs\DockerDesktop\Docker Desktop.exe"` y esperar a `docker info`.
 
@@ -506,6 +508,33 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
    - `.\mvnw.cmd test -Dtest=ArquitecturaTest` → 5 en verde. `.\mvnw.cmd clean test` → **73 en verde**, `BUILD SUCCESS`. Commit `9ff1fdb`.
 6. Documentado: este archivo (§1: 73 tests, fase 4a ✅, siguiente acción = 4b). `arquitectura.md` y diario/temario de la fase 4 quedan para la 4d.
 7. **A demanda del alumno:** push de los commits de esta sesión (`113bcc8`, `9ff1fdb`, `ca44796`) y creación de la rama de seguridad **`backup/antes-de-monolito-modular`** en `cc13a71` (el propio commit de ESTADO), subida a `origin`: el punto exacto antes de mover paquetes en la 4b. Si la modularización sale mal, `git switch backup/antes-de-monolito-modular` vuelve a la casa en orden.
+
+### 2026-11-04 (decimocuarta parte) — fase 4 completa: 4b, 4c y 4d (monolito modular)
+
+**Petición del profesor:** «encaje todo esto en un monolito modular y luego le pase Modulith; JPA más adelante, cuando lo den en clase». Con eso queda cerrada la discusión del skill `monolito-modular` (es **arquitectura objetivo**, no obligación de hoy): ver [arquitectura-monolito.md](../arquitectura-monolito.md) y **D-49**.
+
+**4b — `refactor: move code into catalog module` (`b299efc`):**
+1. `docker compose ps` → `movies-mariadb-1` healthy en el 3307.
+2. Lo esperado: `git mv` **falló dos veces** con `No such file or directory`: `git mv` exige que el directorio destino (`catalog`) exista antes. Tras `New-Item` de las dos carpetas `catalog` (main y test), los 6 `git mv` salieron bien (24 renombrados).
+3. Cambio de texto en los `.java` por script .NET con la receta UTF-8 sin BOM del protocolo: `com.daw.movies.{controller,domain,persistence}` → `com.daw.movies.catalog.{...}`. Residuo: **0** archivos con las rutas viejas.
+4. `mvnw test-compile` → `exit=0`; bytes iniciales de `MovieController.java` intactos (sin BOM).
+5. `mvnw clean test` → **73 en verde**: las 5 reglas ArchUnit (comodines `..domain..`..) guardaron el árbol movido **sin tocar nada**.
+6. Incidental: `docs/arquitectura.md` aparecía modificado sin causa (fence ` ```javascript ` y líneas en blanco: ruido de editor). Revertido con `git checkout --`; se reescribe bien en la 4d.
+
+**4c — `feat: add Spring Modulith verification` (`c04db2c`):**
+1. Versión verificada: Maven Central → BOM `spring-modulith-bom` release **2.1.2** (la 2.2.0-RC1 es RC); docs de Modulith (2.1.1) confirman la línea 2.1.x para Boot 4.1. En el `pom.xml`: `dependencyManagement` con el BOM (`${modulith.version}` = 2.1.2) y `spring-modulith-starter-core` + `spring-modulith-starter-test` **sin versión** (la trae el BOM).
+2. Gotcha resuelto con la doc: para Modulith, todo hijo directo del paquete base es módulo (`config` aparecería como módulo falso). Solución oficial del skill: `@Modulithic(sharedModules = "config")` en `MoviesApplication`.
+3. `catalog/package-info.java` con `@ApplicationModule(displayName = "Catalog")`, sin `allowedDependencies` (un módulo solo no tiene contrato).
+4. `ModulithTest` (2 tests: `verify()` y `Documenter`) → **2 en verde a la primera**. `Documenter` generó en `target/spring-modulith-docs` (no se commitea): `module-catalog.adoc|puml` y `module-config.adoc|puml` (config como módulo compartido).
+5. `mvnw clean test` → **75 en verde**, `BUILD SUCCESS`.
+
+**4d — doc (D-49 y arquitectura objetivo):**
+1. **D-49** en [decisiones-tecnicas.md](decisiones-tecnicas.md): módulo `catalog` sellado, `config` compartido, versiones verificadas, alternativas descartadas, deuda (con un solo módulo el sellado apenas muerde) y el punto de retorno (`backup/antes-de-monolito-modular`).
+2. [arquitectura.md](../arquitectura.md): árbol con `catalog`, nota de módulos y enlaces a D-49 y a la arquitectura objetivo.
+3. [arquitectura-monolito.md](../arquitectura-monolito.md) (que estaba **vacío en disco**: el contenido del profesor se volcó a mano): cabecera «arquitectura de llegada», tabla *lo ya instalado* (fase 4) y *lo encolado* con el tema del temario que lo desbloquea, y la referencia del skill completa (§1–§10). Repaso del propio archivo: se arreglaron 5 frases garbled tras la escritura.
+4. `README.md` del backend: cabecera de estado, tabla de dependencias (Modulith 2.1.2 / ArchUnit 1.5.1 ✅), progresos (fase 34 ✅), el bloque «resultado esperado de `test`» con los 15 renglones reales y la **estructura del repositorio** con los paths `catalog`.
+5. Ajuste del skill `k-back-module` en `Lorenzo\creador-de-skills` (commit local, sin remoto) para `<paquete.raíz>.<módulo>`.
+6. Este archivo al día (§1 y esta entrada). Commit de la 4d: `docs: D-49 and target architecture for catalog module`.
 
 ## 5. Trabajo sin commitear
 
