@@ -1,5 +1,5 @@
 // Imports: herramientas para recibir la película (input) y avisar al listado (output).
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { Movie } from '../../core/models/movie';
 
 // Configuración del componente: no usa nadie más, selector <app-card-movies>,
@@ -10,11 +10,15 @@ import { Movie } from '../../core/models/movie';
   styleUrl: './card-movies.scss',
   templateUrl: './card-movies.html',
 })
-
 export class CardMovies {
 
   // La película que pinta la tarjeta; la obliga a venir desde fuera.
   movie = input.required<Movie>();
+
+  // Cartel local de public/posters/{id}.jpg. Si el fichero no existe (película
+  // nueva sin cartel), el (error) del <img> conmuta al fallback y no rompe nada.
+  protected posterOk = signal(true);
+  protected posterUrl = computed(() => `/posters/${this.movie().id}.jpg`);
 
   // Avisos para el listado: click en la tarjeta → detalle; botones → editar o borrar.
   readonly detail = output<number>();

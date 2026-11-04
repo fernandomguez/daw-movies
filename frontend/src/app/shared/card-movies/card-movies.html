@@ -1,4 +1,12 @@
 <article class="card" (click)="abrirDetalle()">
+  <div class="card__poster">
+    @if (posterOk()) {
+      <img class="card__poster-img" [src]="posterUrl()" [alt]="'Cartel de ' + movie().title" loading="lazy" (error)="posterOk.set(false)" />
+    } @else {
+      <div class="card__poster-fallback"><span aria-hidden="true">🎬</span>{{ movie().title }}</div>
+    }
+  </div>
+
   <div class="card__body">
     <h2 class="card__title">{{ movie().title }}</h2>
 
