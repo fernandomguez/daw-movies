@@ -28,7 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.daw.movies.controller.exception.GlobalExceptionHandler;
+import com.daw.movies.controller.handler.GlobalExceptionHandler;
 import com.daw.movies.controller.mapper.MovieMapper;
 import com.daw.movies.domain.exception.DirectorNotFoundException;
 import com.daw.movies.domain.exception.MovieNotFoundException;

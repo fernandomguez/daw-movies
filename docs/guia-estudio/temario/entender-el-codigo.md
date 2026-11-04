@@ -52,7 +52,7 @@ com.daw.movies
 │   │   ├── request  MovieRequest     ← JSON que ENTRA (+ validaciones)
 │   │   └── response MovieResponse    ← JSON que SALE
 │   ├── mapper    MovieMapper         ← convierte Movie → MovieResponse
-│   └── exception GlobalExceptionHandler  ← convierte errores en 404 / 400
+│   └── handler   GlobalExceptionHandler  ← convierte errores en 404 / 400
 │
 ├── domain                       ← EL NEGOCIO (el corazón)
 │   ├── model      Movie, Director, Actor

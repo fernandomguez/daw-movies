@@ -20,7 +20,7 @@ com.daw.movies
 │   │       └── MovieResponse           ← datos que salen (con DirectorView y ActorView)
 │   ├── mapper
 │   │   └── MovieMapper                 ← dominio → MovieResponse
-│   └── exception
+│   └── handler
 │       └── GlobalExceptionHandler      ← excepciones → respuestas HTTP
 │
 ├── domain                              ← núcleo de negocio
@@ -61,7 +61,7 @@ No hay JPA, ni *value objects* (D-46 revocada), ni entidades de persistencia sep
 | DTO de entrada | `controller.dto.request` | `MovieRequest` | `record` con `title`, `releaseYear`, `duration` y `directorId`. Sus anotaciones (`@NotBlank`, `@Size(max = 255)`, `@NotNull`, `@Min(1888)`, `@MaxYearsAhead(10)`, `@Positive`) son la validación de entrada. |
 | DTO de salida | `controller.dto.response` | `MovieResponse` | `record` con id, título, año, duración, `DirectorView` (id y nombre completo) y lista de `ActorView`. No expone fecha de nacimiento ni biografía. |
 | Mapper | `controller.mapper` | `MovieMapper` | `@Component`. Solo la **salida**: `toResponse(Movie)`. |
-| Manejador de errores | `controller.exception` | `GlobalExceptionHandler` | `@RestControllerAdvice`. Traduce `MovieNotFoundException` y `DirectorNotFoundException` a **404**; `MethodArgumentNotValidException`, `HttpMessageNotReadableException` (JSON mal formado) y `MethodArgumentTypeMismatchException` (p. ej. `/movies/abc`) a **400**; y `HttpMediaTypeNotSupportedException` a **415**, con cuerpo `{ "message": ... }`. |
+| Manejador de errores | `controller.handler` | `GlobalExceptionHandler` | `@RestControllerAdvice`. Traduce `MovieNotFoundException` y `DirectorNotFoundException` a **404**; `MethodArgumentNotValidException`, `HttpMessageNotReadableException` (JSON mal formado) y `MethodArgumentTypeMismatchException` (p. ej. `/movies/abc`) a **400**; y `HttpMediaTypeNotSupportedException` a **415**, con cuerpo `{ "message": ... }`. |
 | Modelo | `domain.model` | `Movie`, `Director`, `Actor` | Clases con tipos simples, sin setters y sin anotaciones de persistencia. Los constructores solo comprueban lo que no puede faltar (`IllegalArgumentException`). `Movie` conoce a su `Director` y a su reparto (`addActor`; `getActors` devuelve una copia inmutable); las relaciones son unidireccionales. Cada clase tiene un segundo constructor con `id` para reconstruirla desde la base de datos. |
 | Excepciones de dominio | `domain.exception` | `MovieNotFoundException`, `DirectorNotFoundException` | `RuntimeException` sin conocimiento de HTTP. |
 | Servicio (contrato) | `domain.service` | `MovieService` | `findAll`, `findById`, `create`, `update`, `delete`. Recibe valores sueltos, no DTO. |

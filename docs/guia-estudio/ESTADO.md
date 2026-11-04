@@ -2,32 +2,55 @@
 
 > **Para qué sirve este archivo:** es el parte de situación. Se lee **al empezar cualquier sesión** (humano o asistente de IA) y se **actualiza al terminar cada paso**, antes de cerrar. Así se puede empezar de cero, sin memoria de la conversación anterior, sin inventar nada.
 >
-> Última actualización: **2026-10-31**.
+> Última actualización: **2026-11-04** (fin de sesión).
 
 ---
 
 ## 1. Dónde estamos (leer esto primero)
 
+> **Giro del 2026-11-04.** El profesor dio el visto bueno a un nuevo rumbo: **sin *value objects*** (D-46 revocada), **sin JPA**, arquitectura por capas con **DAO JDBC** (D-48, [`docs/arquitectura.md`](../arquitectura.md)). Las fases JPA del plan original (11–14) y la 15A quedan superadas o replanteadas; el plan nuevo son las fases 30–34 del Bloque G. Las entradas de la bitácora anteriores a esta fecha cuentan la historia anterior.
+
 | Dato | Valor |
 |---|---|
-| Fase del plan | **10 — Modelo de dominio → COMPLETA** (4 de 4 pasos) |
-| Paso en curso | ninguno: fase cerrada. La siguiente es la **11.1** (qué es JPA), cuando el alumno lo pida |
-| Último paso terminado | 10.4 — `Director`, `Actor` y `Movie` con sus *value objects* (20 tests nuevos) |
-| Último commit | `feat(fase-10): add domain entities` (etiqueta `fase-10`) |
-| Etiqueta más reciente | **`fase-10`** (anotada; push pendiente de confirmación del alumno) |
-| Tests | **55 en verde** (7 de integración + 28 de los *value objects* + 20 de las entidades) |
-| Tablas en `movies` | `flyway_schema_history` (4 filas, versiones 1–4), `director` (6), `actor` (14), `movie` (10), `movie_actor` (24) |
-| Cambios sin commitear | ninguno (ver §5) |
+| Rumbo actual | Arquitectura por capas con JDBC: `controller` (con `dto`, `mapper`, `handler`), `domain` (`model`, `service`, `repository`, `exception`), `persistence` (`dao`, `repository.impl`) |
+| Paso en curso | **Paso 1 casi cerrado** (entender el código + tests + docs). Falta solo comitear el renombrado `controller.exception` → `controller.handler` |
+| Último commit | `339cb5d docs: adapt temario, diary, plan, glossary, READMEs and ESTADO to the new direction` (local; **sin push**) |
+| Tests | **55 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo, 3 de integración (necesitan Docker) |
+| Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Sin Swagger todavía |
+| Tabla de datos | `director` (6), `actor` (14), `movie` (10), `movie_actor` (24); Flyway en la versión 4 |
+| Cambios sin commitear | renombrado a `controller/handler` (código, test y docs) y esta actualización de `ESTADO.md` (ver §5) |
+| Ramas / etiquetas | `main` local está en la fase 10 + commits nuevos. `origin/main` y las etiquetas `fase-11` y `fase-15A` contienen trabajo de otro camino (JPA, OpenAPI) que **no** está en `main` local. Existe `backup/antes-de-volver-a-fase-10`. No mezclar sin hablarlo |
+
+### Las fases que quedan (plan aprobado)
+
+Plan completo: `C:\Users\ferna\.claude\plans\vamos-a-cambiar-el-drifting-pond.md`. **Un commit por subpaso**, con `mvnw clean test` en verde antes de cada uno y confirmación del alumno (excepción deliberada a D-30 para tener más puntos de retorno).
+
+| Fase | Qué se hace | Subpasos / commits propuestos |
+|---|---|---|
+| **0** ✅ | Que compile y los tests pasen | `d75cffc` |
+| **1** ✅ (falta 1 commit) | Entender el código, tests de servicio y controlador, `arquitectura.md` real, D-48, docs sin *value objects* ni JPA | `8b1a1dd`, `7ad36c1`, `0b6f567`, `339cb5d`; **pendiente:** `refactor: rename controller.exception to controller.handler` |
+| **1c** (limpieza) | Matices que dejaron los agentes: `entender-el-codigo.md` aún dice «entre 1888 y 2100» (debe ser «año actual + 10»); glosario con `Puerto` duplicado; `temario/05` §11, `temario/15A` y diarios 05–07 con referencias a JPA; decidir si D-20 queda superada | `docs: fix leftovers after the new direction` |
+| **2** Skill | Actualizar `C:\Users\ferna\Desktop\FP DAW\2o curso\Lorenzo\creador-de-skills` para que replique **esta** arquitectura. **Primero comprobar si esa carpeta es un repositorio git** (si no, no hay commits ahí). Renombres: `presentation` → `controller`, `domain.models` → `domain.model`, `domain.exceptions` → `domain.exception`; mapper → `controller.mapper`; advice → `controller.handler`. En las skills solo `<Entidad>` y `<paquete.raíz>`, nunca `Movie` | **2a** `k-back-module` (árbol, reglas `MOD-R`, ArchUnit) · **2b** renombrar `k-back-presentation` a `k-back-controller` + `k-back-domain` + `k-back-persistence` (decidir dónde van las excepciones de persistencia) · **2c** `do-code-impl`, `do-code-review`, plantillas y `teoria/`. `demo-cliente/` se deja como ejemplo antiguo |
+| **3** Swagger | springdoc **3.2.0** (rama de Spring Boot 4; verificar en Maven Central). `OpenApiConfig` en `com.daw.movies.config`, **fuera** de las capas, para que haya un único Swagger UI cuando haya varios módulos. Probar los 5 endpoints con «Try it out» contra `seed.sql` | **3a** `feat: add springdoc and OpenApiConfig` · **3b** `test: add OpenAPI contract test` (`/v3/api-docs` lista los 5 endpoints) · **3c** `docs: record Swagger manual checks` |
+| **4** Monolito modular | Un único módulo **`catalog`** ahora; después `stock`, `order`, `user`… Estructura `com.daw.movies.catalog.{controller,domain,persistence}`; `MoviesApplication` y `config` en la raíz. Spring Modulith + ArchUnit (versión para Boot 4 a verificar). Riesgo D-45: si `Director`/`Actor` se separan en otro módulo, relacionar por id | **4a** `test: add ArchUnit layer rules` (antes de mover nada) · **4b** `refactor: move code into catalog module` (solo `package` e imports) · **4c** `feat: add Spring Modulith verification` · **4d** `docs: D-49 modular monolith` + ajustar el skill a `<paquete.raíz>.<módulo>` |
 
 ### La siguiente acción, exacta
 
-La **fase 10 está cerrada**. Lo siguiente es la **fase 11 (Fundamentos de JPA)**, paso **11.1** (qué es JPA y qué es Hibernate), pero **no se empieza sin que el alumno lo pida**: al terminar el 10.4 se decidió parar aquí para afianzar la creación de películas en memoria antes de añadir la persistencia.
+1. Comitear el renombrado `controller.handler` (ya hecho en disco, 55 tests en verde).
+2. **Fase 1c** (limpieza de los restos de docs) y después **fase 2a**. Antes de la 2a: `git -C "C:\Users\ferna\Desktop\FP DAW\2o curso\Lorenzo\creador-de-skills" rev-parse --is-inside-work-tree` para saber si hay repositorio.
+3. **No se empieza ninguna fase sin que el alumno lo pida.**
 
-**Segundo frente abierto:** la **fase 15A** (API First) tiene hechos 15A.1 (contrato `openapi.yaml`) y 15A.2 (springdoc 3.2.0 + Swagger UI). El **15A.3** no se puede hacer hasta que existan los controladores (fase 16): compara el documento generado `/v3/api-docs` con el contrato. La UI está en `http://localhost:8080/swagger-ui.html` y **no ejecuta** nada todavía ("Try it out" → `404`).
+Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` (los 3 tests de integración lo necesitan; el resto no). Si Docker está cerrado: `Start-Process "C:\Users\ferna\AppData\Local\Programs\DockerDesktop\Docker Desktop.exe"` y esperar a `docker info`.
 
-Antes de tocar nada: `docker info` responde y `docker compose ps` → `healthy` (los tests de integración lo necesitan; los unitarios de dominio, no). Los datos de prueba ya están cargados; si la base se recrea (`docker compose down -v`), hay que volver a cargarlos con la receta del [diario 09](09-datos-de-prueba.md#cómo-se-recarga-desde-cero).
+### Decisiones y rarezas ya conocidas (no volver a descubrirlas)
 
-**Decidido:** se adoptan *value objects* como pide el profesor (D-46). El coste se paga en la fase 11, al mapearlos con `AttributeConverter`/`@Embeddable`.
+- **Año de estreno:** `@Min(1888)` y `@MaxYearsAhead(10)` (año actual + 10; anotación propia, `@Max` solo admite números fijos).
+- **500 deliberado:** si `create`/`update` no encuentran la película justo después de guardarla → `IllegalStateException` (no un 404).
+- **`GlobalExceptionHandler`:** 404 (película/director), 400 (validación, JSON mal formado, id no numérico), 415 (`Content-Type` no JSON). Un fallo de base de datos o un `IllegalArgumentException` siguen dando 500.
+- **`PUT /movies/{id}`:** comprueba primero la película y después el director; si ambos fallan solo se ve el 404 de la película.
+- **Deuda aceptada:** N+1 en `MovieDaoJdbc.findAll`, reparto de actores de solo lectura, `@Service`/`@Transactional` en `domain`, `Movie` no valida año ni duración (lo hacen el DTO y los `CHECK`).
+- **`spring-boot-starter-webmvc-test`** está en el `pom.xml` porque en Spring Boot 4 `@WebMvcTest` ya no viene en `spring-boot-starter-test`.
+- Los avisos de CRLF → LF de Git en Windows son normales.
 
 ---
 
@@ -348,27 +371,34 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 
 **Pendiente de revisar (informe de los agentes):** swagger/`openapi.yaml` ya no existen (se retoma en la fase 33); `temario/05` sección 11, `temario/15A` y diarios 05–07 y 15A siguen con referencias antiguas; glosario con `Puerto` duplicado.
 
-**Siguiente:** revisar los cambios de los agentes y comitear por temas (con confirmación del alumno).
+7. A petición del alumno, el paquete `controller.exception` pasa a llamarse **`controller.handler`** (`git mv`; `package`, import del test y docs actualizados). `.\mvnw.cmd clean test` → 55 en verde. El nombre antiguo solo queda en la entrada del paso 0, que es historia.
+
+**Siguiente:** fase 2 (skill `creador-de-skills`), cuando el alumno lo pida.
 
 ## 5. Trabajo sin commitear
 
 ```
-?? docs/arquitectura.md   (restaurado del commit 242b205)
- M docs/guia-estudio/ESTADO.md
- M docs/guia-estudio/temario/05-arquitectura-tres-capas-dip.md
- M docs/guia-estudio/temario/11-introduccion-jpa.md
+RM controller/exception/GlobalExceptionHandler.java -> controller/handler/GlobalExceptionHandler.java
+ M src/test/.../controller/MovieControllerTest.java      (import del nuevo paquete)
+ M docs/arquitectura.md                                  (paquete handler)
+ M docs/guia-estudio/temario/entender-el-codigo.md       (paquete handler)
+ M docs/guia-estudio/ESTADO.md                           (este parte de situación)
 ```
 
-**Cerrada la fase 10 el 2026-10-31.** Su commit es `feat(fase-10): add domain entities` (incluye la ampliación de los temas 10 y 11 hecha al final de la sesión) y la etiqueta `fase-10`. **Sin push**: queda a la espera de confirmación del alumno.
+Commit propuesto: `refactor: rename controller.exception to controller.handler`. **Sin push** de nada desde la fase 10: todos los commits posteriores son locales.
 
-| Commit | Frente | Contenido |
-|---|---|---|
-| `f2cf8cc` | **Fase 10** (documentación) | `docs(fase-10): design rich domain model and six value objects` — D-44, D-45, D-46 |
-| `3a41c15` | **Fase 10, paso 10.3** | `feat(fase-10): add six value objects with TDD` — seis `record` + `Texts` (35 tests) |
-| `d06943e` | **Fase 15A** | `feat(fase-15A): add OpenAPI contract and Swagger UI` — D-47 |
-| cierre de la fase 10 | **Fase 10, paso 10.4** | `feat(fase-10): add domain entities` — `Director`, `Actor`, `Movie` y 20 tests (55 en verde) |
+### Commits locales desde la fase 10 (más reciente primero)
 
-**Etiquetas:** `fase-10` se crea al cerrar el 10.4. La 15A sigue abierta (falta 15A.3, que necesita los controladores de la fase 16).
+| Commit | Contenido |
+|---|---|
+| `339cb5d` | Docs adaptadas al giro: temarios 10 y 11, diario 10, plan (fases 30–34), glosario, READMEs, `ESTADO.md` |
+| `0b6f567` | Nuevo temario `entender-el-codigo.md` (recorrido, esquemas y 15 preguntas) |
+| `7ad36c1` | `docs/arquitectura.md` reescrito con el código real + D-48 |
+| `8b1a1dd` | Tests de servicio y controlador (55 en total), tope de año, 500 al releer, 400/415 |
+| `d75cffc` | Corrige los `package` de controller, mapper y handler (compilaba mal) |
+| `398ab41` | Quita los *value objects* y añade la estructura por capas (controller, service, repository, DAO) |
+| `68742ba` | Temarios 05 y 11 alineados, `arquitectura.md` restaurado, D-46 revocada |
+| `aa0cef7` | `feat(fase-10): add domain entities` (etiqueta `fase-10`) |
 
 ---
 
