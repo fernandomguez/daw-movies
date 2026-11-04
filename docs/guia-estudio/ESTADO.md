@@ -13,7 +13,7 @@
 | Dato | Valor |
 |---|---|
 | Rumbo actual | Arquitectura por capas con JDBC: `controller` (con `dto`, `mapper`, `handler`), `domain` (`model`, `service`, `repository`, `exception`), `persistence` (`dao`, `repository.impl`) |
-| Paso en curso | **Fase 2 completa** (skill: `40b0bb1`, `ca3c834`, `ff9f2ad`, `2b9cd9f` en `Lorenzo\creador-de-skills`). Siguiente: fase 3 (Swagger) |
+| Paso en curso | Fase 2 completa. **Fase 3: 3a y 3b hechas** (springdoc 3.2.0 + `OpenApiConfig` + test de contrato, 58 en verde), **sin comitear**. Siguiente: 3c (probar «Try it out») |
 | Último commit | `339cb5d docs: adapt temario, diary, plan, glossary, READMEs and ESTADO to the new direction` (local; **sin push**) |
 | Tests | **55 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo, 3 de integración (necesitan Docker) |
 | Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Sin Swagger todavía |
@@ -411,7 +411,25 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 6. Commit `2b9cd9f` en el repo del skill. `demo-cliente/` queda como ejemplo antiguo, sin tocar, y **sin ejecutar** `mvn test` ahí.
 7. **No probado:** las skills nuevas no se han ejecutado generando una entidad (`/do-code-impl`) ni revisando el proyecto (`/do-code-review`); solo se han reescrito y contrastado con el código leído.
 
-**Siguiente:** fase 3 (Swagger con springdoc 3.2.0), cuando el alumno lo pida. Antes, verificar la versión en Maven Central.
+### 2026-11-04 (séptima parte) — fase 3, subpasos 3a y 3b (Swagger generado desde el código)
+
+1. **Decisión del alumno:** el profesor no quiere el contrato en `src/main/resources`. Elegida la **opción A**: contrato generado por springdoc desde el código, sin `openapi.yaml`; `OpenApiConfig` en `com.daw.movies.config`, fuera de las capas.
+2. Versión comprobada en Maven Central (`maven-metadata.xml`): **3.2.0** es la última de la rama 3.x. `docker info` → `29.8.0`; `docker compose ps` → `movies-mariadb-1` healthy.
+3. **Rojo:** creado `src/test/java/com/daw/movies/config/OpenApiContractTest.java` (3 tests: `/v3/api-docs` lista los 5 endpoints, título `Movies API`, `/swagger-ui/index.html` responde 200). `mvnw -q test -Dtest=OpenApiContractTest` → 3 fallos, `Status expected:<200> but was:<404>`.
+4. **Verde:** `pom.xml` gana `springdoc-openapi-starter-webmvc-ui` con `${springdoc.version}` = 3.2.0, y se crea `config/OpenApiConfig.java` (bean `OpenAPI` con título, versión y descripción). Incidente: el primer `Edit` del `pom.xml` no se aplicó (la sangría real son tabuladores), y la compilación falló con `package io.swagger.v3.oas.models does not exist`; se corrigió la dependencia.
+5. `.\mvnw.cmd clean test` → **58 en verde** (55 + 3), `BUILD SUCCESS`.
+6. **Comprobado con la aplicación arrancada** (`spring-boot:run`, puerto 8080): `/v3/api-docs` → 200, OpenAPI 3.1.0, los 5 endpoints (`GET/POST /movies`, `GET/PUT/DELETE /movies/{id}`) y los esquemas `ErrorResponse`, `MovieRequest`, `MovieResponse`, `ActorView`, `DirectorView`; `/swagger-ui/index.html` → 200; `/swagger-ui.html` → 302 al anterior; `GET /movies` → 200. Aplicación parada después.
+7. **No ejecutado:** el «Try it out» desde el navegador contra `seed.sql` (queda para el 3c, hecho por el alumno) y ninguna anotación `@Operation`/`@Schema` (los ejemplos y las descripciones por endpoint son opcionales).
+
+8. **Prueba manual de los 5 endpoints con `curl`** (a petición del alumno; app arrancada con `spring-boot:run`, 10 películas del `seed.sql` al empezar y al terminar). Solo se tocó una película creada para la prueba (id 12), borrada al final:
+   - `GET /movies/1` → 200 (*The Prestige*, Nolan, 3 actores). `POST /movies` → **201** (id 12). `PUT /movies/12` → **200** (cambia título, año, duración y director). `GET /movies` → 200 (11 en ese momento). `DELETE /movies/12` → **204**, y `GET /movies/12` después → 404.
+   - Errores, todos con cuerpo `{ "message": ... }`: id inexistente (GET/PUT/DELETE) → 404; director inexistente → 404; `/movies/abc` → 400; título vacío + año 1800 + duración 0 → 400 con los tres campos; año 2100 → 400; JSON roto → 400; `Content-Type: text/plain` → 415.
+   - Efecto lateral: el `AUTO_INCREMENT` de `movie` avanza (el próximo id no será el 11).
+   - Esto **no** es «Try it out» en el navegador: usa las mismas rutas, pero no pasa por la interfaz de Swagger.
+
+**Sin commitear:** `pom.xml`, `config/OpenApiConfig.java`, `OpenApiContractTest.java` y esta actualización.
+
+**Siguiente:** 3c: probar los 5 endpoints con «Try it out» en `http://localhost:8080/swagger-ui.html` y anotar el resultado; después, comitear la fase 3 (preguntar antes).
 
 ## 5. Trabajo sin commitear
 
