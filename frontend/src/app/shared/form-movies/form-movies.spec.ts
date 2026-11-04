@@ -49,6 +49,29 @@ describe('FormMovies', () => {
     // Falla si se ha publicado algo más de lo que esperábamos (nada)
     http.verify();
   });
+
+  it('ofrece los directores del backend en el desplegable', async () => {
+    const http = TestBed.inject(HttpTestingController);
+    // La lista que llega del backend alimenta las opciones (ya con dedup del servicio).
+    http.expectOne('/movies').flush([mockMovie()]);
+    await fixture.whenStable();
+
+    const opciones = ((fixture.nativeElement as HTMLElement).querySelector('#directorId') as HTMLSelectElement).options;
+    expect(opciones.length).toBe(2); // la vacía + el director de la película
+    expect(opciones[0].text).toContain('Elige un director');
+    expect(opciones[1].text).toBe('Christopher Nolan');
+  });
+  it('convierte el value del desplegable en el id numérico que pide el backend', () => {
+    const http = TestBed.inject(HttpTestingController);
+    // El GET inicial del servicio se desecha; la edición del mockMovie va por PUT.
+    http.expectOne('/movies').flush([]);
+    (component as any).form.patchValue({ directorId: '1' }); // el texto del <option>
+    (component as any).enviarFormulario();
+
+    const peticion = http.expectOne({ method: 'PUT', url: '/movies/3' });
+    expect(peticion.request.body.directorId).toBe(1); // ya es número
+    peticion.flush({});
+  });
 });
 
 function mockMovie(): Movie {

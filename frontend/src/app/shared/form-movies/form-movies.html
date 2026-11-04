@@ -42,12 +42,20 @@
         }
       </label>
 
-      <!-- Director: es su id, como MovieRequest.directorId (404 si no existe). -->
+      <!-- Director: desplegable con los que hay en el backend. El value del
+           <option> es texto (lo manda el HTML), así que llega como cadena y
+           el id numérico se convierte en enviarFormulario; el usuario solo
+           ve nombres y la opción vacía hace fallar el required. -->
       <label class="form__campo" for="directorId">
-        <span class="form__etiqueta">Id del director</span>
-        <input class="form__input" id="directorId" type="number" formControlName="directorId" min="1">
+        <span class="form__etiqueta">Director</span>
+        <select class="form__select" id="directorId" formControlName="directorId">
+          <option value="">Elige un director…</option>
+          @for (director of movieService.directores(); track director.id) {
+            <option [value]="director.id">{{ director.fullName }}</option>
+          }
+        </select>
         @if (form.controls.directorId.touched && form.controls.directorId.invalid) {
-          <span class="form__error">El id del director debe ser un número positivo.</span>
+          <span class="form__error">Elige el director de la lista.</span>
         }
       </label>
 

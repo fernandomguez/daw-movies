@@ -1,5 +1,6 @@
 // Tokens del bloque que apuntan a los --mlt-sys-*; propiedades que solo leen
 // tokens. Mismo encuadre que el del formulario para que se vean como hermanos.
+// Los tokens de color se llaman por su color y tono: 1 = más oscuro, 9 = más claro.
 .modal {
   // Tokens de diseño
   --modal-ficha-padding: var(--mlt-sys-padding-6);
@@ -18,13 +19,13 @@
   --modal-font-size-close: var(--mlt-sys-font-size-6);
   --modal-font-size-actor: var(--mlt-sys-font-size-3);
   --modal-font-weight-destacada: var(--mlt-sys-font-weight-2);
-  --modal-actor-color-fondo: var(--mlt-sys-color-alternativo-9);
-  --modal-actor-color-texto: var(--mlt-sys-color-alternativo-2);
-  --modal-color-fondo-oscuro: var(--mlt-sys-color-negro-5);
-  --modal-color-ficha: var(--mlt-sys-color-blanco-9);
-  --modal-color-texto-titulo: var(--mlt-sys-color-principal-1);
-  --modal-color-texto-suave: var(--mlt-sys-color-gris-7);
-  --modal-color-linea: var(--mlt-sys-color-gris-9);
+  --modal-color-texto-principal-1: var(--mlt-sys-color-principal-1);
+  --modal-color-texto-alternativo-2: var(--mlt-sys-color-alternativo-2);
+  --modal-color-texto-gris-7: var(--mlt-sys-color-gris-7);
+  --modal-color-fondo-alternativo-9: var(--mlt-sys-color-alternativo-9);
+  --modal-color-fondo-blanco-9: var(--mlt-sys-color-blanco-9);
+  --modal-color-fondo-negro-5: var(--mlt-sys-color-negro-5);
+  --modal-color-gris-9: var(--mlt-sys-color-gris-9);
   --modal-z: var(--mlt-sys-z-modal);
 
   // Propiedades CSS
@@ -33,12 +34,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--modal-color-fondo-oscuro);
+  background: var(--modal-color-fondo-negro-5);
   z-index: var(--modal-z);
 
   // Elementos
   &__ficha {
-    background: var(--modal-color-ficha);
+    background: var(--modal-color-fondo-blanco-9);
     border-radius: var(--modal-border-radius);
     padding: var(--modal-ficha-padding);
     width: min(var(--modal-ficha-anchura), 90vw);
@@ -52,13 +53,13 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--modal-cabecera-gap);
-    border-bottom: var(--modal-border-width) solid var(--modal-color-linea);
+    border-bottom: var(--modal-border-width) solid var(--modal-color-gris-9);
     padding-bottom: var(--modal-cabecera-padding);
   }
 
   &__titulo {
     margin: 0;
-    color: var(--modal-color-texto-titulo);
+    color: var(--modal-color-texto-principal-1);
   }
 
   &__close {
@@ -66,10 +67,10 @@
     background: none;
     font-size: var(--modal-font-size-close);
     cursor: pointer;
-    color: var(--modal-color-texto-suave);
+    color: var(--modal-color-texto-gris-7);
 
     &:hover {
-      color: var(--modal-color-texto-titulo);
+      color: var(--modal-color-texto-principal-1);
     }
   }
 
@@ -87,7 +88,7 @@
     width: var(--modal-etiqueta-anchura);
     margin: 0;
     font-weight: var(--modal-font-weight-destacada);
-    color: var(--modal-color-texto-suave);
+    color: var(--modal-color-texto-gris-7);
   }
 
   &__valor {
@@ -96,7 +97,7 @@
 
   &__subtitulo {
     margin: var(--modal-cabecera-padding) 0 var(--modal-actores-gap);
-    color: var(--modal-color-texto-titulo);
+    color: var(--modal-color-texto-principal-1);
   }
 
   &__actores {
@@ -111,21 +112,19 @@
   &__actor {
     padding: var(--modal-actor-padding);
     border-radius: var(--modal-border-radius-pill);
-    background: var(--modal-actor-color-fondo);
-    color: var(--modal-actor-color-texto);
+    background: var(--modal-color-fondo-alternativo-9);
+    color: var(--modal-color-texto-alternativo-2);
     font-size: var(--modal-font-size-actor);
     font-weight: var(--modal-font-weight-destacada);
   }
 
-  // Reparto vacío: elemento sin modificador, con sus propios tokens
+  // Reparto vacío: reutiliza los tokens del bloque, los mismos de la línea
+  // de separación y del gris del texto, sin duplicar valores.
   &__vacio {
-    --modal-vacio-color-fondo: var(--modal-color-linea);
-    --modal-vacio-color-texto: var(--modal-color-texto-suave);
-
     padding: var(--modal-actor-padding);
     border-radius: var(--modal-border-radius-pill);
-    background: var(--modal-vacio-color-fondo);
-    color: var(--modal-vacio-color-texto);
+    background: var(--modal-color-gris-9);
+    color: var(--modal-color-texto-gris-7);
     font-size: var(--modal-font-size-actor);
   }
 }

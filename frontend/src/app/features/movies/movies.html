@@ -17,6 +17,19 @@
              type="text" placeholder="Ej: Inception…"
              (input)="teclearBusqueda($event)">
     </div>
+
+    <!-- Filtro por director, en el cliente. El desplegable se alimenta de los
+         directores únicos que hay en la lista cargada: al añadir una película
+         de un director nuevo (y refrescar), la opción aparece sola. -->
+    <div class="movies__filter">
+      <label class="movies__filter-label" for="filtro-director">Filtrar por director</label>
+      <select class="movies__filter-select" id="filtro-director" (change)="seleccionarDirector($event)">
+        <option value="">Todos los directores</option>
+        @for (director of movieService.directores(); track director.id) {
+          <option [value]="director.id">{{ director.fullName }}</option>
+        }
+      </select>
+    </div>
   </div>
 
   <div class="movies__toolbar">
@@ -34,7 +47,7 @@
         (removeMovie)="borrarPelicula($event)"
       />
     } @empty {
-      <p class="movies__vacio">No hay películas{{ textoBusqueda() ? ' con ese título' : '' }}</p>
+      <p class="movies__vacio">No hay películas{{ textoBusqueda() ? ' con ese título' : '' }}{{ directorSeleccionado() === '' ? '' : ' de ese director' }}</p>
     }
   </div>
 
@@ -42,7 +55,7 @@
     <app-modal-movies [movie]="movie" (cerrar)="cerrarDetalle()" />
   }
 
-  @if (modalFormulario(); as movie) {
-    <app-form-movies [movie]="movie" (cerrar)="cerrarFormulario()" />
+  @if (modalFormulario() !== undefined) {
+    <app-form-movies [movie]="modalFormulario() ?? null" (cerrar)="cerrarFormulario()" />
   }
 </section>

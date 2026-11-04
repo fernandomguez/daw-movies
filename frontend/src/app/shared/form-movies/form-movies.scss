@@ -1,7 +1,8 @@
 // Tokens del bloque que apuntan a los --mlt-sys-*; propiedades que solo leen
 // tokens. Mismo encuadre que el modal de detalle para que se vean como hermanos.
+// Los tokens de color se llaman por su color y tono: 1 = más oscuro, 9 = más claro.
 .form {
-  // Tokens de diseÃ±o
+  // Tokens de diseño
   --form-ficha-padding: var(--mlt-sys-padding-6);
   --form-ficha-anchura: var(--mlt-sys-width-10);
   --form-ficha-sombra: var(--mlt-sys-sombra-ficha);
@@ -22,15 +23,16 @@
   --form-font-size-error: var(--mlt-sys-font-size-3);
   --form-font-weight-destacada: var(--mlt-sys-font-weight-2);
   --form-duracion: var(--mlt-sys-duracion-rapida);
-  --form-color-fondo-oscuro: var(--mlt-sys-color-negro-5);
-  --form-color-ficha: var(--mlt-sys-color-blanco-9);
-  --form-color-texto-titulo: var(--mlt-sys-color-principal-1);
-  --form-color-texto-suave: var(--mlt-sys-color-gris-7);
-  --form-color-linea: var(--mlt-sys-color-gris-9);
-  --form-color-error-texto: var(--mlt-sys-color-peligroso-2);
-  --form-color-error-fondo: var(--mlt-sys-color-peligroso-9);
-  --form-color-boton: var(--mlt-sys-color-principal-5);
-  --form-color-boton-hover: var(--mlt-sys-color-principal-4);
+  --form-color-texto-principal-1: var(--mlt-sys-color-principal-1);
+  --form-color-texto-peligroso-2: var(--mlt-sys-color-peligroso-2);
+  --form-color-texto-gris-7: var(--mlt-sys-color-gris-7);
+  --form-color-texto-blanco-9: var(--mlt-sys-color-blanco-9);
+  --form-color-fondo-blanco-9: var(--mlt-sys-color-blanco-9);
+  --form-color-fondo-negro-5: var(--mlt-sys-color-negro-5);
+  --form-color-fondo-peligroso-9: var(--mlt-sys-color-peligroso-9);
+  --form-color-gris-9: var(--mlt-sys-color-gris-9);
+  --form-color-principal-5: var(--mlt-sys-color-principal-5);
+  --form-color-principal-4: var(--mlt-sys-color-principal-4);
   --form-z: var(--mlt-sys-z-modal);
 
   // Propiedades CSS
@@ -39,16 +41,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--form-color-fondo-oscuro);
+  background: var(--form-color-fondo-negro-5);
   z-index: var(--form-z);
 
   // Elementos
   &__ficha {
-    background: var(--form-color-ficha);
+    background: var(--form-color-fondo-blanco-9);
     border-radius: var(--form-border-radius);
     padding: var(--form-ficha-padding);
     width: min(var(--form-ficha-anchura), 90vw);
-    max-height: 85vh; // viewport: sube y baja con la ventana, no es un nÃºmero de estilo
+    max-height: 85vh; // viewport: sube y baja con la ventana, no es un número de estilo
     overflow: auto;
     box-shadow: var(--form-ficha-sombra);
   }
@@ -58,13 +60,13 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--form-cabecera-gap);
-    border-bottom: var(--form-border-width) solid var(--form-color-linea);
+    border-bottom: var(--form-border-width) solid var(--form-color-gris-9);
     padding-bottom: var(--form-cabecera-padding);
   }
 
   &__titulo {
     margin: 0;
-    color: var(--form-color-texto-titulo);
+    color: var(--form-color-texto-principal-1);
   }
 
   &__close {
@@ -72,10 +74,10 @@
     background: none;
     font-size: var(--form-font-size-close);
     cursor: pointer;
-    color: var(--form-color-texto-suave);
+    color: var(--form-color-texto-gris-7);
 
     &:hover {
-      color: var(--form-color-texto-titulo);
+      color: var(--form-color-texto-principal-1);
     }
   }
 
@@ -83,8 +85,8 @@
     margin: var(--form-aviso-gap) 0 var(--form-campo-gap);
     padding: var(--form-aviso-padding);
     border-radius: var(--form-border-radius-campo);
-    background: var(--form-color-error-fondo);
-    color: var(--form-color-error-texto);
+    background: var(--form-color-fondo-peligroso-9);
+    color: var(--form-color-texto-peligroso-2);
   }
 
   &__cuerpo {
@@ -102,23 +104,24 @@
 
   &__etiqueta {
     font-weight: var(--form-font-weight-destacada);
-    color: var(--form-color-texto-suave);
+    color: var(--form-color-texto-gris-7);
   }
 
-  &__input {
+  &__input,
+  &__select {
     padding: var(--form-input-padding);
-    border: var(--form-border-width) solid var(--form-color-linea);
+    border: var(--form-border-width) solid var(--form-color-gris-9);
     border-radius: var(--form-border-radius-campo);
     font: inherit;
 
     &:focus-visible {
-      outline: var(--form-outline-width) solid var(--form-color-boton);
+      outline: var(--form-outline-width) solid var(--form-color-principal-5);
       outline-offset: var(--form-outline-offset);
     }
   }
 
   &__error {
-    color: var(--form-color-error-texto);
+    color: var(--form-color-texto-peligroso-2);
     font-size: var(--form-font-size-error);
   }
 
@@ -127,16 +130,15 @@
     padding: var(--form-enviar-padding);
     border: none;
     border-radius: var(--form-border-radius-campo);
-    background: var(--form-color-boton);
-    color: var(--form-color-ficha);
+    background: var(--form-color-principal-5);
+    color: var(--form-color-texto-blanco-9);
     font: inherit;
     font-weight: var(--form-font-weight-destacada);
     cursor: pointer;
     transition: background var(--form-duracion);
 
     &:hover {
-      background: var(--form-color-boton-hover);
+      background: var(--form-color-principal-4);
     }
   }
 }
-

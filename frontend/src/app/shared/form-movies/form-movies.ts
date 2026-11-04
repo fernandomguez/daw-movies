@@ -28,11 +28,14 @@ export class FormMovies {
   }
 
   // Reglas espejo de MovieRequest: mismas que aplicará el backend con @Valid.
+  // El desplegable del director entrega el value como texto (lo manda el HTML,
+  // no usa ngValue): el control lo guarda tal cual y en enviarFormulario se
+  // convierte en el id numérico que pide el MovieRequest.
   protected form = this.formBuilder.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(255)]],
     releaseYear: [null as number | null, [Validators.required, Validators.min(1888), Validators.max(this.maxAno())]],
     duration: [null as number | null, [Validators.required, Validators.min(1)]],
-    directorId: [null as number | null, [Validators.required, Validators.min(1)]],
+    directorId: [null as number | string | null, [Validators.required, Validators.min(1)]],
   });
 
   // Mensaje del backend (400/404) o del propio formulario, para pintarlo arriba.
@@ -65,7 +68,10 @@ export class FormMovies {
 
     // El payload es exactamente el MovieRequest del backend (directorId, no director).
     const payload = this.form.getRawValue();
-    if (payload.releaseYear === null || payload.duration === null || payload.directorId === null) {
+    // Única conversión de la cadena que llega del <select>: aquí ya es número
+    // para que el MoviePayload viaje como pide el backend.
+    const directorId = payload.directorId === null ? null : Number(payload.directorId);
+    if (payload.releaseYear === null || payload.duration === null || directorId === null || Number.isNaN(directorId)) {
       this.aviso.set('Revisa los campos marcados en rojo.');
       return;
     }
@@ -73,7 +79,7 @@ export class FormMovies {
       title: payload.title,
       releaseYear: payload.releaseYear,
       duration: payload.duration,
-      directorId: payload.directorId,
+      directorId,
     };
 
     if (this.movie()) {

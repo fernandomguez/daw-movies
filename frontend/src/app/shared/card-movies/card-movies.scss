@@ -1,5 +1,6 @@
 // Tokens del bloque que apuntan a los --mlt-sys-* y estado privado para el
 // hover; las propiedades solo leen tokens o estado, nunca valores crudos.
+// Los tokens de color se llaman por su color y tono: 1 = más oscuro, 9 = más claro.
 .card {
   // Tokens de diseño
   --card-padding: var(--mlt-sys-padding-5);
@@ -20,31 +21,31 @@
   --card-elevacion-boton: var(--mlt-sys-elevacion-boton);
   --card-duracion: var(--mlt-sys-duracion-normal);
   --card-duracion-rapida: var(--mlt-sys-duracion-rapida);
-  --card-color-texto-titulo: var(--mlt-sys-color-principal-1);
-  --card-color-texto-suave: var(--mlt-sys-color-gris-7);
-  --card-color-fondo: var(--mlt-sys-color-blanco-9);
-  --card-color-chip-fondo: var(--mlt-sys-color-principal-9);
-  --card-color-chip-texto: var(--mlt-sys-color-principal-2);
-  --card-color-aviso-fondo: var(--mlt-sys-color-alternativo-9);
-  --card-color-aviso-texto: var(--mlt-sys-color-alternativo-2);
-  --card-color-borrado-texto: var(--mlt-sys-color-peligroso-2);
-  --card-color-borrado-hover: var(--mlt-sys-color-peligroso-5);
+  --card-color-texto-principal-1: var(--mlt-sys-color-principal-1);
+  --card-color-texto-principal-2: var(--mlt-sys-color-principal-2);
+  --card-color-texto-peligroso-2: var(--mlt-sys-color-peligroso-2);
+  --card-color-texto-alternativo-2: var(--mlt-sys-color-alternativo-2);
+  --card-color-texto-gris-2: var(--mlt-sys-color-gris-2);
+  --card-color-texto-blanco-9: var(--mlt-sys-color-blanco-9);
+  --card-color-fondo-blanco-9: var(--mlt-sys-color-blanco-9);
+  --card-color-fondo-principal-9: var(--mlt-sys-color-principal-9);
+  --card-color-fondo-alternativo-9: var(--mlt-sys-color-alternativo-9);
+  --card-color-fondo-negro-5: var(--mlt-sys-color-negro-5);
+  --card-color-peligroso-5: var(--mlt-sys-color-peligroso-5);
   --card-poster-aspecto: 2 / 3;
-  --card-poster-fallback-fondo: var(--mlt-sys-color-negro-5);
-  --card-poster-fallback-texto: var(--mlt-sys-color-blanco-9);
 
   // Estado privados (los usan a la vez fondo, texto y borde del botón)
-  --card-editState-color: var(--card-color-chip-fondo);
-  --card-editState-color-texto: var(--card-color-chip-texto);
+  --card-editState-color: var(--card-color-fondo-principal-9);
+  --card-editState-color-texto: var(--card-color-texto-principal-2);
   --card-editState-color-borde: transparent;
-  --card-borradoState-color: var(--card-color-fondo);
-  --card-borradoState-color-texto: var(--card-color-borrado-texto);
-  --card-borradoState-color-borde: var(--card-color-aviso-fondo);
+  --card-borradoState-color: var(--card-color-fondo-blanco-9);
+  --card-borradoState-color-texto: var(--card-color-texto-peligroso-2);
+  --card-borradoState-color-borde: var(--card-color-fondo-alternativo-9);
 
   // Propiedades CSS
   display: flex;
   flex-direction: column;
-  background: var(--card-color-fondo);
+  background: var(--card-color-fondo-blanco-9);
   border-radius: var(--card-border-radius);
   overflow: hidden;
   box-shadow: var(--card-sombra);
@@ -59,7 +60,7 @@
   // Elementos
   &__poster {
     aspect-ratio: var(--card-poster-aspecto);
-    background: var(--card-poster-fallback-fondo);
+    background: var(--card-color-fondo-negro-5);
   }
 
   &__poster-img {
@@ -77,7 +78,7 @@
     gap: var(--card-accion-gap);
     height: 100%;
     padding: var(--card-padding);
-    color: var(--card-poster-fallback-texto);
+    color: var(--card-color-texto-blanco-9);
     text-align: center;
   }
 
@@ -91,7 +92,7 @@
 
   &__title {
     margin: 0;
-    color: var(--card-color-texto-titulo);
+    color: var(--card-color-texto-principal-1);
   }
 
   &__meta {
@@ -103,23 +104,23 @@
     display: inline-block;
     padding: var(--card-chip-padding);
     border-radius: var(--card-border-radius-pill);
-    background: var(--card-color-chip-fondo);
-    color: var(--card-color-chip-texto);
+    background: var(--card-color-fondo-principal-9);
+    color: var(--card-color-texto-principal-2);
     font-size: var(--card-font-size-chip);
     font-weight: var(--card-font-weight-destacada);
   }
 
   &__director {
     margin: 0;
-    color: var(--card-color-texto-suave);
+    color: var(--card-color-texto-gris-2);
   }
 
   &__actors-badge {
     display: inline-block;
     padding: var(--card-chip-padding);
     border-radius: var(--card-border-radius-pill);
-    background: var(--card-color-aviso-fondo);
-    color: var(--card-color-aviso-texto);
+    background: var(--card-color-fondo-alternativo-9);
+    color: var(--card-color-texto-alternativo-2);
     font-size: var(--card-font-size-chip);
     font-weight: var(--card-font-weight-destacada);
     width: fit-content;
@@ -130,7 +131,7 @@
     grid-template-columns: var(--card-grid-columnas);
     gap: var(--card-accion-gap);
     padding: var(--card-padding);
-    border-top: var(--card-border-width) solid var(--card-color-chip-fondo);
+    border-top: var(--card-border-width) solid var(--card-color-fondo-principal-9);
     cursor: default;
   }
 
@@ -158,10 +159,10 @@
     background: var(--card-editState-color);
     color: var(--card-editState-color-texto);
 
-    // El hover cambia fondo, texto y (indirectamente) nada de borde: es su estado
+    // El hover cambia fondo y texto: es su estado, con el blanco sobre el azul
     &:hover {
-      --card-editState-color: var(--card-color-chip-texto);
-      --card-editState-color-texto: var(--card-color-fondo);
+      --card-editState-color: var(--card-color-texto-principal-2);
+      --card-editState-color-texto: var(--card-color-texto-blanco-9);
     }
   }
 
@@ -171,9 +172,9 @@
     color: var(--card-borradoState-color-texto);
 
     &:hover {
-      --card-borradoState-color: var(--card-color-borrado-hover);
-      --card-borradoState-color-texto: var(--card-color-fondo);
-      --card-borradoState-color-borde: var(--card-color-borrado-hover);
+      --card-borradoState-color: var(--card-color-peligroso-5);
+      --card-borradoState-color-texto: var(--card-color-texto-blanco-9);
+      --card-borradoState-color-borde: var(--card-color-peligroso-5);
     }
   }
 }

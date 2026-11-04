@@ -20,9 +20,12 @@ export class Movies {
   // Es protected para poder usarlo directamente desde el HTML.
   protected movieService = inject(MovieService);
 
-  // =================   EL BUSCADOR (por título, en el cliente)   ====================
+  // =================   EL BUSCADOR (por título y por director, en el cliente)   ====================
 
   textoBusqueda = signal<string>('');
+
+  // Director elegido en el desplegable ('' = todos los directores).
+  directorSeleccionado = signal<number | ''>('');
 
   // Cambia el texto del buscador. event.target es el <input>;
   // el "as HTMLInputElement" le dice a TypeScript que sí tiene .value.
@@ -31,13 +34,21 @@ export class Movies {
     this.textoBusqueda.set(input.value);
   }
 
+  // Cambia el director del desplegable. El value llega como texto:
+  // con '' se guardan todos; con lo demás, el id convertido a número.
+  seleccionarDirector(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.directorSeleccionado.set(select.value === '' ? '' : Number(select.value));
+  }
+
   moviesFiltradas = computed(() => {
-    let texto = this.textoBusqueda().toLowerCase();
-    let movies = this.movieService.movies();
-    if (texto === '') {
-      return movies;
-    }
-    return movies.filter((m) => m.title.toLowerCase().includes(texto));
+    const texto = this.textoBusqueda().toLowerCase();
+    const director = this.directorSeleccionado();
+    return this.movieService.movies().filter(
+      (m) =>
+        (texto === '' || m.title.toLowerCase().includes(texto)) &&
+        (director === '' || m.director.id === director)
+    );
   });
 
   // =================   LOS MODALES   ====================
@@ -45,8 +56,10 @@ export class Movies {
   // Película abierta en el modal de detalle (null = cerrado).
   movieDetalle = signal<Movie | null>(null);
 
-  // Película cargada en el modal del formulario (null = crear).
-  modalFormulario = signal<Movie | null>(null);
+  // Película cargada en el modal del formulario. Tres estados porque la señal
+  // no re-renderiza si se le asigna el mismo valor: undefined = cerrado,
+  // null = crear y una película = editar (abrirFormulario distingue los dos).
+  modalFormulario = signal<Movie | null | undefined>(undefined);
 
   // Aviso informativo arriba de la lista (creada, borrada, no se pudo borrar...).
   aviso = signal<string>('');
@@ -56,7 +69,7 @@ export class Movies {
   }
 
   protected abrirFormulario(id: number | null): void {
-    this.modalFormulario.set(id === null ? null : (this.movieService.movies().find((m) => m.id === id) ?? null));
+    this.modalFormulario.set(id === null ? null : (this.movieService.movies().find((m) => m.id === id) ?? undefined));
   }
 
   protected cerrarDetalle(): void {
@@ -64,7 +77,7 @@ export class Movies {
   }
 
   protected cerrarFormulario(): void {
-    this.modalFormulario.set(null);
+    this.modalFormulario.set(undefined);
     // El formulario avisa solo sobre errores; aquí se refresca la lista por si el CRUD cambió algo.
     this.movieService.refresh();
   }

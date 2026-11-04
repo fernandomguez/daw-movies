@@ -24,6 +24,21 @@ export class MovieService {
   // Número de películas; se recalcula solo cuando cambia la lista.
   total = computed(() => this.movies().length);
 
+  // Directores únicos (por id) derivados de la lista de películas, ordenados
+  // alfabéticamente. Lo usan el filtro del listado y el desplegable del
+  // formulario: al refrescar tras el CRUD, un director nuevo aparece solo.
+  directores = computed(() => {
+    const directores = new Map<number, string>();
+    for (const movie of this.movies()) {
+      if (!directores.has(movie.director.id)) {
+        directores.set(movie.director.id, movie.director.fullName);
+      }
+    }
+    return [...directores.entries()]
+      .map(([id, fullName]) => ({ id, fullName }))
+      .sort((a, b) => a.fullName.localeCompare(b.fullName));
+  });
+
   constructor() {
     // Al arrancar la app, carga la lista del backend.
     this.load();
