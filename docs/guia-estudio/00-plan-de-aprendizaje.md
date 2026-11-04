@@ -191,7 +191,7 @@ Depende de: 12.
 > **Replanteada el 2026-11-04:** el contrato OpenAPI y Swagger UI (D-47) se hicieron como estaban previstos, pero la parte de Swagger se vuelve a tratar en la fase 33 sobre el código real. Lo escrito abajo es el plan original.
 
 Se inserta entre la 15 y la 16 sin renumerar el resto, para no invalidar las referencias a las fases 16–24.
-**Adelantada el 2026-10-28** (15A.1 y 15A.2) a petición del alumno, para poder ver la interfaz de los endpoints: [diario 15A](15A-api-first.md). No depende de la fase 15: las rutas ya estaban decididas en D-36.
+**Adelantada el 2026-10-28** (15A.1 y 15A.2) a petición del alumno, para poder ver la interfaz de los endpoints: [diario 15A](https://github.com/fernandomguez/daw-movies/blob/jpa-fase-11-15a/docs/guia-estudio/15A-api-first.md) (solo existe en la rama `jpa-fase-11-15a`). No depende de la fase 15: las rutas ya estaban decididas en D-36.
 
 | Paso | Concepto | Resultado esperado |
 |---|---|---|
@@ -284,15 +284,15 @@ Hilos del contenedor, peticiones bloqueantes y virtual threads (Loom). Depende d
 
 ## Bloque G — Fases nuevas tras el giro a JDBC (2026-11-04)
 
-Añadido tras el cambio de rumbo (D-48). Ya existe el código del paso 0 (controlador, servicio, repositorio, DAO JDBC, `MovieRequest`, mapper y manejador de excepciones) con 23 tests en verde. Las fases se **detallarán cuando toque** cada una; aquí solo el índice.
+Añadido tras el cambio de rumbo (D-48). Ya existe el código (controlador, servicio, repositorio, DAO JDBC, `MovieRequest`, mapper, manejador de excepciones y Swagger) con **58 tests en verde**. Las fases se **detallarán cuando toque** cada una; aquí solo el índice. *(En `ESTADO.md` esta misma secuencia aparece numerada 0–4: fase 1 = 30 y 31, fase 2 = 32, fase 3 = 33 y fase 4 = 34.)*
 
-| Fase | Contenido | Prioridad |
-|---|---|---|
-| 30. Entender el código | Recorrer una petición de `MovieController` a MariaDB y volver; `JdbcTemplate`, `RowMapper`, DAO frente a repositorio, el problema N+1 en `findAll` | 🔴 |
-| 31. Tests | Tests del servicio (con un repositorio simulado), del DAO y del controlador; revisión de qué cubre cada uno | 🔴 |
-| 32. Skill del proyecto | Escribir una *skill* (carpeta `skills`, ver `base-standards.md`) con las convenciones de capas | 🟡 |
-| 33. Swagger | Revisar springdoc y el contrato `openapi.yaml` contra el código real (retoma 15A.3) | 🟡 |
-| 34. Monolito modular `catalog` | Reorganizar en un módulo `catalog` (retoma la fase 25 con el código nuevo) | 🟡 |
+| Fase | Contenido | Prioridad | Estado |
+|---|---|---|---|
+| 30. Entender el código | Recorrer una petición de `MovieController` a MariaDB y volver; `JdbcTemplate`, `RowMapper`, DAO frente a repositorio, el problema N+1 en `findAll` | 🔴 | ✅ ([entender-el-codigo.md](temario/entender-el-codigo.md)) |
+| 31. Tests | Tests del servicio (con un repositorio simulado) y del controlador; revisión de qué cubre cada uno | 🔴 | ✅ servicio (13) y controlador (19). **Faltan** los tests del DAO y del repositorio con base de datos real |
+| 32. Skill del proyecto | Actualizar el skill `creador-de-skills` (repositorio aparte, `Lorenzo\creador-de-skills`) para que replique esta arquitectura: `k-back-module`, `k-back-controller` (antes `presentation`), `k-back-domain`, `k-back-persistence`, `do-code-impl`, `do-code-review`, plantillas y teoría | 🟡 | ✅ 2026-11-04 (5 commits locales en ese repositorio, sin remoto). Las skills nuevas **no se han probado** generando o revisando código |
+| 33. Swagger | Contrato OpenAPI **generado desde el código** con springdoc 3.2.0 (sin `openapi.yaml`, a petición del profesor) y `OpenApiConfig` en `com.daw.movies.config`; test de contrato (D-47, nota del 2026-11-04) | 🟡 | ✅ 2026-11-04 |
+| 34. Monolito modular `catalog` | Reorganizar en un módulo `catalog` (retoma la fase 25 con el código nuevo): ArchUnit antes de mover nada, mover paquetes, Spring Modulith | 🟡 | ⏳ |
 
 ## Mapa de dependencias (resumen)
 
@@ -318,7 +318,7 @@ Añadido tras el cambio de rumbo (D-48). Ya existe el código del paso 0 (contro
 | Tema del profesor | Fase nuestra | Estado |
 |---|---|---|
 | DWS 01 Arquitecturas | 5, 25 | 🟡 capas hechas; modular en 25 |
-| DWS 02 API First | 15A | 🟡 contrato y Swagger UI hechos (D-47); falta implementarlo (fase 16) y 15A.3 |
+| DWS 02 API First | 15A, 33 | 🟡 Swagger UI con el contrato **generado desde el código** (fase 33); el método API First puro (yaml primero) no se aplica |
 | DWS 03 Validación e invariancias | 18.2, 18.5 | 🟡 Jakarta Validation en `MovieRequest`; sin *value objects* (D-46 revocada) |
 | DWS 04 Monolito modular y Modulith | 25 | ⏳ añadida |
 | DWS 05 Persistencia JPA | 11–14 (superadas), 19 | 🟠 el proyecto usa JDBC/DAO (D-48); JPA queda como teoría |

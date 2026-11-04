@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual (2026-11-04, tras el giro a JDBC):** fases 1–9 completadas y la fase 10 cerrada, **pero reescrita**. El profesor no quiere *value objects* (D-46 revocada) y el proyecto pasó de JPA a una **arquitectura por capas con JDBC** (D-48): `controller` (con `mapper/` y `exception/`), `domain` (`model`, `service`, `repository`, `exception`) y `persistence` (DAO `MovieDao`/`MovieDaoJdbc` con `JdbcTemplate`, y `MovieRepositoryImpl`). `Movie`, `Director` y `Actor` usan tipos simples; las reglas de entrada están en `MovieRequest` con Jakarta Validation. Hay **23 tests en verde** tras el paso 0 (3 de integración y 20 de las entidades). Las fases JPA 11–14 quedan superadas. Pendiente (bloque G del plan): entender el código, tests, skill, Swagger y monolito modular `catalog`. Último commit de fase: `feat(fase-10): add domain entities` (el giro aún no tiene commit de cierre). Los datos de prueba se cargan aparte con `db/testdata/seed.sql`.
+> **Estado actual (2026-11-04, tras el giro a JDBC):** el proyecto pasó de JPA a una **arquitectura por capas con JDBC** (D-48) y el profesor no quiere *value objects* (D-46 revocada): `controller` (con `dto/`, `mapper/` y `handler/`), `domain` (`model`, `service`, `repository`, `exception`) y `persistence` (DAO `MovieDao`/`MovieDaoJdbc` con `JdbcTemplate`, y `MovieRepositoryImpl`), más `config/` (fuera de las capas) con la configuración de Swagger. `Movie`, `Director` y `Actor` usan tipos simples; las reglas de entrada están en `MovieRequest` con Jakarta Validation. Hay **58 tests en verde**. Hecho en el giro: entender el código y sus tests (fase 30/31), **skill `creador-de-skills` actualizado** (32) y **Swagger generado desde el código** con springdoc 3.2.0 (33). Pendiente: el monolito modular `catalog` (34) y limpiar restos de documentación. Las fases JPA 11–14 quedan superadas y viven en la rama `jpa-fase-11-15a`. Los datos de prueba se cargan aparte con `db/testdata/seed.sql`.
 
 ---
 
@@ -41,7 +41,7 @@ Versiones elegidas y verificadas en fuentes oficiales en la fase 1 ([detalle](do
 | MariaDB | 12.3 (LTS), imagen Docker `mariadb:12.3` → **12.3.3** | Base de datos |
 | Driver MariaDB | 3.5.10 (`mariadb-java-client`) | Conexión JDBC |
 | HikariCP | 7.0.2 | *Pool* de conexiones (`DataSource`) |
-| springdoc-openapi | 3.2.0 (versión explícita: Boot no la gestiona) | Swagger UI y generación de OpenAPI (fase 15A) |
+| springdoc-openapi | 3.2.0 (versión explícita: Boot no la gestiona) | Genera el contrato OpenAPI desde el código y sirve Swagger UI (fase 33) |
 | Maven (vía Maven Wrapper) | 3.10.0 | Compilación, dependencias y tests (no hace falta instalarlo) |
 | Docker + Docker Compose | — | Ejecutar MariaDB sin instalarla |
 | Git | 2.51 | Control de versiones |
@@ -55,7 +55,7 @@ Versiones elegidas y verificadas en fuentes oficiales en la fase 1 ([detalle](do
 | 6 | `spring-boot-starter`, `spring-boot-starter-test` | Núcleo de Spring Boot; JUnit 5, AssertJ y Mockito | ✅ |
 | 7 | `mariadb-java-client`, `spring-boot-starter-jdbc` | Driver JDBC; `JdbcTemplate` y pool de conexiones. *(Se añadió `starter-data-jpa` y se cambió por `starter-jdbc` el 2026-11-04.)* | ✅ |
 | 8 | `spring-boot-starter-flyway`, `flyway-mysql` (12.4.0, versión gestionada por Boot) | Migraciones; módulo de Flyway para MySQL/MariaDB | ✅ |
-| 15A | `springdoc-openapi-starter-webmvc-ui` (3.2.0) | Contrato OpenAPI y Swagger UI | (histórico) hecho en 15A, **ya no está en el `pom.xml`**; se retoma en la fase 33 |
+| 33 | `springdoc-openapi-starter-webmvc-ui` (3.2.0, propiedad `springdoc.version`) | Contrato OpenAPI generado desde el código y Swagger UI | ✅ en el `pom.xml` (en 15A se hizo con un `openapi.yaml` escrito a mano; el profesor no lo quiere en `resources`) |
 | 16 | `spring-boot-starter-webmvc` (+ `-test`) | Controladores REST, Tomcat embebido, JSON | ✅ en el `pom.xml` |
 | 18 | `spring-boot-starter-validation` | Jakarta Validation (`@NotBlank`, `@Valid`) en `MovieRequest` | ✅ en el `pom.xml` |
 | 19 | `spring-boot-testcontainers`, `testcontainers-junit-jupiter`, `testcontainers-mariadb` | Tests de integración con un MariaDB real y desechable | ⏳ |
@@ -88,8 +88,8 @@ El plan completo, con pasos, conceptos y dependencias, está en [00-plan-de-apre
 | | ~~13. Mapeos entre persistencia y dominio~~ | Eliminada (D-29) |
 | | ~~14. Consultas de información relacionada y problemas habituales~~ | Superada (D-48); el N+1 se estudia con JDBC |
 | D. API | 15. DTOs de salida y mapeo dominio → DTO | ⏳ |
-| | 15A. API First: el contrato antes del código | 🟠 Replanteada: se retoma en la fase 33 (Swagger) |
-| G. Tras el giro a JDBC | 30. Entender el código · 31. Tests · 32. Skill · 33. Swagger · 34. Monolito modular `catalog` | ⏳ Ver el [plan](docs/guia-estudio/00-plan-de-aprendizaje.md) |
+| | 15A. API First: el contrato antes del código | 🟠 Replanteada: resuelta en la fase 33 con el contrato generado desde el código |
+| G. Tras el giro a JDBC | 30. Entender el código ✅ · 31. Tests ✅ · 32. Skill ✅ · 33. Swagger ✅ · 34. Monolito modular `catalog` ⏳ | Ver el [plan](docs/guia-estudio/00-plan-de-aprendizaje.md) |
 | | 16. Servicio y controladores REST de lectura | ⏳ |
 | | 17. Operaciones de escritura y transacciones | ⏳ |
 | | 18. Validaciones y manejo de excepciones | ⏳ |
@@ -158,13 +158,16 @@ docker compose up -d          # los tests se conectan a MariaDB: tiene que estar
 Resultado esperado de `test`:
 
 ```
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.config.OpenApiContractTest
+[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.controller.MovieControllerTest
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.DatabaseConnectionTests
 [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.ActorTest
 [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.DirectorTest
 [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.model.MovieTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.domain.service.impl.MovieServiceImplTest
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.FlywayMigrationTests
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
-[INFO] Tests run: 23, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 58, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
@@ -174,9 +177,16 @@ Dos `WARN` de Flyway son esperados (fase 8): `Using MariaDB 12.3 which is newer 
 
 Los avisos `WARNING` de Mockito ("self-attaching", "Dynamic loading of agents") son conocidos y no rompen nada (D-31).
 
-### Documentación de la API: Swagger UI (histórico, pendiente)
+### Documentación de la API: Swagger UI
 
-> **Estado a 2026-11-04:** en el código actual **no hay** `springdoc` en el `pom.xml` ni `openapi.yaml` en `static/`, así que `/swagger-ui.html` no está disponible. Lo hecho en la fase 15A (contrato OpenAPI y Swagger UI, D-47) queda como historia; Swagger se retoma en la **fase 33** sobre los controladores reales. El diario de aquella fase sigue en [15A-api-first.md](docs/guia-estudio/15A-api-first.md).
+Con la aplicación arrancada (`.\mvnw.cmd spring-boot:run`):
+
+| URL | Qué es |
+|---|---|
+| `http://localhost:8080/swagger-ui.html` | Interfaz para probar los 5 endpoints con «Try it out» (redirige a `/swagger-ui/index.html`) |
+| `http://localhost:8080/v3/api-docs` | El contrato OpenAPI en JSON |
+
+El contrato **se genera desde el código** con springdoc 3.2.0: no hay ningún `openapi.yaml` (al profesor no le gusta en `src/main/resources`), así que nunca se desfasa de los controladores. Los datos generales (título, versión, descripción) están en `OpenApiConfig`, en `com.daw.movies.config`, fuera de las capas. El test `OpenApiContractTest` comprueba que `/v3/api-docs` lista los 5 endpoints. Lo hecho en la fase 15A (contrato escrito a mano, D-47) queda como historia en [15A-api-first.md](https://github.com/fernandomguez/daw-movies/blob/jpa-fase-11-15a/docs/guia-estudio/15A-api-first.md) (en la rama `jpa-fase-11-15a`, que conserva aquel código).
 
 ### Cargar los datos de prueba (fase 9)
 
@@ -334,6 +344,10 @@ Cada fase tiene su documento con comandos y resultados reales.
 | 17 | 9 | `NativeCommandError` y `CategoryInfo : NotSpecified` al provocar errores SQL | PowerShell interpreta como error propio la salida de error de `mariadb` | Es ruido: el mensaje real es la línea `ERROR 1452` / `4025` / `1062` |
 | 18 | 9 | `ERROR 1062 ... Duplicate entry '1' for key 'PRIMARY'` al cargar `seed.sql` | El script solo inserta y los datos ya existen | Vaciar las tablas en orden inverso y reiniciar los `AUTO_INCREMENT` |
 | 19 | 9 | `ERROR 1452 ... foreign key constraint fails` al insertar una película con `director_id` inexistente | La FK no encuentra el director | Es el comportamiento correcto (provocado a propósito en el paso 9.3): la base protege la integridad |
+| 20 | 33 | `package io.swagger.v3.oas.models does not exist` al compilar `OpenApiConfig` | La dependencia de springdoc no se había añadido: la edición del `pom.xml` falló porque el archivo usa tabuladores y se buscó con espacios | Añadir la dependencia con la sangría real del archivo y volver a ejecutar los tests |
+| 21 | 33 | `Status expected:<200> but was:<404>` en `OpenApiContractTest` | Es el **rojo esperado** de TDD: aún no existía springdoc | Añadir la dependencia y `OpenApiConfig` (verde) |
+| 22 | git | `git push`: `Permission denied (publickey)`, aunque `ssh -T git@github.com` responde «Hi fernandomguez!» | Git usa su propio `ssh` (`C:\Program Files\Git\usr\bin\ssh.exe`), distinto del de Windows; desde el asistente no hay clave disponible. Forzar el `ssh` de Windows tampoco bastó | Cambiar `origin` a HTTPS (`https://github.com/fernandomguez/daw-movies.git`) y usar la credencial de `gh` (`gh auth login`) |
+| 23 | git | `main` local y `origin/main` divergidos (10 por delante, 11 por detrás) tras el giro a JDBC | `origin/main` tenía el camino JPA (fases 11 y 15A); un `push` normal se rechaza y forzarlo borraría esos commits | Renombrar con `gh api .../branches/<rama>/rename`: el `main` viejo pasó a `jpa-fase-11-15a` y `nuevo-rumbo-jdbc` pasó a `main`. Sin forzar. El primer intento dio `HTTP 502` (fallo temporal de GitHub) y se repitió |
 
 ---
 
@@ -447,7 +461,7 @@ Resumen. Cada decisión, con sus alternativas y su motivo, está en [decisiones-
 | D-44 | Modelo de dominio rico moderado, sin setters | ✅ (vigente; con tipos simples) |
 | D-45 | Monolito clásico en capas; modularización planificada (ahora fase 34, `catalog`) | ✅ |
 | D-46 | *Value objects* en el dominio | ❌ Revocada el 2026-11-04 (el profesor no los quiere) |
-| D-47 | API First con OpenAPI y springdoc | (histórico) springdoc ya no está en el `pom.xml`; se retoma en la fase 33 |
+| D-47 | API First con OpenAPI (`openapi.yaml` escrito a mano) y springdoc | ❌ Superada el 2026-11-04: el contrato se genera desde el código (springdoc sigue, sin yaml; ver `decisiones-tecnicas.md`) |
 | D-48 | Arquitectura por capas con JDBC/DAO en lugar de JPA | ✅ Ver `decisiones-tecnicas.md` |
 
 ---
@@ -496,16 +510,20 @@ daw-movies/
 ├── mvnw, mvnw.cmd, .mvn/  ← Maven Wrapper (Maven 3.10.0)
 ├── src/
 │   ├── main/java/com/daw/movies/MoviesApplication.java   ← clase de arranque
-│   ├── main/java/com/daw/movies/controller/              ← MovieController, dto/, mapper/, exception/
+│   ├── main/java/com/daw/movies/config/                  ← OpenApiConfig (Swagger; fuera de las capas)
+│   ├── main/java/com/daw/movies/controller/              ← MovieController, dto/, mapper/, handler/
 │   ├── main/java/com/daw/movies/domain/                  ← model/ (Movie, Director, Actor), service/, repository/ (puerto), exception/
 │   ├── main/java/com/daw/movies/persistence/             ← dao/ (MovieDao, MovieDaoJdbc), repository/impl/ (MovieRepositoryImpl)
 │   ├── main/resources/application.yaml                    ← configuración (sin secretos: los lee de .env)
 │   ├── main/resources/db/migration/                       ← migraciones Flyway (V1–V4: las cuatro tablas)
 │   ├── main/resources/db/testdata/seed.sql                ← datos de prueba (no lo ejecuta Flyway, D-42)
 │   ├── test/java/com/daw/movies/MoviesApplicationTests.java
-│   ├── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB y ddl-auto
+│   ├── test/java/com/daw/movies/DatabaseConnectionTests.java ← conexión a MariaDB
 │   ├── test/java/com/daw/movies/FlywayMigrationTests.java   ← Flyway crea flyway_schema_history
-│   └── test/java/com/daw/movies/domain/model/               ← 20 tests de las entidades (sin Spring ni base de datos)
+│   ├── test/java/com/daw/movies/config/                     ← OpenApiContractTest (contrato Swagger)
+│   ├── test/java/com/daw/movies/controller/                 ← MovieControllerTest (@WebMvcTest)
+│   ├── test/java/com/daw/movies/domain/model/               ← tests de las entidades (sin Spring ni base de datos)
+│   └── test/java/com/daw/movies/domain/service/impl/        ← MovieServiceImplTest (Mockito)
 └── docs/
     └── guia-estudio/      ← plan, fases, temario, decisiones y glosario
 ```
@@ -533,3 +551,13 @@ git checkout main            # volver al presente
 ```
 
 En GitHub se puede hacer lo mismo eligiendo la etiqueta en el selector de ramas. Las fases 1–5 están juntas en un commit, porque se hicieron antes de crear el repositorio.
+
+### Ramas
+
+| Rama | Contenido |
+|---|---|
+| `main` | El rumbo actual: capas con JDBC, sin *value objects* ni JPA (D-48), con Swagger generado desde el código |
+| `jpa-fase-11-15a` | El camino anterior: JPA/Hibernate, *value objects* y el contrato OpenAPI escrito a mano (fases 11 y 15A, etiquetas `fase-11` y `fase-15A`) |
+| `backup/antes-de-volver-a-fase-10` | Copia de seguridad previa al giro |
+
+Desde el giro, las etiquetas `fase-NN` posteriores a la 10 siguen apuntando al camino JPA. Hasta que se decida otra cosa, el trabajo nuevo se registra con un commit por subpaso (ver `docs/guia-estudio/ESTADO.md`).

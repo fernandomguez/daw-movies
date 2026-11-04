@@ -343,7 +343,7 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Consecuencia para la fase 18:** la validación del DTO sigue existiendo, pero solo para dar un **400 con el campo culpable**; la garantía del dominio es el *value object*.
 - **Documentación:** [temario 10](temario/10-modelo-de-dominio.md#los-value-objects-d-46) y [plan, fase 10](00-plan-de-aprendizaje.md#fase-10--modelo-de-dominio).
 
-## D-47 API First: contrato OpenAPI versionado y Swagger UI con springdoc 3.2.0 — ✅ Decidida por el alumno (fase 15A adelantada, 2026-10-28)
+## D-47 API First: contrato OpenAPI versionado y Swagger UI con springdoc 3.2.0 — ✅ Decidida por el alumno (fase 15A adelantada, 2026-10-28) · ⚠️ superada en lo del `openapi.yaml` el 2026-11-04 (ver la nota final)
 - **Contexto:** el alumno pide ver la **interfaz de los endpoints** antes de la fase 16. El plan ya tenía la fase 15A (API First) entre la 15 y la 16, pero no había ni contrato en OpenAPI ni capa web. Las rutas y las respuestas ya estaban decididas desde la fase 8 (D-36 a D-39).
 - **Decisión:**
   - El **contrato de la v1** se escribe a mano en `src/main/resources/static/openapi.yaml` (OpenAPI 3.0.3). Spring Boot sirve `static/` en la raíz, así que queda en `/openapi.yaml` sin código Java y viaja dentro del `.jar`.
@@ -353,9 +353,14 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Versión comprobada:** springdoc **3.2.0** es la rama para Spring Boot 4 (`<release>3.2.0</release>` en Maven Central, `lastUpdated 2026-10-24`; la web de springdoc indica soporte de Boot 4). Spring Boot **no** gestiona esta versión: se declara explícita.
 - **Alternativa descartada:** servir Swagger UI desde un *webjar* con `swagger-ui-dist` y un `ResourceHandler` propio. Funciona, pero añade configuración manual y no deja el camino preparado para generar el documento desde el código en la fase 16.
 - **Coste:** Tomcat arranca en el 8080 (antes la aplicación terminaba sola); el YAML hay que mantenerlo a mano hasta que el código lo genere; el contrato puede mentir si no se compara (15A.3).
+- **Nota (2026-11-04, fase 33): el contrato pasa a generarse desde el código.** El profesor no quiere el `openapi.yaml` en `src/main/resources`. Opciones que se consideraron: **A** generado desde el código con springdoc (elegida), **B** API First con el yaml en una carpeta fuera de `resources` y `openapi-generator`, **C** yaml solo como documento. Se eligió la A porque no hay archivo que mantener (el contrato no se desfasa del código), es lo que figuraba en el plan y encaja con un único Swagger UI cuando haya varios módulos.
+  - **Qué queda de D-47:** springdoc **3.2.0** (versión explícita en la propiedad `springdoc.version` del `pom.xml`), `spring-boot-starter-webmvc` y Swagger UI en `/swagger-ui.html`.
+  - **Qué cambia:** sin `openapi.yaml` ni `springdoc.swagger-ui.url`; el contrato sale de `/v3/api-docs`. Los datos generales (título «Movies API», versión, descripción) están en `OpenApiConfig`, en `com.daw.movies.config`, **fuera** de `controller`, `domain` y `persistence`.
+  - **Comprobación:** `OpenApiContractTest` (3 tests: lista los 5 endpoints, el título y la página de Swagger UI). Prueba manual de los 5 endpoints con `curl` el 2026-11-04.
+  - **Sin anotaciones:** no se usan `@Operation` ni `@Schema` todavía; son opcionales y sirven para descripciones y ejemplos.
 - **Excepción a D-26:** la dependencia web se adelanta a la fase 16. Se anota como tal; la fase 16 sigue pendiente (controladores, DTO y servicio).
 - **Consecuencia:** `/v3/api-docs` existe pero devuelve `paths: {}` hasta la fase 16. "Try it out" responde `404`: la UI documenta, no ejecuta.
-- **Documentación:** [diario 15A](15A-api-first.md) y [temario 15A](temario/15A-api-first.md).
+- **Documentación:** [diario 15A](https://github.com/fernandomguez/daw-movies/blob/jpa-fase-11-15a/docs/guia-estudio/15A-api-first.md) y [temario 15A](https://github.com/fernandomguez/daw-movies/blob/jpa-fase-11-15a/docs/guia-estudio/temario/15A-api-first.md) (solo existen en la rama `jpa-fase-11-15a`).
 
 ## D-48 Arquitectura por capas con DAO JDBC y dominio con tipos simples — ✅ Decidida por el alumno con el visto bueno del profesor (2026-11-04)
 - **Contexto:** D-46 (*value objects*) quedó revocada el 2026-11-04 porque el profesor no los quiere; con ella desaparecía el motivo de complicar la persistencia (`AttributeConverter`, `@Embeddable`). Además, el esquema de arquitectura de referencia del profesor usa **DAO + JDBC**, no JPA. D-29 (anotaciones JPA en el dominio) y D-20 (repositorio que delega en Spring Data) partían de JPA. Se abandona JPA en favor de JDBC con DAO.

@@ -11,6 +11,9 @@
 com.daw.movies
 ├── MoviesApplication                   ← arranque de Spring Boot
 │
+├── config                              ← configuración de toda la aplicación (fuera de las capas)
+│   └── OpenApiConfig                   ← título y versión del contrato OpenAPI (springdoc lo genera del código)
+│
 ├── controller                          ← capa de entrada (HTTP)
 │   ├── MovieController                 ← API REST en /movies
 │   ├── dto

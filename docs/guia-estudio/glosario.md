@@ -272,13 +272,13 @@ Términos ordenados alfabéticamente. Se amplía en cada fase.
 
 **Reflexión (Java)** (histórico en este proyecto: la usaba Hibernate): capacidad de un programa para inspeccionar y modificar clases en **tiempo de ejecución**: crear objetos, leer y escribir campos privados o invocar métodos sin que el compilador los conozca. JPA la usa para rellenar una entidad desde una fila: crea el objeto con el constructor sin argumentos y escribe cada campo. Con JDBC ya no hace falta: las entidades no tienen constructor vacío.
 
-**OpenAPI**: estándar para describir una API HTTP en YAML o JSON (rutas, parámetros, cuerpos, respuestas y esquemas). Antes se llamaba *Swagger Specification*. En este proyecto, `src/main/resources/static/openapi.yaml` (OAS 3.0.3) es el contrato de la v1 (D-47).
+**OpenAPI**: estándar para describir una API HTTP en YAML o JSON (rutas, parámetros, cuerpos, respuestas y esquemas). Antes se llamaba *Swagger Specification*. En este proyecto el documento **se genera desde el código** y se lee en `/v3/api-docs` (D-47, nota del 2026-11-04). En la fase 15A (rama `jpa-fase-11-15a`) se escribió a mano en un `openapi.yaml`.
 
 **Swagger UI**: aplicación web que lee un documento OpenAPI y lo pinta como página navegable, con "Try it out". No es lo mismo que OpenAPI: la UI **necesita** un documento; el documento no necesita la UI.
 
-**springdoc-openapi**: librería que genera un documento OpenAPI a partir de los `@RestController` de Spring y sirve Swagger UI. En este proyecto se usa la **3.2.0** (rama para Spring Boot 4), apuntando a nuestro contrato con `springdoc.swagger-ui.url=/openapi.yaml`.
+**springdoc-openapi**: librería que genera un documento OpenAPI a partir de los `@RestController` de Spring y sirve Swagger UI. En este proyecto se usa la **3.2.0** (rama para Spring Boot 4) y lee los controladores reales: no hace falta ningún yaml. Los datos generales (título, versión) se dan con un *bean* `OpenAPI` en `OpenApiConfig`.
 
-**API First (*contract first*)**: escribir el contrato de la API **antes** que el código. El contrato manda: si el código no coincide, se corrige el código. Lo contrario es *code first*, donde el documento se genera después y puede no reflejar lo acordado.
+**API First (*contract first*)**: escribir el contrato de la API **antes** que el código. El contrato manda: si el código no coincide, se corrige el código. Lo contrario es *code first*, donde el documento se genera después y puede no reflejar lo acordado. El proyecto usa hoy *code first* (el contrato sale del código con springdoc).
 
 **`operationId`**: nombre único de una operación dentro del documento OpenAPI (`listMovies`). Lo usan Swagger UI y los generadores de clientes.
 

@@ -2,7 +2,7 @@
 
 Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el proyecto real** que estamos construyendo, paso a paso, con los motivos de cada decisión.
 
-> **Giro del 2026-11-04.** El profesor no quiere *value objects* (D-46 revocada) y el proyecto pasó de JPA a una arquitectura por capas con **JDBC** (DAO + `JdbcTemplate`, D-48). Hoy hay **23 tests en verde** tras el paso 0. Los documentos de las fases 10 a 14 conservan la historia y lo superado está marcado como *(histórico)*. Los pasos que quedan están en el bloque G del [plan](00-plan-de-aprendizaje.md).
+> **Giro del 2026-11-04.** El profesor no quiere *value objects* (D-46 revocada) y el proyecto pasó de JPA a una arquitectura por capas con **JDBC** (DAO + `JdbcTemplate`, D-48). Hoy hay **58 tests en verde**, el skill `creador-de-skills` está actualizado y Swagger se genera desde el código (springdoc 3.2.0). Los documentos de las fases 10 a 14 conservan la historia y lo superado está marcado como *(histórico)*. El camino JPA vive en la rama `jpa-fase-11-15a`. Los pasos que quedan están en el bloque G del [plan](00-plan-de-aprendizaje.md).
 
 ## Cómo está organizada
 
@@ -36,7 +36,8 @@ Esta carpeta es la guía para repasar el proyecto más adelante. Explica **el pr
 | 09 | [Datos de prueba, `INSERT` y consultas con `JOIN`](temario/09-datos-de-prueba-y-consultas.md) | Completo |
 | 10 | [Modelo de dominio: anémico o rico](temario/10-modelo-de-dominio.md) | Actualizado el 2026-11-04: tipos simples; los *value objects* son histórico |
 | 11 | [Introducción a JPA](temario/11-introduccion-jpa.md) | Solo teoría: el proyecto usa JDBC (D-48) |
-| 15A | [API First: el contrato antes del código](temario/15A-api-first.md) | Completo (fase 15A adelantada; falta 15A.3 en la fase 16) |
+| 15A | [API First: el contrato antes del código](https://github.com/fernandomguez/daw-movies/blob/jpa-fase-11-15a/docs/guia-estudio/temario/15A-api-first.md) (rama `jpa-fase-11-15a`) | Histórico: el contrato a mano se sustituyó el 2026-11-04 por uno generado desde el código (D-47) |
+| — | [Entender el código: de una petición a la base de datos](temario/entender-el-codigo.md) | Completo (recorrido, esquemas y 15 preguntas) |
 
 Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conceptos, por qué los necesitamos, archivos implicados, código explicado, recorrido de los datos, comandos y comprobaciones, errores y soluciones, decisiones, resumen y preguntas de repaso.
 
@@ -54,11 +55,12 @@ Cada archivo de fase sigue, cuando corresponde, esta estructura: objetivo, conce
 | 8. Flyway: migraciones del esquema | ✅ Completada (6 de 6 pasos; commit `3e38972`) | [08-flyway-migraciones.md](08-flyway-migraciones.md) |
 | 9. Datos de prueba y comprobación de relaciones | ✅ Completada (5 de 5 pasos; commit `7bbb579`) | [09-datos-de-prueba.md](09-datos-de-prueba.md) |
 | 10. Modelo de dominio | ✅ Cerrada; **reescrita el 2026-11-04** (sin *value objects*, tipos simples) | [10-modelo-de-dominio.md](10-modelo-de-dominio.md) (ver «Giro del 2026-11-04») |
-| 15A. API First: el contrato antes del código | 🟠 Replanteada: se retoma en la fase 33 (springdoc ya no está en el `pom.xml`) | [15A-api-first.md](15A-api-first.md) |
+| 15A. API First: el contrato antes del código | 🟠 Replanteada: resuelta en la fase 33 con el contrato generado desde el código | [15A-api-first.md](https://github.com/fernandomguez/daw-movies/blob/jpa-fase-11-15a/docs/guia-estudio/15A-api-first.md) (rama `jpa-fase-11-15a`) |
 | 11, 13 y 14 | Superadas por el giro a JDBC (D-48) | Ver el [plan](00-plan-de-aprendizaje.md) |
 | 12 | Replanteada: puerto `MovieRepository` + DAO JDBC | Ver el [plan](00-plan-de-aprendizaje.md) |
 | 15 a 20 | Pendientes de reordenar con el código ya existente | Ver el [plan](00-plan-de-aprendizaje.md) |
-| 30 a 34 (bloque G) | Entender el código, tests, skill, Swagger y monolito modular `catalog` | Ver el [plan](00-plan-de-aprendizaje.md) |
+| 30 a 33 (bloque G) | ✅ Entender el código, tests (servicio y controlador), skill y Swagger | Ver el [plan](00-plan-de-aprendizaje.md) y [ESTADO.md](ESTADO.md) |
+| 34 (bloque G) | ⏳ Monolito modular `catalog` | Ver el [plan](00-plan-de-aprendizaje.md) |
 | *(antes)* 11 a 20 | Pendientes (la 13 se eliminó, D-29) | Ver el [plan](00-plan-de-aprendizaje.md) |
 
 > Normas del proyecto: [base-standards.md](../../base-standards.md). Código en inglés; documentación y comentarios en español.
