@@ -2,7 +2,7 @@
 
 > **Para qué sirve este archivo:** es el parte de situación. Se lee **al empezar cualquier sesión** (humano o asistente de IA) y se **actualiza al terminar cada paso**, antes de cerrar. Así se puede empezar de cero, sin memoria de la conversación anterior, sin inventar nada.
 >
-> Última actualización: **2026-11-04** (fin de sesión).
+> Última actualización: **2026-11-04** (fin de sesión, segunda parte).
 
 ---
 
@@ -437,6 +437,22 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 2. Luego pidió **cambiar `main` por la rama nueva**. `gh` no tenía sesión y `git push` fallaba con `Permission denied (publickey)` (incluso forzando `C:/Windows/System32/OpenSSH/ssh.exe`) aunque el `ssh -T git@github.com` del alumno respondía «Hi fernandomguez!». El alumno hizo `gh auth login` (HTTPS).
 3. Con `gh api -X POST repos/fernandomguez/daw-movies/branches/<rama>/rename`: `main` → `jpa-fase-11-15a` (el primer intento dio `HTTP 502`; se repitió una vez y se comprobó que el listado tarda unos segundos en reflejarlo) y después `nuevo-rumbo-jdbc` → `main`. La rama por defecto no se movió sola: `gh repo edit --default-branch main`. Sin forzar nada; ramas protegidas: ninguna.
 4. Resultado en GitHub: `main` = `24f7e9c` (luego `38187f0`), `jpa-fase-11-15a` = `2d58690`, `backup/antes-de-volver-a-fase-10` = `242b205`; las etiquetas `fase-01`…`fase-15A` no cambian.
+
+### 2026-11-04 (novena parte) — giro de validaciones, traslado del proyecto y arranque del frontend
+
+**Lo que hizo la sesión «Validaciones Jakarta y maxYearsAhead» (19:22–20:31, murió con Orca cerrado):**
+
+1. `MovieRequest`): la anotación propia `@MaxYearsAhead(10)` (y su validador) se sustituyó por un método `isReleaseYearValid()` con `@AssertTrue` (el año no pasa de año actual + 10; `@Max` solo admite números fijos). Borrados `MaxYearsAhead.java` y `MaxYearsAheadValidator.java`.
+2. [temario/entender-el-codigo.md](temario/entender-el-codigo.md) ampliado (el viaje de una petición incluido el `Optional` y el `KeyHolder` del `insert`).
+3. **Traslado del proyecto**: de `...\SpringBoot\prueba2_peliculas` a `...\SpringBoot\proyectoMovies\backend` (con `.git` intacto; la carpeta vieja quedó vacía y se borró). Hecho con `robocopy /MOVE` porque la carpeta estaba bloqueada (MarkText tenía abierto un `.md` del proyecto).
+4. **Plan del frontend** (5 fases, en esa sesión): 0 reestructurar · 1 scaffold Angular 22 + `proxy.conf.json` (`/movies` → `localhost:8080`, sin CORS) · 2 núcleo (`core/models/movie.ts`, `core/services/movie-service.ts` con signals) · 3 componentes al estilo del proyecto `trabajadores` (`features/movies`, `card-movies`, `modal-movies`, `form-movies`, errores 400 del backend pintados en el formulario) · 4 SCSS en capas s01–s06 con tokens `--mlt-sys-*` y semánticas `!default` · 5 verificación. Las fases 0, 1 y 2 **quedaron verificadas por subagente**. Fase 3 a medias: `card-movies.*` y `modal-movies.*` en disco; faltan `features/movies`, `form-movies`, la shell de app y las fases 4–5.
+
+**Recuperación (esta sesión, 20:33+):**
+
+5. `.\mvnw.cmd clean test` → **58 en verde** desde la nueva ubicación (el cambio de validación queda probado). Docker estaba ya arrancado (`movies-mariadb-1` healthy).
+6. Borrado el archivo basura `MovieServiceImpl (recovered).java` (difería de la real en una línea de javadoc; restos de la recuperación del traslado).
+7. Pendiente decidido: el frontend vivirá en este mismo repo (la raíz git pasará de `backend\` a `proyectoMovies\` para que el `frontend\` quede dentro). El commit del frontend será otro, separado de este.
+8. Commit de validaciones: `refactor: replace MaxYearsAhead annotation with AssertTrue validation`.
 5. Local: `git remote set-url origin https://github.com/fernandomguez/daw-movies.git`, `git fetch --prune`, `git branch -u origin/main main` → `main` y `origin/main` coinciden. Push con la credencial de `gh` solo para ese comando (`git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin main`); no se tocó la configuración global de Git.
 6. Documentos actualizados al cierre: `README.md` de la raíz (estado, dependencias, progreso, 58 tests, sección de Swagger, errores 20–23, estructura, ramas, D-47), `README.md` de la guía, plan (bloque G con estados), `decisiones-tecnicas.md` (nota en D-47), glosario (OpenAPI, springdoc, API First), `arquitectura.md` (`config`) y este archivo. Los enlaces al diario y al temario 15A se apuntaron a la rama `jpa-fase-11-15a`, donde existen.
 7. `mvnw clean test` **no** se volvió a ejecutar tras estos cambios de documentación (solo se tocaron `.md`); la última ejecución fue de **58 en verde** antes del commit `3f3dbc2`.

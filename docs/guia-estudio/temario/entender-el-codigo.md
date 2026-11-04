@@ -76,6 +76,22 @@ com.daw.movies
 
 ## 3. El recorrido de una petición: `GET /movies/3`
 
+### El viaje, contado en lenguaje natural
+
+Estás en la web y haces click en la tarjeta de *Inception*. El navegador lanza una petición HTTP: `GET /movies/3` (el `3` es el id de la película). Esa petición llega a la única puerta de la aplicación, `MovieController`: Spring, leyendo su `@GetMapping("/{id}")`, sabe que es para él, y la anotación `@PathVariable` convierte ese `3` de la URL en un `Long id`. El controlador no piensa nada: solo pasa el encargo y dice *`movieService.findById(3)`*.
+
+El encargo aterriza en `MovieServiceImpl`, el jefe de sala, que aplica la regla del negocio: «para servir una película, primero debe existir». Le pasa el recado a su proveedor — la interfaz `MovieRepository` del propio `domain` — con *`movieRepository.findById(3)`*. La interfaz no sabe hacer nada por sí sola, así que lo ejecuta quien la cumple en la parte de abajo, `MovieRepositoryImpl` (paquete `persistence`). Hoy solo hace de pasamanos: reenvía la pregunta al DAO con *`movieDao.findById(3)`*.
+
+El DAO, `MovieDaoJdbc`, es el único que sabe hablar con la base de datos: lanza a MariaDB un `SELECT ... JOIN` que junto la fila de la película y su director, y una segunda consulta para traer los actores. MariaDB devuelve filas crudas, y el `RowMapper` (`mapMovie()`) las transforma, una a una, de regreso a objetos Java: un `Movie` con su `Director` y sus `Actor`es.
+
+Ahora el dato sube por el mismo camino al revés: del DAO al `MovieRepositoryImpl`, que se lo entrega al servicio empaquetado en un `Optional<Movie>`. El servicio abre la caja: **si está vacía, lanza `MovieNotFoundException`** y saltamos al grupo de abajo; si trae la película, se la devuelve al controlador en crudo (el `Movie` del modelo), pero el JSON que verás en pantalla todavía no existe. El controlador pasa ese `Movie` por `MovieMapper`, que lo traduce a un `MovieResponse`: solo título, año, duración, y director y actores con su `id` y `fullName` — la cocina no se enseña entera, solo el plato.
+
+Y por fin llega a tu navegador un `200 OK` con el JSON, que es lo que la web pinta en la tarjeta que clicaste.
+
+**Y si algo falla por el camino:** si la `Optional` venía vacía, la excepción sube hasta `GlobalExceptionHandler`, que la traduce a un `404` con un mensaje («no existe la película 3») — tu web puede avisar con elegancia de que esa película ya no está. Lo mismo pasa con un id raro como `/movies/abc` (Spring no lo convierte a número → `400`) o con cualquier validación de un `POST` que no pase (→ `400`).
+
+> **Para recordar:** la petición baja **Controller → Service → Repository → DAO → base**, y el dato sube por las mismas capas en orden inverso, transformándose dos veces en el viaje: filas → `Movie` (el `RowMapper`) y `Movie` → JSON (el `MovieMapper`).
+
 ### 3.1 El dibujo
 
 ```
