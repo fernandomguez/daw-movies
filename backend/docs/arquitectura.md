@@ -96,6 +96,18 @@ Paquetes **relativos al módulo** (muestran el patrón; el árbol de §1 tiene l
 | Fachada (contrato) | `api.facade` | `CatalogFacade` + `MovieLookup` | `@NamedInterface("facade")`: solo interfaz + records; lo que los consumidores necesitan, no lo interno. |
 | Fachada (impl.) | `api.facade.impl` | `CatalogFacadeImpl` + `CatalogFacadeMapper` | Delega en el servicio de dominio y mapea; sin reglas, sin repositorios, sin invocar casos de uso. Fuera de la interfaz con nombre. |
 
+### Por qué `ratings` no tiene `api/facade` ni `domain.service` (todavía)
+
+Los dos módulos comparten la **estructura** del §2, pero cada uno instancia solo las piezas que necesita. El skill marca cuándo nace cada una:
+
+| Pieza | Qué la trae a la vida |
+|---|---|
+| `api/facade` + `@NamedInterface` + `impl` | Un **consumidor real** de otro módulo. §3.1: «un módulo que no ofrece nada a otros no necesita operaciones en su fachada… no inventes». `catalog` la estrenó al nacer `ratings` (D-50); `ratings` la estrenará cuando exista un tercer módulo o un módulo existente la necesite |
+| `internal/domain.service` | La fachada que debe alimentar (§3.3: `FacadeImpl` «solo delega en servicios de dominio»), y/o reglas que cruzan modelos. En `ratings` los casos de uso llaman directo a sus puertos (`RatingRepository` + `AvailableMoviesPort`); el servicio aparecería con la fachada |
+| `internal/persistence/adapter` | Tener un módulo del que **depender**. Solo lo tiene `ratings` (consume catalog). El grafo es dirigido: catalog no puede conocer a ratings (verificado por `ArquitecturaTest`) |
+
+Si mañana ratings necesitara fachada, la receta es la del §6: interfaz + records en `api/facade`, `impl` delegando en el `RatingService` que renacería, y el consumidor declara `allowedDependencies = "ratings :: facade"`.
+
 ### Persistencia: cómo lee y escribe JDBC
 
 - **Lectura:** `MovieDaoJdbc` hace una consulta con `JOIN` de `movie` y `director` y, después, **por cada película**, una segunda sobre `movie_actor` + `actor` para el reparto. En `findAll` eso es el **N+1** (1 + N consultas); `findById` hace 2. `RatingDaoJdbc` no necesita JOINs.

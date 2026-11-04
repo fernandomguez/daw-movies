@@ -23,8 +23,8 @@
 | `app` como raíz de composición, fuera de los módulos | ✅ `com.daw.movies.app.OpenApiConfig`; solo paquetes anotados son módulos (`detection-strategy = explicitly-annotated`) |
 | **`api/facade(+impl)` · `api/http` · `internal/{application,domain,persistence}`** (§2 completo) | ✅ en los dos módulos (D-51) |
 | `package-info.java` con `@ApplicationModule` + `allowedDependencies = "catalog :: facade"` | ✅ en ambos (la dependencia queda restringida a la interfaz con nombre) |
-| `@NamedInterface("facade")` solo en `api/facade` | ✅ en `catalog` (records de contrato: `MovieLookup`) |
-| Casos de uso `{Accion}{Entidad}UseCase.execute()` | ✅ 5 en catalog + 3 en ratings; `@Named` + `@jakarta.transaction.Transactional` los que escriben; ninguno invoca otro |
+| `@NamedInterface("facade")` solo en `api/facade` | ✅ en `catalog`; **no** en `ratings` a propósito (§3.1: no se inventa fachada sin consumidor; la estrenará con el módulo 3) |
+| Casos de uso `{Accion}{Entidad}UseCase.execute()` | ✅ 5 en catalog + 3 en ratings; `@Named` + `@jakarta.transaction.Transactional` los que escriben; ninguno invoca otro. Los de ratings llaman directo a sus puertos (§3.3 permite servicios **y/o** puertos): el `domain.service` nacería con la fachada de ratings, que no existe aún |
 | Dominio puro de Spring (solo `@Named` tolerado) | ✅ la impureza `@Service`/`@Transactional` de D-48 murió con D-51 |
 | Contratos con otros módulos declarados por el consumidor (puerto + adapter) | ✅ `AvailableMoviesPort` en `internal.domain.port` + `CatalogMoviesAdapter` en `internal.persistence.adapter` (únic import de la fachada ajena) |
 | Handlers por módulo | ✅ `CatalogExceptionHandler`, `RatingExceptionHandler` |
