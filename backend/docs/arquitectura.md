@@ -59,7 +59,30 @@ com.daw.movies
 
 No hay JPA, ni *value objects* (D-46 revocada), ni entidades de persistencia separadas: las clases de `domain.model` son las que construye el DAO y las que consume el mapper.
 
-**Módulo Spring Modulith (D-49):** `catalog` es el único módulo real y va sellado en su `package-info.java`; `config` es *módulo compartido* (`@Modulithic`). La verificación vive en `ModulithTest` (`verify()` + `Documenter`) y las reglas de ArchUnit en `ArquitecturaTest` (comodines `..domain..`... para que sigan valiendo en el módulo). Hoy no hay fachada: `catalog` no ofrece ni consume nada de otros módulos.
+**Módulo Spring Modulith (D-49):** `catalog` está sellado en su `package-info.java`; `config` es *módulo compartido* (`@Modulithic`). La verificación vive en `ModulithTest` (`verify()` + `Documenter`) y las reglas de ArchUnit en `ArquitecturaTest`. Hoy no hay fachada: `catalog` no ofrece ni consume nada de otros módulos.
+
+**Segundo módulo — `ratings` (fase 5, [D-50](guia-estudio/decisiones-tecnicas.md#d-50-segundo-módulo-ratings-conectado-por-fachada)):**
+
+```text
+com.daw.movies.ratings                     ← MÓDULO «Ratings» (solo puede depender de `catalog`)
+├── package-info.java                      ← @ApplicationModule(allowedDependencies = "catalog")
+├── controller                             ← (operaciones sobre las valoraciones)
+│   ├── RatingController                   ← GET/POST /movies/{movieId}/ratings · DELETE /ratings/{id}
+│   ├── dto.request.RatingRequest          ← @Min(1) @Max(10), @Size(max=500), comentario opcional
+│   ├── dto.response.RatingResponse
+│   ├── mapper.RatingMapper                ← dominio → RatingResponse
+│   └── handler.RatingExceptionHandler     ← 404 (película/valoración), 400, 415
+├── domain
+│   ├── model.Rating                       ← id, movieId (¡por id!: D-45), score, comment
+│   ├── exception.MovieNotFoundException · RatingNotFoundException
+│   ├── repository.RatingRepository        ← puerto
+│   └── service.RatingService · impl.RatingServiceImpl
+└── persistence
+    ├── dao.RatingDao · impl.jdbc.RatingDaoJdbc
+    └── repository.impl.RatingRepositoryImpl
+```
+
+La **fachada** del módulo catalog es el único punto de contacto: `CatalogFacade` + `record MovieLookup(Long id, String title)` viven en la raíz de `com.daw.movies.catalog` (la única zona pública del módulo sellado). Si la película no existe, ratings lanza **su propia** `MovieNotFoundException`. Esquema nuevo: `V5__create_rating_table.sql` (`rating`, FK a `movie` con `CASCADE`, `CHECK` nota 1–10).
 
 ---
 

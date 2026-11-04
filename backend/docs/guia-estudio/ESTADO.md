@@ -2,7 +2,7 @@
 
 > **Para qué sirve este archivo:** es el parte de situación. Se lee **al empezar cualquier sesión** (humano o asistente de IA) y se **actualiza al terminar cada paso**, antes de cerrar. Así se puede empezar de cero, sin memoria de la conversación anterior, sin inventar nada.
 >
-> Última actualización: **2026-11-04** (decimocuarta parte).
+> Última actualización: **2026-11-04** (decimoquinta parte).
 
 ---
 
@@ -12,12 +12,12 @@
 
 | Dato | Valor |
 |---|---|
-| Rumbo actual | Monolito modular: módulo **`catalog`** de Spring Modulith con capas JDBC dentro (D-48 + D-49): `com.daw.movies.catalog.{controller,domain,persistence}`, `MoviesApplication` y `config` en la raíz (`config` = módulo compartido) |
-| Paso en curso | **Fase 4 completa** (4a ArchUnit `9ff1fdb` · 4b módulo `catalog` `b299efc` · 4c Modulith `c04db2c` · 4d doc D-49). También hechas: fases 0–3, 1c, tests de persistencia y el **frontend Angular**. El plan del giro (fases 30–34) **está cerrado**. Próxima pieza de fondo: la migración a **JPA** cuando el temario la permita ([arquitectura-monolito.md](../arquitectura-monolito.md)) |
-| Último commit | `b06a3da` (`docs: D-49 and target architecture for catalog module`). Lo anterior: `c04db2c` (4c), `b299efc` (4b). Todo lo anterior al `c04db2c` está subido a `origin/main` (`4d098be`); el tramo de la fase 4 queda por subir hasta que el alumno lo confirme. (Historia del cambio de ramas, 2026-11-04: se **intercambiaron las ramas en GitHub** con `gh api .../branches/<rama>/rename`: el `main` viejo (camino JPA, fases 11 y 15A) es ahora **`origin/jpa-fase-11-15a`** (`2d58690`) y la rama `nuevo-rumbo-jdbc` pasó a llamarse `main` (rama por defecto, puesta con `gh repo edit --default-branch main`). Etiquetas `fase-01`…`fase-15A` y `backup/antes-de-volver-a-fase-10` sin cambios |
-| Tests | **75 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo (6+6+8), 3 de contrato OpenAPI, 10 de persistencia (6 DAO + 4 repositorio), **5 de ArchUnit** (`ArquitecturaTest`) y **2 de Modulith** (`ModulithTest`: `verify()` + `Documenter`, sin context de Spring). Los 16 que arrancan la aplicación o tocan la BD necesitan Docker; ArchUnit y Modulith no |
-| Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Swagger UI en `/swagger-ui.html` y contrato en `/v3/api-docs` (generado desde el código, sin yaml) |
-| Tabla de datos | `director` (6), `actor` (14), `movie` (10), `movie_actor` (24); Flyway en la versión 4 |
+| Rumbo actual | Monolito modular con **dos módulos de negocio** (D-48/D-49/D-50): `catalog` (JDBC en capas, sellado) y `ratings` (valoraciones), conectados por la fachada `CatalogFacade` + `MovieLookup` en la raíz de `catalog`. `MoviesApplication` y `config` en la raíz (`config` = módulo compartido) |
+| Paso en curso | **Fase 4 completa** (`9ff1fdb`/`b299efc`/`c04db2c`/`b06a3da`) y **fase 5 completa**: fachada (5a, `266f443`) y módulo `ratings` (5b, `a03d09b`). El plan del giro quedó cerrado; la fase 5 nació de la petición del profesor de «otro módulo con el que conectar». Próxima pieza de fondo: la migración a **JPA** cuando el temario la permita ([arquitectura-monolito.md](../arquitectura-monolito.md)) |
+| Último commit | `a03d09b` (`feat(ratings): ... fase 5b)`) + el commit de docs de la decimoquinta parte. El push de la fase 4 va ya en `origin/main` (`b86b890`); el tramo de la fase 5 queda por subir |
+| Tests | **109 en verde** (`mvnw clean test`): 32 controlador (19+13), 20 servicio (13+7), 24 modelo (20 modelo + 4 rating), 3 de contrato OpenAPI, **18 de persistencia** (10 catalog + 8 ratings), 7 de ArchUnit y 2 de Modulith. Los 24 que arrancan la aplicación o tocan la BD necesitan Docker; ArchUnit, Modulith y el resto no |
+| Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. `/movies/{movieId}/ratings`: GET y POST. `/ratings/{id}`: DELETE. **9 en total** (D-38/D-39 valen: `200 []`, orden por creación). Swagger UI en `/swagger-ui.html` |
+| Tabla de datos | `director` (6), `actor` (14), `movie` (10), `movie_actor` (24), `rating` (**0 en el seed**: la crea `V5` y arranca vacía; los tests crean sus filas con rollback); Flyway en la versión **5** |
 | Cambios sin commitear | ninguno al cierre de la sesión del 2026-11-04 (el repo del skill, `Lorenzo\creador-de-skills`, no tiene remoto: sus commits son solo locales) |
 | Ramas / etiquetas | `main` (local y remota) = nuevo rumbo JDBC, a partir de la fase 10. El camino JPA/OpenAPI de las fases 11 y 15A vive en `origin/jpa-fase-11-15a` y en las etiquetas `fase-11` y `fase-15A`. Existe `backup/antes-de-volver-a-fase-10` y, desde el 2026-11-04, `backup/antes-de-monolito-modular` (copia de `main` en `cc13a71`, justo antes de la fase 4b). No mezclar sin hablarlo. **`origin` es ahora HTTPS** (`https://github.com/fernandomguez/daw-movies.git`): el SSH de `git push` falló con `Permission denied (publickey)` aunque `ssh -T` funcionaba; para subir desde el asistente hace falta la credencial de `gh` (`gh auth login` ya hecho) |
 
@@ -33,6 +33,7 @@ Plan completo: `C:\Users\ferna\.claude\plans\vamos-a-cambiar-el-drifting-pond.md
 | **2** ✅ Skill (`40b0bb1`, `ca3c834`, `ff9f2ad`, `2b9cd9f` en el repo del skill, sin remoto) | Actualizar `C:\Users\ferna\Desktop\FP DAW\2o curso\Lorenzo\creador-de-skills` para que replique **esta** arquitectura. **Primero comprobar si esa carpeta es un repositorio git** (si no, no hay commits ahí). Renombres: `presentation` → `controller`, `domain.models` → `domain.model`, `domain.exceptions` → `domain.exception`; mapper → `controller.mapper`; advice → `controller.handler`. En las skills solo `<Entidad>` y `<paquete.raíz>`, nunca `Movie` | **2a** `k-back-module` (árbol, reglas `MOD-R`, ArchUnit) · **2b** renombrar `k-back-presentation` a `k-back-controller` + `k-back-domain` + `k-back-persistence` (decidir dónde van las excepciones de persistencia) · **2c** `do-code-impl`, `do-code-review`, plantillas y `teoria/`. `demo-cliente/` se deja como ejemplo antiguo |
 | **3** ✅ Swagger (`3f3dbc2`; el contrato sale del código, sin yaml: ver la bitácora y D-47) | springdoc **3.2.0** (rama de Spring Boot 4; verificar en Maven Central). `OpenApiConfig` en `com.daw.movies.config`, **fuera** de las capas, para que haya un único Swagger UI cuando haya varios módulos. Probar los 5 endpoints con «Try it out» contra `seed.sql` | **3a** `feat: add springdoc and OpenApiConfig` · **3b** `test: add OpenAPI contract test` (`/v3/api-docs` lista los 5 endpoints) · **3c** `docs: record Swagger manual checks` |
 | **4** ✅ Monolito modular | Un único módulo **`catalog`** ahora; después `stock`, `order`, `user`… Estructura `com.daw.movies.catalog.{controller,domain,persistence}`; `MoviesApplication` y `config` en la raíz. Spring Modulith + ArchUnit. Riesgo D-45: si `Director`/`Actor` se separan en otro módulo, relacionar por id | **4a** ✅ `9ff1fdb` (ArchUnit 1.5.1, 5 reglas, rojo controlado con sonda) · **4b** ✅ `b299efc` (solo `package` e imports; ArchUnit tocó en verde sin cambios) · **4c** ✅ `c04db2c` (BOM 2.1.2 + starters del BOM; `package-info` sellado; `@Modulithic(sharedModules = "config")`; `ModulithTest` en verde a la primera + `Documenter` genera la doc) · **4d** ✅ D-49, `arquitectura-monolito.md` (arquitectura objetivo), README y `ESTADO.md` al día; el skill `k-back-module` ajustado en su repo |
+| **5** ✅ Segundo módulo `ratings` ([D-50](decisiones-tecnicas.md#d-50-segundo-módulo-ratings-conectado-por-fachada)) | Conectar un segundo módulo de negocio a la frontera de `catalog` (petición del profesor). Relaciones **por id** (D-45), fachada mínima en la raíz de `catalog` (la zona pública del módulo sellado), excepciones propias del módulo, endpoints `GET/POST /movies/{movieId}/ratings` + `DELETE /ratings/{id}`, esquema `V5` con FK `CASCADE` | **5a** ✅ `266f443` (`feat(catalog): expose minimal movie facade`) · **5b** ✅ `a03d09b` (`feat(ratings): add second module consuming the catalog facade`, 23 ficheros, V5, 4 capas de tests) · **5c** ✅ D-50 + docs + [arquitectura-monolito.md](../arquitectura-monolito.md) actualizada (la fase fachada "simple" ya está; la rica queda encolada) |
 
 ### La siguiente acción, exacta
 
@@ -535,6 +536,25 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 4. `README.md` del backend: cabecera de estado, tabla de dependencias (Modulith 2.1.2 / ArchUnit 1.5.1 ✅), progresos (fase 34 ✅), el bloque «resultado esperado de `test`» con los 15 renglones reales y la **estructura del repositorio** con los paths `catalog`.
 5. Ajuste del skill `k-back-module` en `Lorenzo\creador-de-skills` (commit local, sin remoto) para `<paquete.raíz>.<módulo>`.
 6. Este archivo al día (§1 y esta entrada). Commits de la 4d: `b06a3da` (`docs: D-49 and target architecture for catalog module`) y este arreglo puntual de esta entrada.
+
+### 2026-11-04 (decimoquinta parte) — fase 5: segundo módulo `ratings` conectado por fachada (D-50)
+
+**Petición del alumno (con el profesor detrás):** «otro módulo con el que conectar». Nace `ratings` — la fachada mínima de `catalog` es la pieza nueva (en `arquitectura-monolito.md` §1, la fila de fachada y la de segundo módulo pasaron a ✅).
+
+1. **Push de la fase 4** (pedido por el alumno: «haz commit»): `4d098be..b86b890`.
+2. **5a — fachada (`266f443`):** `CatalogFacade` (interfaz) + `MovieLookup` (`record` id/título) + `CatalogFacadeImpl` (`@Service`, delega en el `MovieDao` interno y traduce dominio → record). La fachada vive en la **raíz de `com.daw.movies.catalog`**: la única zona pública de un módulo sellado. `mvnw clean test` → **75 en verde**.
+3. **5b — módulo `ratings` (`a03d09b`), 23 ficheros nuevos:**
+   - `V5__create_rating_table.sql`: `rating` (`id`, `movie_id NOT NULL`, `score`, `comment VARCHAR(500) NULL`, PK nombrada D-41, FK a movie con **CASCADE** y `CHECK` 1–10). Flyway → **versión 5**.
+   - `package-info.java`: `@ApplicationModule(displayName = "Ratings", allowedDependencies = "catalog")`.
+   - domain: `Rating` (movieId **por id**, D-45), `MovieNotFoundException`/`RatingNotFoundException` propias del módulo, `RatingRepository` (puerto), `RatingService`/`RatingServiceImpl` (`@Service`+`@Transactional`, impureza reconocida de D-48; la dependencia a catalog vive solo aquí, a través de la fachada).
+   - persistence: `RatingDao`/`RatingDaoJdbc` (`JdbcTemplate`, sin JOIN: el N+1 del catalog aquí no existe) y `RatingRepositoryImpl`.
+   - controller: `RatingController` (`GET/POST /movies/{movieId}/ratings`, `DELETE /ratings/{id}`), `RatingRequest` (`@Min(1)@Max(10)`, `@Size(500)`), `RatingResponse`, `RatingMapper`, `RatingExceptionHandler` propio (cada módulo su advice: el de catalog no es visible desde fuera, módulo sellado).
+   - ArchUnit: +2 reglas (ratings no toca internals de catalog; catalog no conoce ratings) → **7** en `ArquitecturaTest`.
+   - `OpenApiContractTest` actualizado: **9 endpoints** (los 5 de movies + los 4 de ratings).
+   - Tests: `RatingTest` (4), `RatingServiceImplTest` (7, fachada y puerto simulados, capturando el `Rating` guardado), `RatingControllerTest` (13, `@WebMvcTest` + `@Import` de mapper y handler), `RatingDaoJdbcTest` (5) y `RatingRepositoryImplTest` (3), los dos últimos contra MariaDB con rollback (PER-D8 adaptado) y **creando su propia película + director** en `@BeforeEach` (la FK lo obliga; no dependen del seed).
+4. `mvnw clean test` → **109 en verde**, `BUILD SUCCESS`. `ModulithTest` ya gobierna el contrato de **dos** módulos (un `import` de un internal revienta `verify()`).
+5. **5c — docs:** **D-50** en decisiones; `arquitectura.md` (mini-árbol de ratings + fachada); `arquitectura-monolito.md` (§1 fachada simple ✅ y segundo módulo ✅; §2 la fachada **rica** `api/facade`+MapStruct queda encolada a la migración JPA); README (cabecera, 109 tests, 9 endpoints, V1–V5, árbol con `ratings`); este archivo (§1, fila de fase 5 en la tabla, esta entrada). Commit de docs ya al final de la parte.
+6. **Nota:** `seed.sql` sigue sin tocar — `rating` arranca vacía; los demo rápidos de Swagger o el frontend pueden cargar una valoración a mano si el alumno quiere ver el flujo completo.
 
 ## 5. Trabajo sin commitear
 

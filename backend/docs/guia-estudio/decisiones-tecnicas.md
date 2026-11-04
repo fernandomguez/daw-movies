@@ -402,3 +402,17 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
   - `backend/docs/arquitectura.md` describe el árbol con `catalog`; la [arquitectura objetivo](../arquitectura-monolito.md) anota qué piezas ya están y cuáles quedan encoladas.
   - **Punto de retorno:** la rama `backup/antes-de-monolito-modular` guarda el árbol justo antes del `git mv` (4b).
 - **Documentación:** [arquitectura.md](../arquitectura.md) y [arquitectura-monolito.md](../arquitectura-monolito.md).
+
+## D-50 Segundo módulo `ratings` conectado por fachada — ✅ Decidida por el alumno a petición del profesor (fase 5, 2026-11-04)
+- **Contexto:** con un solo módulo no había frontera que vigilar (duda conocida de D-49). El profesor pidió «otro módulo con el que conectar»: nace `ratings` (valoraciones de 1–10 sobre películas), el primero que consume la fachada ajena.
+- **Decisión:**
+  - **Fachada mínima en `catalog`:** `CatalogFacade` + `record MovieLookup(Long id, String title)` viven en la **raíz del paquete del módulo** (`com.daw.movies.catalog`), que es la única zona pública de un módulo sellado (regla de Modulith de los «módulos simples»). Contrato por lo que el consumidor necesita (id + título), nunca el dominio.
+  - **Dependencia declarada:** `ratings/package-info.java` con `@ApplicationModule(allowedDependencies = "catalog")`. El soldador: `ModulithTest` (un `import` de un internals revienta `verify()`).
+  - **Relaciones entre módulos por id** (D-45 anticipada): `Rating` guarda `movie_id BIGINT`, no objetos. Doble comprobación de frontera en ArchUnit: ratings no toca `catalog.{controller,domain,persistence}`, y catalog no conoce a ratings.
+  - **Excepciones propias del módulo:** la fachada responde `Optional`, y `RatingServiceImpl` traduce el vacío a la `MovieNotFoundException` de ratings (la fachada no exporta excepciones ajenas).
+  - **Endpoints** (9 en total): `GET/POST /movies/{movieId}/ratings` (D-38/D-39 valen: `200 []`, orden por creación) y `DELETE /ratings/{id}`. Handler propio `RatingExceptionHandler` (404, 400, 415) según la arquitectura objetivo.
+  - **Esquema:** `V5__create_rating_table.sql` — `rating` con `CHECK` del 1–10, `comment VARCHAR(500) NULL` y FK a `movie` con `ON DELETE CASCADE` (la valoración es propiedad de su película; la película no es propiedad del director: ahí sigue `RESTRICT`). `seed.sql` sin tocar: `rating` arranca vacía.
+  - **Tests en cuatro capas como su módulo mayor:** modelo (4), servicio con la fachada simulada (7), `@WebMvcTest` (13), DAO/repositorio contra MariaDB con rollback (5+3) — misma disciplina PER-D8/PER-R09 que en catalog.
+- **Deuda reconocida (diferencia con la arquitectura objetivo):** el paquete objetivo `api/facade` + `:: facade` + DTO separados queda para la migración JPA (ver arquitectura-monolito.md §2); hoy la fachada es la versión simple de esa pieza y funciona con la misma disciplina.
+- **Consecuencias:** la doc de módulos del `Documenter` ahora pinta dos módulos (`module-catalog`, `module-ratings`); la frontera empieza a morder de verdad — se comprobó que las reglas `ArquitecturaTest` son 7 y `verify()` pilla dependencias internas cruzadas.
+- **Documentación:** [arquitectura.md](../arquitectura.md) y [arquitectura-monolito.md](../arquitectura-monolito.md).
