@@ -13,12 +13,12 @@
 | Dato | Valor |
 |---|---|
 | Rumbo actual | Arquitectura por capas con JDBC: `controller` (con `dto`, `mapper`, `handler`), `domain` (`model`, `service`, `repository`, `exception`), `persistence` (`dao`, `repository.impl`) |
-| Paso en curso | Fase 2 completa. **Fase 3: 3a y 3b hechas** (springdoc 3.2.0 + `OpenApiConfig` + test de contrato, 58 en verde), **sin comitear**. Siguiente: 3c (probar «Try it out») |
-| Último commit | `339cb5d docs: adapt temario, diary, plan, glossary, READMEs and ESTADO to the new direction` (local; **sin push**) |
-| Tests | **55 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo, 3 de integración (necesitan Docker) |
-| Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Sin Swagger todavía |
+| Paso en curso | Fases 1, 2 y 3 hechas (skill actualizado; Swagger con springdoc 3.2.0 y `OpenApiConfig`). Siguiente: resolver la divergencia con `origin/main`; después fase 4 |
+| Último commit | `3f3dbc2 feat: add springdoc and OpenApiConfig with contract test` (local; **sin push**: `main` está 10 por delante y 11 por detrás de `origin/main`) |
+| Tests | **58 en verde** (`mvnw clean test`): 3 de contrato OpenAPI, 19 controlador, 13 servicio, 20 modelo, 3 de integración (necesitan Docker) |
+| Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Swagger UI en `/swagger-ui.html` y contrato en `/v3/api-docs` (generado desde el código, sin yaml) |
 | Tabla de datos | `director` (6), `actor` (14), `movie` (10), `movie_actor` (24); Flyway en la versión 4 |
-| Cambios sin commitear | renombrado a `controller/handler` (código, test y docs) y esta actualización de `ESTADO.md` (ver §5) |
+| Cambios sin commitear | ninguno al cierre de la sesión del 2026-11-04 (el repo del skill, `Lorenzo\creador-de-skills`, no tiene remoto: sus commits son solo locales) |
 | Ramas / etiquetas | `main` local está en la fase 10 + commits nuevos. `origin/main` y las etiquetas `fase-11` y `fase-15A` contienen trabajo de otro camino (JPA, OpenAPI) que **no** está en `main` local. Existe `backup/antes-de-volver-a-fase-10`. No mezclar sin hablarlo |
 
 ### Las fases que quedan (plan aprobado)
@@ -427,9 +427,9 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
    - Efecto lateral: el `AUTO_INCREMENT` de `movie` avanza (el próximo id no será el 11).
    - Esto **no** es «Try it out» en el navegador: usa las mismas rutas, pero no pasa por la interfaz de Swagger.
 
-**Sin commitear:** `pom.xml`, `config/OpenApiConfig.java`, `OpenApiContractTest.java` y esta actualización.
+9. A petición del alumno se dejó la aplicación arrancada para que viera Swagger UI en `http://localhost:8080/swagger-ui.html`; al terminar se paró (`8080` sin respuesta). Commit `3f3dbc2` (`feat: add springdoc and OpenApiConfig with contract test`; `pom.xml`, `OpenApiConfig`, `OpenApiContractTest`, `ESTADO.md`).
 
-**Siguiente:** 3c: probar los 5 endpoints con «Try it out» en `http://localhost:8080/swagger-ui.html` y anotar el resultado; después, comitear la fase 3 (preguntar antes).
+**Siguiente:** resolver la **divergencia con `origin/main`** (ver §1, «Ramas») antes de cualquier `push`; después, fase 4 (monolito modular, empezando por 4a: pruebas ArchUnit). No se empieza sin que el alumno lo pida.
 
 ## 5. Trabajo sin commitear
 
