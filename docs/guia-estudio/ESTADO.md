@@ -319,10 +319,20 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 
 ---
 
+### 2026-11-04 — revisión del temario contra el código (HEAD = `aa0cef7`, fase 10)
+
+1. Contrastados los temas 02–11 con el código de `domain.model`, las migraciones y `pom.xml`. El tema 10 coincide con el código.
+2. Corregidos tres desfases: tema 11 (ejemplo de `new Director(1L, "Christopher", ...)` sustituido por el constructor real con *value objects*, y nota de que el ejemplo `@Entity` con `String`/`LocalDate` es una simplificación) y tema 05 (la frase «en la fase 10 elegiremos…» ahora recoge D-44/D-46).
+3. Observado, **no tocado**: `docs/arquitectura.md` existe sin seguimiento y **vacío**; la rama local `main` está en la fase 10, mientras `origin/main` y las etiquetas `fase-11` y `fase-15A` contienen trabajo posterior (el commit `daf027e` de la 15A no está en el historial de `main`; por eso `openapi.yaml` y springdoc no existen en el árbol actual, aunque §1 los menciona).
+4. No se ejecutó ningún comando de Maven ni de Docker.
+
 ## 5. Trabajo sin commitear
 
 ```
-nada: el árbol está limpio.
+?? docs/arquitectura.md   (restaurado del commit 242b205)
+ M docs/guia-estudio/ESTADO.md
+ M docs/guia-estudio/temario/05-arquitectura-tres-capas-dip.md
+ M docs/guia-estudio/temario/11-introduccion-jpa.md
 ```
 
 **Cerrada la fase 10 el 2026-10-31.** Su commit es `feat(fase-10): add domain entities` (incluye la ampliación de los temas 10 y 11 hecha al final de la sesión) y la etiqueta `fase-10`. **Sin push**: queda a la espera de confirmación del alumno.

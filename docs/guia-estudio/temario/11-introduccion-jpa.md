@@ -21,8 +21,13 @@ Tabla director
 **Java** trabaja con **objetos**:
 
 ```java
-Director nolan = new Director(1L, "Christopher", "Nolan", LocalDate.of(1970, 7, 30));
+Director nolan = new Director(
+        new PersonName("Christopher", "Nolan"),
+        new BirthDate(LocalDate.of(1970, 7, 30)),
+        null);                      // sin biografía
 ```
+
+El `id` no se pasa al constructor: lo asigna la base al guardar (por eso `getId()` es `null` hasta entonces). Los datos no son `String` sueltos sino *value objects* (fase 10, D-46): ahí está el reto que resolverá la fase 11.
 
 ### Cómo sería sin JPA
 
@@ -59,6 +64,8 @@ public class Director {
 ```
 
 Al pedir "dame el director 1", JPA genera el `SELECT`, lee la fila y devuelve un objeto `Director` relleno con los datos de Nolan.
+
+> **Simplificación didáctica.** Este ejemplo usa `String` y `LocalDate` para ver solo la idea de las anotaciones. El `Director` real (paso 10.4) guarda `PersonName name`, `BirthDate birthDate` y `Biography biography`, y JPA no sabe guardar esos tipos por sí solo: hace falta un `AttributeConverter` (un valor → una columna: `Title`, `BirthDate`…) o `@Embeddable` (un valor → varias columnas: `PersonName`). Es el coste de D-46, y se paga en la fase 11.
 
 A este tipo de herramienta se le llama **ORM** (*Object-Relational Mapping*): traduce entre **objetos** y tablas **relacionales**.
 

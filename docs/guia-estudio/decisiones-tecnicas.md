@@ -272,7 +272,7 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Motivo:** permite comprobar en la misma consulta la diferencia entre `COUNT(*)` y `COUNT(m.id)` y el comportamiento de `AVG` con `NULL`. Es un dato real y verificable, como el resto.
 - **Consecuencia:** los recuentos de la semilla son **6 directores**, 10 películas, 14 actores y 24 participaciones. El director 6 aparece en las consultas con `LEFT JOIN` y desaparece con `INNER JOIN`.
 
-## D-44 Modelo de dominio rico (moderado), sin setters — ✅ Decidida por el alumno (fase 10, paso 10.1) · **ampliada por D-46**
+## D-44 Modelo de dominio rico (moderado), sin setters — ✅ Decidida por el alumno (fase 10, paso 10.1) · ~~ampliada por D-46~~ (D-46 revocada el 2026-11-04)
 - **Contexto:** hay que decidir dónde viven las reglas de `Movie`, `Director` y `Actor` antes de escribirlas (fase 10). El esquema ya las impone en la base (`NOT NULL`, `CHECK`, FK), pero un objeto Java puede violarlas si la clase lo permite.
 - **Alternativas:**
   - **(A) Anémico:** campos + getters + setters; la validación se hace en el servicio o el controlador. Es lo más habitual en muchos proyectos.
@@ -281,7 +281,7 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Elección: B**, confirmada por el alumno.
 - **Motivos:** el dominio es pequeño (tres clases) y las reglas ya están claras; concentrarlas en el constructor evita que cada capa las repita y que un objeto inválido circule hasta la base. Sin setters no hay forma de romper un invariante después de crear el objeto. La opción C multiplica los caminos de mutación para un beneficio que aún no necesitamos (la escritura llega en la fase 17).
 - **Qué incluye:**
-  - Constructor público que valida. **Desde D-46, la validación de cada campo vive en su *value object*** (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`); el constructor de la entidad recibe tipos ya válidos y solo comprueba lo que cruza campos (por ejemplo, que el director no sea `null`).
+  - Constructor público que valida. **(Revocado: D-46 ya no existe; los campos vuelven a ser tipos simples y las reglas de entrada van en el DTO con Jakarta Validation.)** Texto histórico: *la validación de cada campo vivía en su value object* (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`); el constructor de la entidad recibe tipos ya válidos y solo comprueba lo que cruza campos (por ejemplo, que el director no sea `null`).
   - Biografía opcional: `null` cuando no hay. `Biography` no admite texto en blanco; convertir un texto en blanco a `null` es normalización de entrada y se hace en el mapper (fase 17) y en el DTO (fase 18).
   - `fullName()` calculado (nombre + apellidos), delegando en `PersonName`; no es una columna.
   - Constructor sin argumentos **protegido** para JPA y campos **no `final`** (coste aceptado en D-29). Se añaden en el paso 10.4.
@@ -305,7 +305,15 @@ Solo existe `base-standards.md`. Las referencias a `backend-standards.md` y a la
 - **Consecuencia:** no se añade Spring Modulith ni ArchUnit al `pom.xml` hasta la fase 25. La revisión de la fase 20.1 sigue siendo manual.
 - **Documentación:** [temario 10](temario/10-modelo-de-dominio.md#monolito-normal-o-monolito-modular) y [plan, Bloque F](00-plan-de-aprendizaje.md#bloque-f--temas-del-temario-del-profesor-que-faltaban).
 
-## D-46 *Value objects* en el dominio — ✅ Decidida por el alumno (fase 10, 2026-10-28)
+## D-46 *Value objects* en el dominio — ❌ **Revocada** (2026-11-04) · antes: ✅ decidida por el alumno (fase 10, 2026-10-28)
+
+> **Revocación (2026-11-04):** el profesor indica que **no quiere *value objects* en este proyecto**. El dominio vuelve a **tipos simples** (`String`, `int`, `LocalDate`) y las reglas de entrada se comprueban en la capa de entrada, con **Jakarta Validation** en los DTO (`MovieRequest`, fase 18), como ya preveía D-44 antes de D-46. El constructor de la entidad conserva solo las comprobaciones defensivas de lo que no puede faltar (por ejemplo, que el director no sea `null`).
+> - **Se eliminan:** `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`, `Texts` y sus 28 tests.
+> - **Consecuencia para la fase 11:** desaparece el coste de `AttributeConverter` y `@Embeddable`; los campos se mapean directamente con `@Column`.
+> - **Consecuencia para la fase 18:** vuelve a ser la validación del DTO la que da el `400`; la garantía ya no es un tipo propio, sino el DTO más el `NOT NULL`/`CHECK` de la base.
+> - **Lo que se pierde:** que un `Title` inválido no pueda existir por ninguna vía (mapper, JPA, test). Se acepta: es una decisión de la asignatura.
+> - El texto de abajo se conserva como **historia** de lo que se decidió y por qué; ya no está vigente.
+
 - **Contexto:** D-44 dejó fuera los *value objects*. El profesor los pide expresamente ([tema 03](https://cesguiro.es/doku.php/clase/daw/dws/1eval/validacion)) y el proyecto no es una práctica evaluada, sino un ejercicio para aplicar lo que se da en clase.
 - **Decisión:** el dominio usa **tipos propios** en lugar de primitivos: `Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate` y `Biography`. Son `record` inmutables, comparados por valor, con **constructor compacto** que valida.
 - **Por qué:** *primitive obsession*: un `String` puede ser cualquier cosa y la regla queda dispersa. Con un tipo propio, el objeto inválido **no existe** por ninguna vía de creación (`new`, mapper, JPA, test). Las anotaciones de Jakarta Validation no dan esa garantía fuera de una petición HTTP.

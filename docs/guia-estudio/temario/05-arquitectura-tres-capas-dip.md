@@ -665,7 +665,7 @@ En este proyecto usamos **Repositorio**: `MovieRepository` es la interfaz que de
 - **Anémico:** las clases del dominio solo tienen datos (atributos, getters y setters). Las reglas están en los servicios. Ejemplo: `movie.setDurationMinutes(-5)` se acepta, y es el servicio quien tiene que acordarse de comprobarlo.
 - **Rico:** las clases tienen datos **y** comportamiento: protegen sus propias reglas. Ejemplo: el constructor de `Movie` lanza una excepción si la duración no es positiva, así que no puede existir una película inválida.
 
-En la fase 10 elegiremos y justificaremos el modelo para nuestro problema.
+**Decidido en la fase 10:** modelo **rico moderado** con *value objects* (`Title`, `ReleaseYear`, `DurationMinutes`, `PersonName`, `BirthDate`, `Biography`), sin setters (D-44 y D-46). Las reglas de cada valor viven en su `record`; el constructor de `Movie`, `Director` o `Actor` solo comprueba que no falte ninguna pieza. Está explicado en el [tema 10](10-modelo-de-dominio.md).
 
 ### Otros conceptos
 
