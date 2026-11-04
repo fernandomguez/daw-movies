@@ -1,11 +1,11 @@
-# Arquitectura del proyecto (ejemplo con `Movie`)
+# Arquitectura del proyecto (módulos `catalog` y `ratings`)
 
 > Describe la arquitectura **real** del código en `src/main/java/com/daw/movies`, no un ideal. Paquete raíz: `com.daw.movies`.
-> Decisión que la respalda: [D-48](guia-estudio/decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples) (capas con DAO JDBC) y [D-49](guia-estudio/decisiones-tecnicas.md#d-49-monolito-modular-módulo-catalog-con-spring-modulith) (el módulo `catalog` con Spring Modulith). Código en inglés; documentación en español.
+> Decisiones que la respaldan: [D-48](guia-estudio/decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples) (capas con DAO JDBC), [D-49](guia-estudio/decisiones-tecnicas.md#d-49-monolito-modular-módulo-catalog-con-spring-modulith) (monolito modular), [D-50](guia-estudio/decisiones-tecnicas.md#d-50-segundo-módulo-ratings-conectado-por-fachada) (segundo módulo por fachada) y [D-51](guia-estudio/decisiones-tecnicas.md#d-51-estructura-objetivo-en-los-dos-módulos-sync-con-el-§2-del-skill) (estructura `api` + `internal` del §2 del skill). Código en inglés; documentación en español.
 >
-> La arquitectura objetivo de futuro (JPA, fachadas, casos de uso) está en [arquitectura-monolito.md](arquitectura-monolito.md); se adopta por temas del temario.
+> La arquitectura objetivo completa (JPA, MapStruct, modelos enriquecidos) está en [arquitectura-monolito.md](arquitectura-monolito.md); la estructura de paquetes ya es la del skill, lo que queda encolado son piezas internas.
 >
-> Esta arquitectura no se debe tocar. Son apuntes del profesor y se debe mantener así. (Ya se ha tocado con la carpeta config, revisar si está bien)
+> Esta arquitectura no se debe tocar. Son apuntes del profesor y se debe mantener así.
 
 ---
 
@@ -13,133 +13,123 @@
 
 ```text
 com.daw.movies
-├── MoviesApplication                   ← arranque de Spring Boot (+ @Modulithic: `config` es módulo compartido)
+├── MoviesApplication                      ← @SpringBootApplication, nada más (§3.1)
+├── app                                    ← raíz de composición (NO es módulo)
+│   └── OpenApiConfig                      ← título y versión del contrato OpenAPI (springdoc del código)
 │
-├── config                              ← configuración de toda la aplicación (fuera de las capas; módulo compartido)
-│   └── OpenApiConfig                   ← título y versión del contrato OpenAPI (springdoc lo genera del código)
+├── catalog                                ← MÓDULO «Catalog» (@ApplicationModule, sin dependencias)
+│   ├── package-info.java
+│   ├── api
+│   │   ├── facade                         ← @NamedInterface("facade"): lo ÚNICO expuesto
+│   │   │   ├── CatalogFacade              ← interfaz para los demás módulos
+│   │   │   ├── MovieLookup                ← record DTO del contrato (no domina el módulo)
+│   │   │   └── impl                       ← no forma parte de la interfaz con nombre
+│   │   │       ├── CatalogFacadeImpl      ← delega en el servicio de dominio y mapea
+│   │   │       └── CatalogFacadeMapper    ← a mano hasta que entre MapStruct
+│   │   └── http                           ← contrato HTTP del módulo
+│   │       ├── MovieController            ← GET/POST /movies · GET/PUT/DELETE /movies/{id}
+│   │       ├── dto.request.MovieRequest   ← Jakarta Validation (@NotBlank, @Min(1888)…)
+│   │       ├── dto.response.MovieResponse ← DirectorView y ActorView
+│   │       ├── mapper.MovieMapper         ← dominio → MovieResponse
+│   │       └── handler.CatalogExceptionHandler  ← 404/400/415 con { "message": ... }
+│   └── internal
+│       ├── application                    ← casos de uso (§3.3)
+│       │   ├── FindMoviesUseCase · FindMovieByIdUseCase
+│       │   └── CreateMovieUseCase · UpdateMovieUseCase · DeleteMovieUseCase
+│       │        @Named; @jakarta.transaction.Transactional los que escriben
+│       ├── domain                         ← núcleo (Java puro salvo @Named)
+│       │   ├── model  Movie · Director · Actor
+│       │   ├── exception  MovieNotFoundException · DirectorNotFoundException
+│       │   ├── service  MovieService (+Impl)  ← consultas; las usa la fachada y los casos de uso
+│       │   └── repository  MovieRepository ← puerto del repositorio
+│       └── persistence                    ← adaptadores
+│           ├── dao  MovieDao (+ MovieDaoJdbc: JDBC puro)
+│           └── repository.impl  MovieRepositoryImpl
 │
-└── catalog                             ← MÓDULO Spring Modulith «Catalog» (sellado en package-info con @ApplicationModule)
-    ├── controller                      ← capa de entrada (HTTP)
-    │   ├── MovieController             ← API REST en /movies
-    │   ├── dto
-    │   │   ├── request
-    │   │   │   └── MovieRequest        ← datos que entran (con Jakarta Validation)
-    │   │   └── response
-    │   │       └── MovieResponse       ← datos que salen (con DirectorView y ActorView)
-    │   ├── mapper
-    │   │   └── MovieMapper             ← dominio → MovieResponse
-    │   └── handler
-    │       └── GlobalExceptionHandler   ← excepciones → respuestas HTTP
-    │
-    ├── domain                          ← núcleo de negocio
-    │   ├── model
-    │   │   ├── Movie
-    │   │   ├── Director
-    │   │   └── Actor
-    │   ├── exception
-    │   │   ├── MovieNotFoundException
-    │   │   └── DirectorNotFoundException
-    │   ├── service
-    │   │   ├── MovieService            ← interfaz (casos de uso)
-    │   │   └── impl
-    │   │       └── MovieServiceImpl    ← lógica de negocio y transacciones
-    │   └── repository
-    │       └── MovieRepository         ← interfaz (puerto) del repositorio
-    │
-    └── persistence                     ← acceso a datos
-        ├── repository
-        │   └── impl
-        │       └── MovieRepositoryImpl ← implementa MovieRepository, usa el DAO
-        └── dao
-            ├── MovieDao                ← interfaz del DAO
-            └── impl
-                └── jdbc
-                    └── MovieDaoJdbc    ← JDBC puro con JdbcTemplate
+└── ratings                                ← MÓDULO «Ratings» (@ApplicationModule; "catalog :: facade")
+    ├── package-info.java
+    ├── api/http
+    │   ├── RatingController               ← GET/POST /movies/{movieId}/ratings · DELETE /ratings/{id}
+    │   ├── dto.request.RatingResponse     ← @Min(1) @Max(10), comentario ≤ 500 opcional
+    │   ├── mapper.RatingMapper
+    │   └── handler.RatingExceptionHandler
+    └── internal
+        ├── application                    ← CreateRating · FindRatingsByMovie · DeleteRating
+        ├── domain
+        │   ├── model.Rating               ← movieId POR ID (D-45): la peli vive en otro módulo
+        │   ├── exception  MovieNotFoundException · RatingNotFoundException (propias del módulo)
+        │   ├── port.AvailableMoviesPort   ← contrato con catalog declarado por el consumidor
+        │   │       (record propio AvailableMovie: nada de DTO ajeno en el dominio)
+        │   └── repository.RatingRepository
+        └── persistence
+            ├── dao  RatingDao (+ RatingDaoJdbc)
+            ├── repository.impl  RatingRepositoryImpl
+            └── adapter.CatalogMoviesAdapter ← ÚNICO import de la fachada ajena (§3.3)
 ```
 
-No hay JPA, ni *value objects* (D-46 revocada), ni entidades de persistencia separadas: las clases de `domain.model` son las que construye el DAO y las que consume el mapper.
+No hay JPA, ni *value objects* (D-46 revocada), ni entidades de persistencia separadas: las clases de `internal.domain.model` son las que construye el DAO y las que consumen mapper y servicio de dominio.
 
-**Módulo Spring Modulith (D-49):** `catalog` está sellado en su `package-info.java`; `config` es *módulo compartido* (`@Modulithic`). La verificación vive en `ModulithTest` (`verify()` + `Documenter`) y las reglas de ArchUnit en `ArquitecturaTest`. Hoy no hay fachada: `catalog` no ofrece ni consume nada de otros módulos.
-
-**Segundo módulo — `ratings` (fase 5, [D-50](guia-estudio/decisiones-tecnicas.md#d-50-segundo-módulo-ratings-conectado-por-fachada)):**
-
-```text
-com.daw.movies.ratings                     ← MÓDULO «Ratings» (solo puede depender de `catalog`)
-├── package-info.java                      ← @ApplicationModule(allowedDependencies = "catalog")
-├── controller                             ← (operaciones sobre las valoraciones)
-│   ├── RatingController                   ← GET/POST /movies/{movieId}/ratings · DELETE /ratings/{id}
-│   ├── dto.request.RatingRequest          ← @Min(1) @Max(10), @Size(max=500), comentario opcional
-│   ├── dto.response.RatingResponse
-│   ├── mapper.RatingMapper                ← dominio → RatingResponse
-│   └── handler.RatingExceptionHandler     ← 404 (película/valoración), 400, 415
-├── domain
-│   ├── model.Rating                       ← id, movieId (¡por id!: D-45), score, comment
-│   ├── exception.MovieNotFoundException · RatingNotFoundException
-│   ├── repository.RatingRepository        ← puerto
-│   └── service.RatingService · impl.RatingServiceImpl
-└── persistence
-    ├── dao.RatingDao · impl.jdbc.RatingDaoJdbc
-    └── repository.impl.RatingRepositoryImpl
-```
-
-La **fachada** del módulo catalog es el único punto de contacto: `CatalogFacade` + `record MovieLookup(Long id, String title)` viven en la raíz de `com.daw.movies.catalog` (la única zona pública del módulo sellado). Si la película no existe, ratings lanza **su propia** `MovieNotFoundException`. Esquema nuevo: `V5__create_rating_table.sql` (`rating`, FK a `movie` con `CASCADE`, `CHECK` nota 1–10).
+**Módulos Spring Modulith (D-49/D-50/D-51):** `catalog` y `ratings` van sellados en su `package-info.java`; `app` no es módulo por la estrategia `spring.modulith.detection-strategy = explicitly-annotated` (solo los paquetes anotados cuentan). La verificación vive en `ModulithTest` (`verify()` + `Documenter` de Modulith) y en `ArquitecturaTest` (las reglas del §3.7 del skill). El único contacto entre módulos es `catalog :: facade`: si la película no existe, ratings lanza **su propia** `MovieNotFoundException` a través de su puerto `AvailableMoviesPort`. Esquema: migraciones `V1` a `V5` (`V5` crea `rating` con FK a `movie` en `CASCADE` y `CHECK` 1–10).
 
 ---
 
-## 2. Qué va en cada capa
+## 2. Qué va en cada paquete
 
-| Capa                      | Paquete                       | Clase                                                 | Responsabilidad real                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------------------- | ----------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Controlador               | `controller`                  | `MovieController`                                     | Endpoints `GET /movies`, `GET /movies/{id}`, `POST /movies`, `PUT /movies/{id}` y `DELETE /movies/{id}`. Valida el cuerpo con `@Valid`, pasa **valores sueltos** al servicio y convierte el resultado con el mapper. Sin lógica de negocio.                                                                                                                                                            |
-| DTO de entrada            | `controller.dto.request`      | `MovieRequest`                                        | `record` con `title`, `releaseYear`, `duration` y `directorId`. Sus anotaciones (`@NotBlank`, `@Size(max = 255)`, `@NotNull`, `@Min(1888)`, `@MaxYearsAhead(10)`, `@Positive`) son la validación de entrada.                                                                                                                                                                                           |
-| DTO de salida             | `controller.dto.response`     | `MovieResponse`                                       | `record` con id, título, año, duración, `DirectorView` (id y nombre completo) y lista de `ActorView`. No expone fecha de nacimiento ni biografía.                                                                                                                                                                                                                                                      |
-| Mapper                    | `controller.mapper`           | `MovieMapper`                                         | `@Component`. Solo la **salida**: `toResponse(Movie)`.                                                                                                                                                                                                                                                                                                                                                 |
-| Manejador de errores      | `controller.handler`          | `GlobalExceptionHandler`                              | `@RestControllerAdvice`. Traduce `MovieNotFoundException` y `DirectorNotFoundException` a **404**; `MethodArgumentNotValidException`, `HttpMessageNotReadableException` (JSON mal formado) y `MethodArgumentTypeMismatchException` (p. ej. `/movies/abc`) a **400**; y `HttpMediaTypeNotSupportedException` a **415**, con cuerpo `{ "message": ... }`.                                                |
-| Modelo                    | `domain.model`                | `Movie`, `Director`, `Actor`                          | Clases con tipos simples, sin setters y sin anotaciones de persistencia. Los constructores solo comprueban lo que no puede faltar (`IllegalArgumentException`). `Movie` conoce a su `Director` y a su reparto (`addActor`; `getActors` devuelve una copia inmutable); las relaciones son unidireccionales. Cada clase tiene un segundo constructor con `id` para reconstruirla desde la base de datos. |
-| Excepciones de dominio    | `domain.exception`            | `MovieNotFoundException`, `DirectorNotFoundException` | `RuntimeException` sin conocimiento de HTTP.                                                                                                                                                                                                                                                                                                                                                           |
-| Servicio (contrato)       | `domain.service`              | `MovieService`                                        | `findAll`, `findById`, `create`, `update`, `delete`. Recibe valores sueltos, no DTO.                                                                                                                                                                                                                                                                                                                   |
-| Servicio (implementación) | `domain.service.impl`         | `MovieServiceImpl`                                    | Lógica de los casos de uso: busca el director, construye la `Movie`, guarda y vuelve a leer por id. Lanza las excepciones de «no existe». Depende de `MovieRepository`.                                                                                                                                                                                                                                |
-| Repositorio (puerto)      | `domain.repository`           | `MovieRepository`                                     | `findAll`, `findById`, `findDirectorById`, `save` (**devuelve el id generado**), `update(id, movie)` y `deleteById`.                                                                                                                                                                                                                                                                                   |
-| Repositorio (adaptador)   | `persistence.repository.impl` | `MovieRepositoryImpl`                                 | `@Repository`. Cumple el puerto delegando en `MovieDao` (`save` llama a `insert`).                                                                                                                                                                                                                                                                                                                     |
-| DAO (contrato)            | `persistence.dao`             | `MovieDao`                                            | Operaciones sobre la tabla `movie` y lo necesario para hidratar una `Movie`.                                                                                                                                                                                                                                                                                                                           |
-| DAO (implementación)      | `persistence.dao.impl.jdbc`   | `MovieDaoJdbc`                                        | `@Repository`. SQL con `JdbcTemplate` y `RowMapper`.                                                                                                                                                                                                                                                                                                                                                   |
+Paquetes **relativos al módulo** (muestran el patrón; el árbol de §1 tiene las rutas completas).
 
-### Persistencia: cómo lee y escribe `MovieDaoJdbc`
+| Elemento | Paquete | Clases | Responsabilidad real |
+|---|---|---|---|
+| Contrato HTTP | `api.http` | `MovieController`, `RatingController` | Llama a los **casos de uso** del propio módulo; valida con `@Valid`; nunca repositorios, ni `internal.persistence`, ni fachadas ajenas. |
+| DTO web de entrada | `api.http.dto.request` | `MovieRequest`, `RatingRequest` | `record` con Jakarta Validation. Distintos de los records de la fachada aunque coincidan campo a campo (§3.3). |
+| DTO web de salida | `api.http.dto.response` | `MovieResponse` (con `DirectorView`/`ActorView`), `RatingResponse` | Lo que sale; sin fechas de nacimiento ni biografías. |
+| Mapper web | `api.http.mapper` | `MovieMapper`, `RatingMapper` | Solo la **salida**: dominio → DTO web. |
+| Manejador de errores | `api.http.handler` | `CatalogExceptionHandler`, `RatingExceptionHandler` | `@RestControllerAdvice` **por módulo**: 404 (entidades), 400 (validación, JSON, id), 415, `{ "message": ... }`. |
+| Casos de uso | `internal.application` | `FindMovies`, `FindMovieById`, `CreateMovie`, `UpdateMovie`, `DeleteMovie`, `CreateRating`, `FindRatingsByMovie`, `DeleteRating` | Un `execute()` cada uno (§3.3). Orquestan: servicio de dominio y/o puerto del repositorio, guardan y releen. `@Named`; transacción (`@jakarta.transaction.Transactional`) solo si escriben. No invocan otros casos de uso. |
+| Servicio de dominio | `internal.domain.service` | `MovieService` + `MovieServiceImpl` | Consultas del módulo (`findMovie`, `findDirector` sobre el puerto) que usan la fachada y los casos de uso. Sin Spring. |
+| Modelo | `internal.domain.model` | `Movie`, `Director`, `Actor`, `Rating` | Tipos simples, sin setters, sin anotaciones; constructores defensivos con `IllegalArgumentException`. Relaciones unidireccionales; entre módulos **por id** (D-45). |
+| Excepciones de dominio | `internal.domain.exception` | `MovieNotFoundException`, `DirectorNotFoundException`, `RatingNotFoundException` | `RuntimeException` sin conocimiento de HTTP; propias de cada módulo. |
+| Puerto del repositorio | `internal.domain.repository` | `MovieRepository`, `RatingRepository` | Interfaces (DIP): `findById`, listas, `save` (**devuelve el id generado**), `update`, `deleteById`. |
+| Puerto de otro módulo | `internal.domain.port` | `AvailableMoviesPort` (record `AvailableMovie`) | Contrato con `catalog` **declarado por el consumidor** (§3.3): nunca DTO ajeno en el dominio. |
+| Adaptador de repositorio | `internal.persistence.repository.impl` | `MovieRepositoryImpl`, `RatingRepositoryImpl` | `@Repository`; implementa el puerto delegando en el DAO. |
+| DAO | `internal.persistence.dao(.impl.jdbc)` | `MovieDao`+`MovieDaoJdbc`, `RatingDao`+`RatingDaoJdbc` | JDBC puro: SQL con `JdbcTemplate` y `RowMapper`. |
+| Adaptador de módulo ajeno | `internal.persistence.adapter` | `CatalogMoviesAdapter` | Implementa `AvailableMoviesPort` llamando a `CatalogFacade`: **el único sitio que importa una fachada ajena**. |
+| Fachada (contrato) | `api.facade` | `CatalogFacade` + `MovieLookup` | `@NamedInterface("facade")`: solo interfaz + records; lo que los consumidores necesitan, no lo interno. |
+| Fachada (impl.) | `api.facade.impl` | `CatalogFacadeImpl` + `CatalogFacadeMapper` | Delega en el servicio de dominio y mapea; sin reglas, sin repositorios, sin invocar casos de uso. Fuera de la interfaz con nombre. |
 
-- **Lectura:** una consulta con `JOIN` de `movie` y `director` y, después, **por cada película**, una segunda consulta sobre `movie_actor` + `actor` para cargar el reparto. En `findAll` eso es el problema **N+1** (1 + N consultas). `findById` hace 2.
-- **Escritura:** `insert` usa `GeneratedKeyHolder` y devuelve el id; `update` y `deleteById` son sentencias simples.
-- **El reparto no se escribe:** ni `insert` ni `update` tocan `movie_actor`. Solo se lee; no hay endpoints que lo gestionen.
-- El esquema lo crean las migraciones Flyway (`V1` a `V4`); los datos de prueba están fuera de Flyway (D-42).
+### Persistencia: cómo lee y escribe JDBC
+
+- **Lectura:** `MovieDaoJdbc` hace una consulta con `JOIN` de `movie` y `director` y, después, **por cada película**, una segunda sobre `movie_actor` + `actor` para el reparto. En `findAll` eso es el **N+1** (1 + N consultas); `findById` hace 2. `RatingDaoJdbc` no necesita JOINs.
+- **Escritura:** `insert` usa `GeneratedKeyHolder` y devuelve el id; `update` y `deleteById` son sentencias simples. El reparto no se escribe (no hay endpoints que lo gestionen).
+- El esquema lo crean las migraciones Flyway (`V1` a `V5`); los datos de prueba están fuera de Flyway (D-42).
 
 ---
 
 ## 3. Reglas de dependencia
 
 ```text
-controller ──▶ domain.service (interfaz)
-    │
-    └──▶ domain.model (MovieMapper lee Movie)
-
-domain.service.impl ──▶ domain.repository (interfaz)
-                                ▲
-                                │ implementa
-persistence.repository.impl ──▶ persistence.dao (interfaz)
-                                        ▲
-                                        │ implementa
-                          persistence.dao.impl.jdbc
+api/http ──────► internal.application ──► internal.domain ◄── internal.persistence ◄──┐
+   (controllers llaman         (casos de uso:          (modelo, servicio y puertos)   │
+    casos de uso)               orquestan; tx aquí)                                    │
+                                                                                       │
+api/facade/impl ──► internal.domain.service ──► internal.domain.repository (puerto)
+   (CatalogFacadeMapper, a mano)                                                  │
+                                                                                       │
+ratings.internal.persistence.adapter ──► catalog.api.facade   (la única fachada ajena)─┘
+app ──► todo
 ```
 
-1. `controller` usa la **interfaz** `MovieService`, nunca `MovieServiceImpl`. Conoce también el modelo de dominio, porque `MovieMapper` lo traduce a DTO.
-2. `domain` **no importa** nada de `controller` ni de `persistence`.
-3. `MovieServiceImpl` depende de `MovieRepository` (interfaz), nunca de `MovieRepositoryImpl`.
-4. `MovieRepositoryImpl` depende de `MovieDao` (interfaz), nunca de `MovieDaoJdbc`.
-5. Los DTO viven en `controller`; el dominio no los conoce. Por eso el servicio recibe valores sueltos.
-6. Toda dependencia se inyecta por constructor.
+1. `api.http` llama a los **casos de uso** de su módulo; nunca `internal.persistence`, ni `api.facade.impl`, ni módulos ajenos.
+2. `internal.application` no toca `internal.persistence` ni `api`.
+3. `internal.domain` no importa nada de `api`, de `internal.application`, de `internal.persistence` ni de Spring (solo se tolera `jakarta.inject.Named`).
+4. Los casos de uso, el servicio de dominio y los adaptadores dependen de **interfaces** (`MovieRepository`, `MovieDao`, `AvailableMoviesPort`), nunca de los `*Impl`.
+5. Los DTO web viven en `api.http` y los de fachada en `api.facade`; el dominio no conoce ninguno. Por eso los casos de uso reciben valores sueltos.
+6. Un módulo consume a otro solo por su fachada con nombre (`catalog :: facade`); el adaptador ajeno vive en **su** `internal.persistence`. El grafo no tiene ciclos.
+7. Toda dependencia se inyecta por constructor.
 
-### Impurezas reconocidas
+### Impurezas toleradas
 
-- `MovieServiceImpl` lleva `@Service` y `@Transactional`: `domain` depende de anotaciones de Spring. Se acepta por simplicidad (D-48).
-- `MovieDaoJdbc` y `MovieRepositoryImpl` llevan `@Repository`.
+- `@Named` (jakarta, no Spring) en casos de uso, fachada impl y el servicio de dominio.
+- `MovieDaoJdbc`, `RatingDaoJdbc`, `MovieRepositoryImpl` y `RatingRepositoryImpl` llevan `@Repository` (Spring) en `internal.persistence`.
 
 ---
 
@@ -150,15 +140,18 @@ persistence.repository.impl ──▶ persistence.dao (interfaz)
 | Controlador            | `<Entidad>Controller`        | `MovieController`        |
 | DTO de entrada         | `<Entidad>Request`           | `MovieRequest`           |
 | DTO de salida          | `<Entidad>Response`          | `MovieResponse`          |
-| Mapper                 | `<Entidad>Mapper`            | `MovieMapper`            |
+| Mapper web             | `<Entidad>Mapper`            | `MovieMapper`            |
+| Caso de uso            | `<Acción><Entidad>UseCase`   | `CreateMovieUseCase`     |
 | Modelo                 | `<Entidad>`                  | `Movie`                  |
 | Excepción de dominio   | `<Entidad>NotFoundException` | `MovieNotFoundException` |
-| Servicio (interfaz)    | `<Entidad>Service`           | `MovieService`           |
-| Servicio (impl.)       | `<Entidad>ServiceImpl`       | `MovieServiceImpl`       |
+| Servicio de dominio    | `<Entidad>Service(+Impl)`    | `MovieService`           |
 | Repositorio (interfaz) | `<Entidad>Repository`        | `MovieRepository`        |
 | Repositorio (impl.)    | `<Entidad>RepositoryImpl`    | `MovieRepositoryImpl`    |
-| DAO (interfaz)         | `<Entidad>Dao`               | `MovieDao`               |
-| DAO (impl. JDBC)       | `<Entidad>DaoJdbc`           | `MovieDaoJdbc`           |
+| DAO (interfaz/impl.)   | `<Entidad>Dao`, `<Entidad>DaoJdbc` | `MovieDaoJdbc`     |
+| Fachada                | `<Modulo>Facade` (+ `Impl`, mapper) | `CatalogFacade`   |
+| Handler del módulo     | `<Modulo>ExceptionHandler`   | `CatalogExceptionHandler` |
+| Puerto de módulo ajeno | `<Capacidad>Port` (+ `Adapter`) | `AvailableMoviesPort` |
+| Módulo                 | minúsculas, plural de negocio | `catalog`, `ratings`    |
 
 ---
 
@@ -171,15 +164,15 @@ POST /movies  (MovieRequest)
 MovieController        → @Valid comprueba MovieRequest (si falla: 400)
    │                     pasa title, releaseYear, duration y directorId sueltos
    ▼
-MovieService.create(...)                     [interfaz]
-   │   MovieServiceImpl (@Transactional):
-   │   1. findDirectorById → si no existe: DirectorNotFoundException (404)
+CreateMovieUseCase.execute(...)               [internal.application]
+   │   1. MovieService.findDirector(id) → si no existe: DirectorNotFoundException (404)
    │   2. new Movie(title, releaseYear, duration, director)
-   │   3. save(movie) → id generado
-   │   4. findById(id) → Movie completa
+   │   3. MovieRepository.save(movie) → id generado
+   │   4. MovieRepository.findById(id) → Movie completa
+   │      (@jakarta.transaction.Transactional cubre todo el caso de uso)
    ▼
-MovieRepository                              [interfaz]
-   │   MovieRepositoryImpl → MovieDao.insert / findById
+MovieRepositoryImpl          [internal.persistence, implementa el puerto]
+   │   → MovieDao.insert / findById
    ▼
 MovieDaoJdbc (JdbcTemplate)  →  MariaDB
    │
@@ -188,37 +181,39 @@ MovieDaoJdbc (JdbcTemplate)  →  MariaDB
 MovieController        → MovieMapper.toResponse(movie) → 201 Created
 ```
 
+En `ratings`, el caso de uso `CreateRatingUseCase` comprueba primero la película por `AvailableMoviesPort` (que el adapter `CatalogMoviesAdapter` responde con la fachada de `catalog`); si no existe, 404 con la excepción propia del módulo.
+
 `update` y `delete` comprueban primero que la película existe (`MovieNotFoundException`, 404). `update` además comprueba el director.
 
 ### Errores
 
 | Situación                                   | Excepción                                 | Respuesta |
 | ------------------------------------------- | ----------------------------------------- | --------- |
-| Película no existe                          | `MovieNotFoundException`                  | 404       |
+| Película/valoración no existe               | `MovieNotFoundException`, `RatingNotFoundException` | 404 |
 | Director no existe                          | `DirectorNotFoundException`               | 404       |
 | Cuerpo no cumple la validación              | `MethodArgumentNotValidException`         | 400       |
 | JSON mal formado o con un tipo imposible    | `HttpMessageNotReadableException`         | 400       |
 | Id de la URL no numérico                    | `MethodArgumentTypeMismatchException`     | 400       |
 | `Content-Type` distinto de JSON             | `HttpMediaTypeNotSupportedException`      | 415       |
-| La película no aparece justo tras guardarla | `IllegalStateException`, sin manejador    | 500       |
+| La entidad no aparece justo tras guardarla  | `IllegalStateException`, sin manejador    | 500       |
 | Constructor del dominio rechaza un valor    | `IllegalArgumentException`, sin manejador | 500       |
 | Error de base de datos                      | sin manejador                             | 500       |
 
 ---
 
-## 6. Checklist para añadir una entidad nueva
+## 6. Checklist para añadir una entidad nueva (dentro de un módulo)
 
-Sustituir `Movie` por la entidad:
+Sustituir `<Entidad>` por la entidad y seguir el orden del §3.8:
 
-- [ ] `domain/model/<Entidad>`
-- [ ] `domain/exception/<Entidad>NotFoundException`
-- [ ] `domain/repository/<Entidad>Repository` (interfaz)
-- [ ] `domain/service/<Entidad>Service` (interfaz) e `impl/<Entidad>ServiceImpl`
-- [ ] `persistence/dao/<Entidad>Dao` (interfaz) e `impl/jdbc/<Entidad>DaoJdbc`
-- [ ] `persistence/repository/impl/<Entidad>RepositoryImpl`
-- [ ] `controller/dto/request/<Entidad>Request` y `dto/response/<Entidad>Response`
-- [ ] `controller/mapper/<Entidad>Mapper`
-- [ ] `controller/<Entidad>Controller` y el manejador de su excepción en `GlobalExceptionHandler`
+- [ ] `internal/domain/model/<Entidad>` (+ excepciones propias si las hay)
+- [ ] `internal/domain/repository/<Entidad>Repository` (puerto)
+- [ ] `internal/persistence/dao/<Entidad>Dao` e `impl/jdbc/<Entidad>DaoJdbc`
+- [ ] `internal/persistence/repository/impl/<Entidad>RepositoryImpl`
+- [ ] `internal/application/<Acción><Entidad>UseCase` (uno por operación con `execute`)
+- [ ] `api/http/dto/request/<Entidad>Request` y `dto/response/<Entidad>Response`
+- [ ] `api/http/mapper/<Entidad>Mapper`
+- [ ] `api/http/<Entidad>Controller` + método en el `<Modulo>ExceptionHandler`
+- [ ] Operación consumible por otros módulos: método en `<Modulo>Facade` + record DTO, delegación y mapeo en `facade/impl`, `allowedDependencies` del consumidor, puerto + adapter en el consumidor
 - [ ] Migración Flyway si hay tabla nueva
 - [ ] Tests de cada capa (TDD: primero el test)
 
@@ -229,6 +224,6 @@ Sustituir `Movie` por la entidad:
 - **N+1** en `MovieDaoJdbc.findAll` (una consulta de actores por película).
 - **Reparto de solo lectura:** no se escribe `movie_actor`.
 - **500 sin tratar** para `IllegalArgumentException` y errores de base de datos.
-- **Impureza de Spring en el dominio** (`@Service`, `@Transactional`).
-- **Un único agregado:** `Director` y `Actor` existen como modelo, pero solo se leen a través de `Movie` (`findDirectorById` es lo único propio de director).
-- **Sin `equals`/`hashCode`** en las entidades.
+- **Un único agregado en `catalog`:** `Director` y `Actor` existen como modelo, pero solo se leen a través de `Movie` (`MovieService.findDirector` es lo único propio de director).
+- **Sin `equals`/`hashCode`** en las entidades (identidad = `id` de la base).
+- **Sin `@ApplicationModuleTest` por módulo** ni MapStruct ni JPA: en esa cola está su pieza ([arquitectura-monolito.md](arquitectura-monolito.md), §2).

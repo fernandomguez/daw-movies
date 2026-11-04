@@ -1,47 +1,51 @@
 # Arquitectura objetivo: monolito modular con Spring Modulith
 
-> **Esta es la arquitectura de llegada, no la del código de hoy.** La describe el
-> skill `monolito-modular` (apuntes del profesor) y se irá adoptando conforme el
-> temario la permita: su pieza mayor (JPA, `internal/persistence` con entidades)
-> llega cuando el profesor dé el tema, «no lo hemos hecho todavía», y el resto
-> (fachadas, casos de uso) cuando haya ≥2 módulos de negocio.
+> **La estructura de esta referencia ES ya la del código (D-51):** `api/facade(+impl)`,
+> `api/http` e `internal/{application,domain,persistence}` están instalados en los
+> dos módulos. Lo que queda de esta referencia es **técnico** y llega con el
+> temario: JPA en `internal/persistence`, modelos enriquecidos, MapStruct y los
+> `@ApplicationModuleTest` (§2 de abajo).
 >
 > La arquitectura **real** de hoy está en [arquitectura.md](arquitectura.md)
-> ( Decisiones: [D-48](guia-estudio/decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples) y
-> [D-49](guia-estudio/decisiones-tecnicas.md#d-49-monolito-modular-módulo-catalog-con-spring-modulith) ). Código en inglés; documentación en español.
+> ( Decisiones: [D-48](guia-estudio/decisiones-tecnicas.md#d-48-arquitectura-por-capas-con-dao-jdbc-y-dominio-con-tipos-simples),
+> [D-49](guia-estudio/decisiones-tecnicas.md#d-49-monolito-modular-módulo-catalog-con-spring-modulith),
+> [D-50](guia-estudio/decisiones-tecnicas.md#d-50-segundo-módulo-ratings-conectado-por-fachada) y
+> [D-51](guia-estudio/decisiones-tecnicas.md#d-51-estructura-objetivo-en-los-dos-módulos-sync-con-el-2-del-skill) ). Código en inglés; documentación en español.
 
 ---
 
-## 1. Lo que ya está instalado (fase 4, D-49, 2026-11-04)
+## 1. Lo que ya está instalado (D-49/D-50/**D-51**, 2026-11-04)
 
 | Pieza del skill | Estado hoy |
 |---|---|
-| Un módulo de negocio, paquete en minúsculas y plural | ✅ `com.daw.movies.catalog` |
-| `Application.java` en el paquete base | ✅ `MoviesApplication`, con `@Modulithic(sharedModules = "config")` |
-| Configuración transversal fuera de los módulos (el `app` del skill) | ✅ `com.daw.movies.config.OpenApiConfig` (módulo compartido) |
-| `package-info.java` con `@ApplicationModule` | ✅ en `catalog` (sellado, `displayName = "Catalog"`, sin `allowedDependencies`: no ofrece ni consume) |
-| Verificación Modulith (`verify()`), grafo acíclico | ✅ `ModulithTest` |
-| `Documenter` (doc de módulos en `target/spring-modulith-docs`) | ✅ en `ModulithTest` (pinta `module-catalog` y `module-ratings`) |
-| ArchUnit como segunda barrera | ✅ `ArquitecturaTest` (7 reglas con comodines, MOD-R01–R05 + 2 de frontera) |
-| Fachada entre módulos (versión simple del `api/facade` objetivo) | ✅ `CatalogFacade` + `record MovieLookup` en la raíz de `catalog` (D-50, fase 5) |
-| Segundo módulo consumiendo la fachada (`allowedDependencies = "catalog"`) | ✅ `ratings` (valoraciones), D-50 |
+| Módulos de negocio, paquetes en minúsculas y plural | ✅ `catalog` y `ratings` |
+| `Application.java` en el paquete base | ✅ `MoviesApplication` (`@SpringBootApplication` y nada más) |
+| `app` como raíz de composición, fuera de los módulos | ✅ `com.daw.movies.app.OpenApiConfig`; solo paquetes anotados son módulos (`detection-strategy = explicitly-annotated`) |
+| **`api/facade(+impl)` · `api/http` · `internal/{application,domain,persistence}`** (§2 completo) | ✅ en los dos módulos (D-51) |
+| `package-info.java` con `@ApplicationModule` + `allowedDependencies = "catalog :: facade"` | ✅ en ambos (la dependencia queda restringida a la interfaz con nombre) |
+| `@NamedInterface("facade")` solo en `api/facade` | ✅ en `catalog` (records de contrato: `MovieLookup`) |
+| Casos de uso `{Accion}{Entidad}UseCase.execute()` | ✅ 5 en catalog + 3 en ratings; `@Named` + `@jakarta.transaction.Transactional` los que escriben; ninguno invoca otro |
+| Dominio puro de Spring (solo `@Named` tolerado) | ✅ la impureza `@Service`/`@Transactional` de D-48 murió con D-51 |
+| Contratos con otros módulos declarados por el consumidor (puerto + adapter) | ✅ `AvailableMoviesPort` en `internal.domain.port` + `CatalogMoviesAdapter` en `internal.persistence.adapter` (únic import de la fachada ajena) |
+| Handlers por módulo | ✅ `CatalogExceptionHandler`, `RatingExceptionHandler` |
+| Verificación Modulith (`verify()`), grafo acíclico | ✅ `ModulithTest` (cogió en rojo la fachada sin `@NamedInterface` durante la migración) |
+| `Documenter` (doc de módulos) | ✅ pinta `module-catalog` y `module-ratings` |
+| ArchUnit `LayerRulesTest` equivalente (§3.7) | ✅ `ArquitecturaTest` (9 reglas) |
+| DTO web separados de los de fachada | ✅ por estructura |
 
-**No aplicable todavía, a propósito:** la versión **objetivo** de la fachada
-(`api/facade` + `@NamedInterface("facade")` + `:: facade` + mapeo MapStruct) —
-la simple ya existe y sirve (D-50) —, `internal/…` (la estructura
-planas de D-48 vive igual de bien dentro de los módulos; se reordena al migrar a
-la arquitectura objetivo) y JPA/MapStruct (todo JDBC, D-48).
+**No aplicable todavía, a propósito (piezas técnicas, no estructura):** JPA
+(entidades, `JpaDao`, `PersistenceMapper`) — JDBC sigue; **MapStruct** — los
+mappers van a mano (`CatalogFacadeMapper`, cero lógica); modelos enriquecidos + value objects; `@ApplicationModuleTest` por módulo.
 
 ## 2. Lo que queda encolado, y qué lo desbloquea
 
 | Pieza de la arquitectura objetivo | Temario / condición |
 |---|---|
-| `internal/persistence` con `@Entity` + `JpaRepository` + mapper entidad↔dominio | Tema 05 del profesor (JPA); la primera vez ya existe de referencia en la rama `jpa-fase-11-15a` |
+| `internal/persistence` con `@Entity` + `JpaRepository` + `PersistenceMapper` | Tema 05 del profesor (JPA); la primera vez ya existe de referencia en la rama `jpa-fase-11-15a` |
+| MapStruct (JSR-330) para `FacadeMapper` y `PersistenceMapper` | Con la migración JPA (los mappers a mano están en su jobs y son triviales) |
 | Modelos enriquecidos + *value objects* (`internal/domain`) | Vuelve el comportamiento del dominio (tema 03; los VOs ya se hicieron una vez y se revocaron, D-46) |
-| **Casos de uso** `{Accion}{Entidad}UseCase.execute` (en vez de `MovieService` con 5 métodos) | Con la arquitectura rica; y el skill prohíbe llamar de un caso de uso a otro |
-| `api/facade` + `@NamedInterface("facade")` + DTO-records de fachada con MapStruct | La fachada **simple** ya conecta `ratings` ↔ `catalog` (D-50); esta versión rica llega con la migración a la arquitectura objetivo |
-| Dominio 100 % puro (adiós a `@Service`/`@Transactional` en `domain`, **hoy impureza aceptada de D-48**) | Misma migración JPA: se cablea con `@Bean` en `app` o se cambia a `jakarta.inject.Named` |
-| `@ApplicationModuleTest` por módulo; el `allowedDependencies` a `catalog :: facade` | Con la fachada rica (MapStruct + DTO separados) |
+| Tests `@ApplicationModuleTest` por módulo (§3.7.4) | Deuda reconocida en D-51: el arranque parcial de un módulo con BD real necesita diseñarse (portunas DataSource, fachada del módulo dependiente…) |
+| Dominio 100 % puro (adiós al `jakarta.inject.Named`) | Se cablea con `@Bean` en `app` si el profesor lo quiere estricto |
 
 Riesgo ya apuntado (D-45): si `Director`/`Actor` se partiesen en otro módulo, las relaciones entre módulos van **por id**, no por objeto — el skill fija cómo (puerto declarado por el consumidor + `{Capacidad}Adapter` solo en `persistence`).
 

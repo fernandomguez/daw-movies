@@ -4,7 +4,7 @@ Proyecto educativo de 2.º de DAW: una API REST de películas, directores y acto
 
 El objetivo no es solo que funcione, sino **entender cada pieza y cada decisión**. Por eso el repositorio incluye una guía de estudio completa ([`docs/guia-estudio/`](docs/guia-estudio/README.md)) que cuenta qué se hizo, por qué, qué errores aparecieron y cómo se resolvieron. Si estás aprendiendo Spring Boot, puedes seguirla en orden.
 
-> **Estado actual (2026-11-04, monolito modular):** el proyecto pasó de JPA a una **arquitectura por capas con JDBC** (D-48) y el profesor no quiere *value objects* (D-46 revocada). Desde la fase 4 (D-49) todo vive en **módulos Spring Modulith**: `catalog` (capas `controller/domain/persistence`, sellado) y `ratings` (valoraciones de 1–10, D-50), con `MoviesApplication` y `config/` en la raíz (`@Modulithic(sharedModules = "config")`); verificación en `ModulithTest` (`verify()` + `Documenter`) y barrera ArchUnit en `ArquitecturaTest` (7 reglas). El módulo ratings consume **la fachada `CatalogFacade` + `MovieLookup`** (relación por id). Hecho en el giro: entender el código y sus tests (30/31), skill `creador-de-skills` actualizado (32), **Swagger desde el código** (33), **monolito modular** (34) y **segundo módulo conectado por fachada** (5, D-50). Hay **109 tests en verde** y **9 endpoints**. La arquitectura objetivo (JPA, fachada rica, casos de uso, `internal/…`) está en [`docs/arquitectura-monolito.md`](docs/arquitectura-monolito.md) y se adoptará por temas del temario («el profesor no quiere JPA todavía: no lo hemos dado»). Las fases JPA 11–14 quedan superadas y viven en la rama `jpa-fase-11-15a`. Los datos de prueba se cargan aparte con `db/testdata/seed.sql`.
+> **Estado actual (2026-11-04, estructura objetivo D-51):** monolito modular según el skill del profesor (`arquitectura-monolito.md`): `MoviesApplication` + `app/` en la raíz (raíz de composición, no módulo) y **dos módulos** sellados con `@ApplicationModule`: `catalog` (películas/directores/actores con DAO JDBC y fachada `CatalogFacade`) y `ratings` (valoraciones 1–10, D-50). Cada módulo: `api/facade(+impl)`, `api/http` (controller + DTOs + mapper + handler propio) e `internal/{application con casos de uso a un `execute()`, domain Java puro, persistence JDBC/adapter}`. ratings consume `catalog :: facade` vía `AvailableMoviesPort` + `CatalogMoviesAdapter`. Verificación: `ModulithTest` (`verify()` + `Documenter`) y `ArquitecturaTest` (9 reglas del §3.7). Hay **117 tests en verde** y **9 endpoints**. Lo que queda de la referencia (JPA, MapStruct, modelos enriquecidos, `@ApplicationModuleTest`) va por temas del temario («el profesor no quiere JPA todavía: no lo hemos dado»). Las fases JPA 11–14 viven en la rama `jpa-fase-11-15a`. Los datos de prueba se cargan aparte con `db/testdata/seed.sql`.
 
 ---
 
@@ -158,25 +158,33 @@ docker compose up -d          # los tests se conectan a MariaDB: tiene que estar
 Resultado esperado de `test`:
 
 ```
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ArquitecturaTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ArquitecturaTest
 [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ModulithTest
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.config.OpenApiContractTest
-[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.controller.MovieControllerTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.app.OpenApiContractTest
+[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.api.http.MovieControllerTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.api.http.RatingControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.application.FindMoviesUseCaseTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.application.FindMovieByIdUseCaseTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.application.CreateMovieUseCaseTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.application.UpdateMovieUseCaseTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.application.DeleteMovieUseCaseTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.internal.application.CreateRatingUseCaseTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.internal.application.FindRatingsByMovieUseCaseTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.internal.application.DeleteRatingUseCaseTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.internal.persistence.adapter.CatalogMoviesAdapterTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.domain.service.MovieServiceTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.domain.model.ActorTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.domain.model.DirectorTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.domain.model.MovieTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.internal.domain.model.RatingTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.persistence.dao.impl.jdbc.MovieDaoJdbcTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.internal.persistence.repository.impl.MovieRepositoryImplTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.internal.persistence.dao.impl.jdbc.RatingDaoJdbcTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.internal.persistence.repository.impl.RatingRepositoryImplTest
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.DatabaseConnectionTests
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.domain.model.ActorTest
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.domain.model.DirectorTest
-[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.domain.model.MovieTest
-[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.domain.service.impl.MovieServiceImplTest
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.FlywayMigrationTests
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.MoviesApplicationTests
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.persistence.dao.impl.jdbc.MovieDaoJdbcTest
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.catalog.persistence.repository.impl.MovieRepositoryImplTest
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.persistence.dao.impl.jdbc.RatingDaoJdbcTest
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.persistence.repository.impl.RatingRepositoryImplTest
-[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.controller.RatingControllerTest
-[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.domain.service.impl.RatingServiceImplTest
-[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0 -- in com.daw.movies.ratings.domain.model.RatingTest
-[INFO] Tests run: 109, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 117, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
 ```
 
@@ -518,29 +526,31 @@ daw-movies/
 ├── pom.xml                ← proyecto Maven: Java 25, Spring Boot 4.1.1, dependencias
 ├── mvnw, mvnw.cmd, .mvn/  ← Maven Wrapper (Maven 3.10.0)
 ├── src/
-│   ├── main/java/com/daw/movies/MoviesApplication.java       ← clase de arranque (@Modulithic: módulo compartido "config")
-│   ├── main/java/com/daw/movies/config/                      ← OpenApiConfig (Swagger; módulo compartido, fuera de las capas)
-│   ├── main/java/com/daw/movies/catalog/                     ← package-info.java: sello del módulo (@ApplicationModule)
-│   ├── main/java/com/daw/movies/catalog/CatalogFacade.java   ← fachada del módulo (+ MovieLookup): lo único público
-│   ├── main/java/com/daw/movies/catalog/controller/          ← MovieController, dto/, mapper/, handler/
-│   ├── main/java/com/daw/movies/catalog/domain/              ← model/ (Movie, Director, Actor), service/, repository/ (puerto), exception/
-│   ├── main/java/com/daw/movies/catalog/persistence/         ← dao/ (MovieDao, MovieDaoJdbc), repository/impl/ (MovieRepositoryImpl)
-│   ├── main/java/com/daw/movies/ratings/                     ← segundo módulo (D-50): Rating + servicio + DAO + endpoints + package-info
-│   ├── main/resources/application.yaml                        ← configuración (sin secretos: los lee de .env)
+│   ├── main/java/com/daw/movies/MoviesApplication.java       ← @SpringBootApplication, nada más (§3.1 del skill)
+│   ├── main/java/com/daw/movies/app/                          ← raíz de composición: OpenApiConfig (NO es módulo)
+│   ├── main/java/com/daw/movies/catalog/                      ← MÓDULO «Catalog» (package-info sellado)
+│   │   ├── api/facade/(impl)/                                 ← @NamedInterface("facade"): CatalogFacade + MovieLookup (+ Impl y mapper)
+│   │   ├── api/http/                                          ← MovieController, dto/, mapper/, handler/
+│   │   ├── internal/application/                              ← los 5 casos de uso (FindMovies, CreateMovie…)
+│   │   ├── internal/domain/                                   ← model/ (Movie, Director, Actor), service/, repository/ (puerto), exception/
+│   │   └── internal/persistence/                              ← dao/ (MovieDao, MovieDaoJdbc), repository/impl/
+│   ├── main/java/com/daw/movies/ratings/                      ← MÓDULO «Ratings» (package-info: "catalog :: facade")
+│   │   ├── api/http/                                          ← RatingController, dto/, mapper/, handler/
+│   │   ├── internal/application/                              ← los 3 casos de uso (CreateRating…)
+│   │   ├── internal/domain/                                   ← model/, exception/, port/ (AvailableMoviesPort), repository/
+│   │   └── internal/persistence/                              ← dao/, repository/impl/, adapter/ (CatalogMoviesAdapter)
+│   ├── main/resources/application.yaml                        ← configuración (+ detection-strategy de Modulith; secretos por .env)
 │   ├── main/resources/db/migration/                           ← migraciones Flyway (V1–V5: las cinco tablas)
 │   ├── main/resources/db/testdata/seed.sql                    ← datos de prueba (no lo ejecuta Flyway, D-42)
 │   ├── test/java/com/daw/movies/MoviesApplicationTests.java
 │   ├── test/java/com/daw/movies/ModulithTest.java             ← verify() y Documenter de Spring Modulith (2 módulos)
-│   ├── test/java/com/daw/movies/ArquitecturaTest.java         ← 7 reglas ArchUnit (MOD-R01–R05 + frontera de módulos)
-│   ├── test/java/com/daw/movies/DatabaseConnectionTests.java  ← conexión a MariaDB
-│   ├── test/java/com/daw/movies/FlywayMigrationTests.java     ← Flyway crea flyway_schema_history
-│   ├── test/java/com/daw/movies/config/                       ← OpenApiContractTest (contrato Swagger)
-│   ├── test/java/com/daw/movies/catalog/controller/           ← MovieControllerTest (@WebMvcTest)
-│   ├── test/java/com/daw/movies/catalog/domain/               ← tests de entidades (sin Spring) y MovieServiceImplTest (Mockito)
-│   ├── test/java/com/daw/movies/ratings/                      ← el módulo ratings: model, service (Mockito), controller (@WebMvcTest) y persistence
+│   ├── test/java/com/daw/movies/ArquitecturaTest.java         ← 9 reglas ArchUnit (§3.7 del skill + frontera)
+│   ├── test/java/com/daw/movies/app/                          ← OpenApiContractTest (contrato Swagger)
+│   ├── test/java/com/daw/movies/catalog/…                     ← espejo: api/http (MockMvc), internal/application (casos de uso), internal/domain, internal/persistence
+│   └── test/java/com/daw/movies/ratings/…                     ← espejo: api/http, internal/application, internal/domain, internal/persistence (+ adapter)
 └── docs/
-    ├── arquitectura.md             ← la arquitectura real de los módulos catalog y ratings (D-48 a D-50)
-    ├── arquitectura-monolito.md    ← arquitectura objetivo (skill monolito-modular; JPA más adelante)
+    ├── arquitectura.md             ← la arquitectura real de los módulos catalog y ratings (D-48 a D-51)
+    ├── arquitectura-monolito.md    ← referencia del skill monolito-modular (instalada, §1; lo pendiente en §2)
     └── guia-estudio/               ← plan, fases, temario, decisiones y glosario
 ```
 
