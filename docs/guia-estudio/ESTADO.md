@@ -14,12 +14,12 @@
 |---|---|
 | Rumbo actual | Arquitectura por capas con JDBC: `controller` (con `dto`, `mapper`, `handler`), `domain` (`model`, `service`, `repository`, `exception`), `persistence` (`dao`, `repository.impl`) |
 | Paso en curso | Fases 1, 2 y 3 hechas (skill actualizado; Swagger con springdoc 3.2.0 y `OpenApiConfig`). Siguiente: resolver la divergencia con `origin/main`; después fase 4 |
-| Último commit | `main` local, subido el 2026-11-04 a la rama **`origin/nuevo-rumbo-jdbc`** (con `git push -u origin main:nuevo-rumbo-jdbc`; el `main` local ahora sigue a esa rama). **`origin/main` no se ha tocado**: tiene el camino JPA (11 commits que `main` local no tiene) y sigue divergido. Decidir qué hacer con `origin/main` (PR, sustituirlo o dejarlo) está pendiente |
+| Último commit | `main` local = `origin/main` (el nuevo rumbo JDBC). El 2026-11-04 se **intercambiaron las ramas en GitHub** con `gh api .../branches/<rama>/rename`: el `main` viejo (camino JPA, fases 11 y 15A) es ahora **`origin/jpa-fase-11-15a`** (`2d58690`) y la rama `nuevo-rumbo-jdbc` pasó a llamarse `main` (rama por defecto, puesta con `gh repo edit --default-branch main`). Etiquetas `fase-01`…`fase-15A` y `backup/antes-de-volver-a-fase-10` sin cambios |
 | Tests | **58 en verde** (`mvnw clean test`): 3 de contrato OpenAPI, 19 controlador, 13 servicio, 20 modelo, 3 de integración (necesitan Docker) |
 | Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Swagger UI en `/swagger-ui.html` y contrato en `/v3/api-docs` (generado desde el código, sin yaml) |
 | Tabla de datos | `director` (6), `actor` (14), `movie` (10), `movie_actor` (24); Flyway en la versión 4 |
 | Cambios sin commitear | ninguno al cierre de la sesión del 2026-11-04 (el repo del skill, `Lorenzo\creador-de-skills`, no tiene remoto: sus commits son solo locales) |
-| Ramas / etiquetas | `main` local está en la fase 10 + commits nuevos. `origin/main` y las etiquetas `fase-11` y `fase-15A` contienen trabajo de otro camino (JPA, OpenAPI) que **no** está en `main` local. Existe `backup/antes-de-volver-a-fase-10`. No mezclar sin hablarlo |
+| Ramas / etiquetas | `main` (local y remota) = nuevo rumbo JDBC, a partir de la fase 10. El camino JPA/OpenAPI de las fases 11 y 15A vive en `origin/jpa-fase-11-15a` y en las etiquetas `fase-11` y `fase-15A`. Existe `backup/antes-de-volver-a-fase-10`. No mezclar sin hablarlo. **`origin` es ahora HTTPS** (`https://github.com/fernandomguez/daw-movies.git`): el SSH de `git push` falló con `Permission denied (publickey)` aunque `ssh -T` funcionaba; para subir desde el asistente hace falta la credencial de `gh` (`gh auth login` ya hecho) |
 
 ### Las fases que quedan (plan aprobado)
 
