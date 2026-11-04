@@ -2,7 +2,7 @@
 
 > **Para qué sirve este archivo:** es el parte de situación. Se lee **al empezar cualquier sesión** (humano o asistente de IA) y se **actualiza al terminar cada paso**, antes de cerrar. Así se puede empezar de cero, sin memoria de la conversación anterior, sin inventar nada.
 >
-> Última actualización: **2026-11-04** (fin de sesión, segunda parte).
+> Última actualización: **2026-11-04** (fin de sesión, duodécima parte).
 
 ---
 
@@ -13,8 +13,8 @@
 | Dato | Valor |
 |---|---|
 | Rumbo actual | Arquitectura por capas con JDBC: `controller` (con `dto`, `mapper`, `handler`), `domain` (`model`, `service`, `repository`, `exception`), `persistence` (`dao`, `repository.impl`) |
-| Paso en curso | Fases 0–3 y la **1c de docs, hechas**. Quedan: los **tests del DAO/repositorio con base de datos real** (quedaron fuera de la 1c) y la **4** (monolito modular). Divergencia con `origin/main` ya resuelta; `main` lleva además el frontend Angular (`f1fb4ce`, `2079b79`, `e814b1d`) |
-| Último commit | `main` local = `origin/main` (el nuevo rumbo JDBC). El 2026-11-04 se **intercambiaron las ramas en GitHub** con `gh api .../branches/<rama>/rename`: el `main` viejo (camino JPA, fases 11 y 15A) es ahora **`origin/jpa-fase-11-15a`** (`2d58690`) y la rama `nuevo-rumbo-jdbc` pasó a llamarse `main` (rama por defecto, puesta con `gh repo edit --default-branch main`). Etiquetas `fase-01`…`fase-15A` y `backup/antes-de-volver-a-fase-10` sin cambios |
+| Paso en curso | Fases 0–3 y la **1c de docs, hechas**. **Frontend Angular terminado y verificado** (décima/undécima/duodécima partes). Quedan: los **tests del DAO/repositorio con base de datos real** (quedaron fuera de la 1c) y la **4** (monolito modular) |
+| Último commit | `a6546d3` (`feat(frontend): ...`) — **`main` local va 9 commits por delante de `origin/main`: sin `push`** (pendiente de confirmación del alumno). El 2026-11-04 se **intercambiaron las ramas en GitHub** con `gh api .../branches/<rama>/rename`: el `main` viejo (camino JPA, fases 11 y 15A) es ahora **`origin/jpa-fase-11-15a`** (`2d58690`) y la rama `nuevo-rumbo-jdbc` pasó a llamarse `main` (rama por defecto, puesta con `gh repo edit --default-branch main`). Etiquetas `fase-01`…`fase-15A` y `backup/antes-de-volver-a-fase-10` sin cambios |
 | Tests | **58 en verde** (`mvnw clean test`): 19 controlador, 13 servicio, 20 modelo (6+6+8), 3 de contrato OpenAPI y 3 de integración. Los 6 que arrancan la aplicación necesitan Docker; el resto no |
 | Endpoints | `/movies`: GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}`. Swagger UI en `/swagger-ui.html` y contrato en `/v3/api-docs` (generado desde el código, sin yaml) |
 | Tabla de datos | `director` (6), `actor` (14), `movie` (10), `movie_actor` (24); Flyway en la versión 4 |
@@ -36,7 +36,7 @@ Plan completo: `C:\Users\ferna\.claude\plans\vamos-a-cambiar-el-drifting-pond.md
 
 ### La siguiente acción, exacta
 
-1. **Antes de la fase 4:** el alumno lleva al profesor las [preguntas sobre el monolito modular](preguntas-monolito-modular.md) (13 preguntas en tabla, con la columna «Respuesta» vacía); sus respuestas se anotan ahí y en D-49. Después, **fase 1c** (limpieza de los restos de docs; ver la tabla) y/o **fase 4a** (`test: add ArchUnit layer rules`, antes de mover ningún paquete). Verificar antes la versión de ArchUnit y de Spring Modulith para Spring Boot 4.
+1. **Antes de la fase 4:** el alumno lleva al profesor las [preguntas sobre el monolito modular](preguntas-monolito-modular.md) (13 preguntas en tabla, con la columna «Respuesta» vacía); sus respuestas se anotan ahí y en D-49. **La fase 1c de docs ya está hecha** (2026-11-04, commit `e3f2967`); queda la fase **4a** (`test: add ArchUnit layer rules`, antes de mover ningún paquete). Verificar antes la versión de ArchUnit y de Spring Modulith para Spring Boot 4.
 2. Para subir cambios desde el asistente: `origin` es HTTPS; el `git push` normal funciona con `git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin main` (el SSH de Git falló en la sesión del 2026-11-04). Desde tu terminal, `git push` también debería valer.
 3. **No se empieza ninguna fase sin que el alumno lo pida.**
 
@@ -442,20 +442,19 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 
 **Lo que hizo la sesión «Validaciones Jakarta y maxYearsAhead» (19:22–20:31, murió con Orca cerrado):**
 
-1. `MovieRequest`): la anotación propia `@MaxYearsAhead(10)` (y su validador) se sustituyó por un método `isReleaseYearValid()` con `@AssertTrue` (el año no pasa de año actual + 10; `@Max` solo admite números fijos). Borrados `MaxYearsAhead.java` y `MaxYearsAheadValidator.java`.
+1. `MovieRequest`: la anotación propia `@MaxYearsAhead(10)` (y su validador) se sustituyó por un método `isReleaseYearValid()` con `@AssertTrue` (el año no pasa de año actual + 10; `@Max` solo admite números fijos). Borrados `MaxYearsAhead.java` y `MaxYearsAheadValidator.java`.
 2. [temario/entender-el-codigo.md](temario/entender-el-codigo.md) ampliado (el viaje de una petición incluido el `Optional` y el `KeyHolder` del `insert`).
 3. **Traslado del proyecto**: de `...\SpringBoot\prueba2_peliculas` a `...\SpringBoot\proyectoMovies\backend` (con `.git` intacto; la carpeta vieja quedó vacía y se borró). Hecho con `robocopy /MOVE` porque la carpeta estaba bloqueada (MarkText tenía abierto un `.md` del proyecto).
 4. **Plan del frontend** (5 fases, en esa sesión): 0 reestructurar · 1 scaffold Angular 22 + `proxy.conf.json` (`/movies` → `localhost:8080`, sin CORS) · 2 núcleo (`core/models/movie.ts`, `core/services/movie-service.ts` con signals) · 3 componentes al estilo del proyecto `trabajadores` (`features/movies`, `card-movies`, `modal-movies`, `form-movies`, errores 400 del backend pintados en el formulario) · 4 SCSS en capas s01–s06 con tokens `--mlt-sys-*` y semánticas `!default` · 5 verificación. Las fases 0, 1 y 2 **quedaron verificadas por subagente**. Fase 3 a medias: `card-movies.*` y `modal-movies.*` en disco; faltan `features/movies`, `form-movies`, la shell de app y las fases 4–5.
 
 **Recuperación (esta sesión, 20:33+):**
 
-5. `.\mvnw.cmd clean test` → **58 en verde** desde la nueva ubicación (el cambio de validación queda probado). Docker estaba ya arrancado (`movies-mariadb-1` healthy).
-6. Borrado el archivo basura `MovieServiceImpl (recovered).java` (difería de la real en una línea de javadoc; restos de la recuperación del traslado).
-7. Pendiente decidido: el frontend vivirá en este mismo repo (la raíz git pasará de `backend\` a `proyectoMovies\` para que el `frontend\` quede dentro). El commit del frontend será otro, separado de este.
-8. Commit de validaciones: `refactor: replace MaxYearsAhead annotation with AssertTrue validation`.
-5. Local: `git remote set-url origin https://github.com/fernandomguez/daw-movies.git`, `git fetch --prune`, `git branch -u origin/main main` → `main` y `origin/main` coinciden. Push con la credencial de `gh` solo para ese comando (`git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin main`); no se tocó la configuración global de Git.
-6. Documentos actualizados al cierre: `README.md` de la raíz (estado, dependencias, progreso, 58 tests, sección de Swagger, errores 20–23, estructura, ramas, D-47), `README.md` de la guía, plan (bloque G con estados), `decisiones-tecnicas.md` (nota en D-47), glosario (OpenAPI, springdoc, API First), `arquitectura.md` (`config`) y este archivo. Los enlaces al diario y al temario 15A se apuntaron a la rama `jpa-fase-11-15a`, donde existen.
-7. `mvnw clean test` **no** se volvió a ejecutar tras estos cambios de documentación (solo se tocaron `.md`); la última ejecución fue de **58 en verde** antes del commit `3f3dbc2`.
+1. `.\mvnw.cmd clean test` → **58 en verde** desde la nueva ubicación (el cambio de validación queda probado). Docker estaba ya arrancado (`movies-mariadb-1` healthy).
+2. Borrado el archivo basura `MovieServiceImpl (recovered).java` (difería de la real en una línea de javadoc; restos de la recuperación del traslado).
+3. Pendiente decidido: el frontend vivirá en este mismo repo (la raíz git pasará de `backend\` a `proyectoMovies\` para que el `frontend\` quede dentro). El commit del frontend será otro, separado de este.
+4. Commit de validaciones: `refactor: replace MaxYearsAhead annotation with AssertTrue validation`.
+
+*(Los apartados 5–7 del cierre de la octava parte que quedaban al final de este bloque — remote en HTTPS, documentos actualizados y el aviso de no reejecutar tests tras tocar solo `.md` — estos se consideran cubiertos por la décima y la undécima parte de hoy.)*
 
 ### 2026-11-04 (décima parte) — la raíz del repo sube a `proyectoMovies\` y el frontend queda completo
 
@@ -482,6 +481,14 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 8. §1 actualizado: fila «Paso en curso», fila 1c ✅ y la nota del año (`@AssertTrue`, sin `@MaxYearsAhead`, que se quitó en `6f0fbea`).
 9. Los **tests del DAO y del repositorio con base de datos real** quedan como tarea propia pendiente, fuera de esta fase.
 10. No se ejecutó `mvnw clean test`: solo se tocaron `.md` (mismo precedente que al cerrar la 15A); la última ejecución en verde fue **58** de la décima parte.
+
+### 2026-11-04 (duodécima parte) — commit final del frontend y cierre de la revisión (tercera ronda)
+
+1. Tras la undécima parte, esta sesión completó el frontend con lo que faltaba: **filtro por director en el cliente** (select alimentado por `movieService.directores()`, un `computed` que deduplica y ordena por nombre; mismo estilo que el filtro por departamento del proyecto `trabajadores`), el **formulario de director pasó a un select** (con el `directorId` convertido una sola vez, `form-movies.ts:73`) y el **arreglo del bug del modal de crear** (`modalFormulario` pasó a `Movie | null | undefined` y el template ahora prueba `@if (modalFormulario() !== undefined)`: antes con `@if (...; as movie)` el `null` de crear **nunca se renderizaba**). Tests: de **15 a 20** (los nuevos: directores deduplicados, filtro por director con clic real, conversión del select).
+2. Commit final `a6546d3` (`feat(frontend): Angular 22 movies dashboard with tokens SCSS, posters and director filter`). Juntos, el frontend va en **8 commits** (`f1fb4ce`, `2079b79`, `e814b1d`, `ece8a0b`, `1dcde3b`, `e3f2967`, y anteriores de la sesión muerta; ver `git log --oneline`).
+3. **Tercera ronda de revisión (subagente):** APRUEBA frontend (build 0 avisos, **20/20** tests, lecturas de tokens correctas, HTML↔SCSS coincide, payload correcto), **APRUEBA** backend (árbol limpio, humo contra `localhost:8080`: 200/404/400 correctos con el seed) y **APRUEBA** codificación (UTF-8 sin BOM en los 13 ficheros, tildes por codepoint). Los fallos que señala la ronda son de **documentación** (se corrigen en este apartado) y el texto corrupto de `frontend/agents.md` (líneas 43, 52, 73, 74, 86, 92: corregido en el mismo commit).
+4. **Pendiente de decisión del alumno:** `main` local va **9 commits por delante** de `origin/main` (**sin push**). La sesión terminó sin subir nada; el protocolo pide confirmación antes de push (ver §1).
+5. El poster de las tarjetas y el filtro por director **no estaban en el plan original del frontend** (los ejecutó el proceso huérfano de la sesión muerta): quedan porque superaron la revisión, pero se deshacen en commits separados si el alumno no los quiere.
 
 ## 5. Trabajo sin commitear
 
