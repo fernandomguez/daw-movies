@@ -457,17 +457,22 @@ Petición del alumno: *"¿hemos incluido Swagger? Implementa la documentación O
 6. Documentos actualizados al cierre: `README.md` de la raíz (estado, dependencias, progreso, 58 tests, sección de Swagger, errores 20–23, estructura, ramas, D-47), `README.md` de la guía, plan (bloque G con estados), `decisiones-tecnicas.md` (nota en D-47), glosario (OpenAPI, springdoc, API First), `arquitectura.md` (`config`) y este archivo. Los enlaces al diario y al temario 15A se apuntaron a la rama `jpa-fase-11-15a`, donde existen.
 7. `mvnw clean test` **no** se volvió a ejecutar tras estos cambios de documentación (solo se tocaron `.md`); la última ejecución fue de **58 en verde** antes del commit `3f3dbc2`.
 
+### 2026-11-04 (décima parte) — la raíz del repo sube a `proyectoMovies\` y el frontend queda completo
+
+**Recuperación del plan muerto (continuación de la novena parte):**
+
+1. Repositorio: el `.git` subió de `backend\` a la raíz `proyectoMovies\` (historial intacto; commit `2b41cd6` rearma las rutas). A partir de aquí la raíz del repo es `proyectoMovies\` y `git` se usa desde ahí.
+2. Datos del backend revalidados tras el traslado: `.\mvnw.cmd clean test` → **58 en verde**, Docker `healthy` (`movies-mariadb-1`); borrado el archivo basura `MovieServiceImpl (recovered).java`; commit `6f0fbea` (`refactor: replace MaxYearsAhead annotation with AssertTrue validation`).
+3. **Frontend terminado** (Angular 22, `frontend\`): fases 1–2 ya verificadas por subagente en la sesión muerta; esta sesión audita y completa la 3 (listado con buscador por título, `card-movies`, `modal-movies`, `form-movies` con mensajes de error del backend, borrado con confirmación) y la 4 (SCSS en capas s01–s06 con tokens `--mlt-sys-*` y estado privado por componente). Revisor de subagente en dos rondas: la primera marcó valores crudos, lecturas directas de `--mlt-sys-*`, el modificador propio de un elemento, `font-weight` repetido, un test trivial y un `any`; corregidos todos (catálogo ampliado con `$sombras`, `$elevaciones`, `$duraciones`, `$pesos`, `$z-index`; `modal__vacio` como elemento; `MoviePayload` reutilizado; `HttpErrorResponse` en el servicio; test nuevo que comprueba aviso y que el backend no recibe nada con el formulario inválido). La segunda ronda aprobó todo y detectó una clase HTML sin regla SCSS (`card__poster*`), saldada también. Token muerto `--card-outline-width` eliminado.
+4. **Rareza al detalle:** el servidor `opencode` de la sesión muerta se despertó (resucitado por Orca, PID 10668) y siguió ejecutando su plan por su cuenta entre las 20:37 y las 20:55. Ese proceso huérfano termino matado por esta sesión; su trabajo (poster de las tarjetas) quedó verificado a mano y por el revisor. **Los posters (`public\posters\{id}.jpg`, imágenes de Wikipedia en *fair use* documentado en su `README.md`) NO están aprobados por el alumno**: van en este commit por comodidad; si no se quieren, se deshacen en un commit aparte sin tocar el resto.
+5. Verificación final: `npx ng build` → **sin avisos de presupuesto** (subidos a `8kB/16kB` de `anyComponentStyle` porque la arquitectura de tokens hace los archivos más largos); `npx ng test` → **15/15** (5 ficheros: app, movies, card, modal, form); `ng serve` (proxy 4200→8080) con el backend y el seed reales: `GET /movies` 200 con las 10 películas, raíz 200 y `posters/3.jpg` 200 (134,6 kB).
+6. Commit del frontend: `feat(frontend): Angular 22 movies dashboard with tokens SCSS and posters` (único commit, con el `ESTADO.md` de este apartado).
+
+**Siguiente (sin ejecutar):** fase 1c y/o fase 4 del backend (preguntas y ArchUnit), cuando el alumno lo pida.
+
 ## 5. Trabajo sin commitear
 
-```
-RM controller/exception/GlobalExceptionHandler.java -> controller/handler/GlobalExceptionHandler.java
- M src/test/.../controller/MovieControllerTest.java      (import del nuevo paquete)
- M docs/arquitectura.md                                  (paquete handler)
- M docs/guia-estudio/temario/entender-el-codigo.md       (paquete handler)
- M docs/guia-estudio/ESTADO.md                           (este parte de situación)
-```
-
-Commit propuesto: `refactor: rename controller.exception to controller.handler`. **Sin push** de nada desde la fase 10: todos los commits posteriores son locales.
+Ninguno tras el commit `refactor: replace MaxYearsAhead...` + `refactor: move project root up...` + el commit del frontend de la décima parte. El §1 de arriba manda.
 
 ### Commits locales desde la fase 10 (más reciente primero)
 
