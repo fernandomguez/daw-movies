@@ -1,0 +1,27 @@
+// Catálogo de opciones: valores crudos, sin decisiones de diseño.
+// Las gamas de color tienen 9 tonos (1 = más oscuro, 9 = más claro).
+
+$colores: (
+  'violeta': (#2E1065, #4C1D95, #5B21B6, #6D28D9, #7C3AED, #A78BFA, #C4B5FD, #DDD6FE, #EDE9FE),
+  'naranja': (#7C2D12, #9A3412, #C2410C, #EA580C, #F97316, #FDBA74, #FED7AA, #FFEDD5, #FFF7ED),
+  'rojo': (#7F1D1D, #991B1B, #B91C1C, #DC2626, #EF4444, #FCA5A5, #FECACA, #FEE2E2, #FEF2F2),
+  'gris': (#111827, #1F2937, #374151, #4B5563, #6B7280, #9CA3AF, #D1D5DB, #E5E7EB, #F3F4F6),
+  'blanco': (#F9FAFB, #FAFAFA, #FBFBFB, #FCFCFC, #FDFDFD, #FEFEFE, #FFFFFF, #FFFFFF, #FFFFFF),
+  'negro': (#000000, #050505, #0B0B0F, #111318, rgba(0, 0, 0, 60%), #1A1A1E, #242428, #2E2E33, #38383D)
+);
+
+$fuentes: (
+  'sans-serif': ("Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif),
+  'serif': (Georgia, "Times New Roman", serif),
+  'monospace': (Consolas, "Courier New", monospace)
+);
+
+$font-sizes: (10px, 12px, 14px, 16px, 18px, 24px, 32px, 40px);
+
+$margins: (0px, 4px, 8px, 12px, 16px, 24px, 32px, 48px);
+
+$paddings: (0px, 4px, 8px, 12px, 16px, 24px, 32px, 40px);
+
+$border-radius: (1px, 2px, 4px, 6px, 8px, 12px, 16px, 20px, 999px);
+
+$widths: (0px, 1px, 4px, 8px, 12px, 16px, 24px, 32px);

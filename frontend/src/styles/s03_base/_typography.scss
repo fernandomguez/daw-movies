@@ -1,0 +1,19 @@
+// Tipografía base: niveles de font-size elegidos en _variables_semanticas.scss.
+@use "../s01_utilities" as *;
+
+body {
+  font-size: var(--mlt-sys-font-size-#{$nivel-texto-base});
+  line-height: 1.5;
+}
+
+h1 {
+  font-size: var(--mlt-sys-font-size-#{$nivel-h1});
+}
+
+h2 {
+  font-size: var(--mlt-sys-font-size-#{$nivel-h2});
+}
+
+h3 {
+  font-size: var(--mlt-sys-font-size-#{$nivel-h3});
+}

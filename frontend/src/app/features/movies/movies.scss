@@ -1,0 +1,111 @@
+// El listado: cabecera con título+contador, buscador, botón de nueva película
+// y la grid de cards. Tokens --movies-* apuntando a --mlt-sys-*.
+.movies {
+  --movies-max-width: 1100px;
+  --movies-color-texto-titulo: var(--mlt-sys-color-principal-1);
+  --movies-color-texto-suave: var(--mlt-sys-color-gris-6);
+  --movies-color-error-texto: var(--mlt-sys-color-peligroso-2);
+  --movies-color-error-fondo: var(--mlt-sys-color-peligroso-9);
+  --movies-color-aviso-fondo: var(--mlt-sys-color-alternativo-9);
+  --movies-color-aviso-texto: var(--mlt-sys-color-alternativo-2);
+  --movies-color-principal: var(--mlt-sys-color-principal-5);
+  --movies-color-principal-hover: var(--mlt-sys-color-principal-4);
+  --movies-color-boton-texto: var(--mlt-sys-color-blanco-9);
+  --movies-input-border-color: var(--mlt-sys-color-gris-8);
+  --movies-border-radius-campo: var(--mlt-sys-border-radius-4);
+
+  max-width: var(--movies-max-width);
+  margin: 0 auto;
+  padding: 2rem 1rem;
+
+  &__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--mlt-sys-margin-4);
+    justify-content: space-between;
+  }
+
+  &__title {
+    margin: 0 0 var(--mlt-sys-margin-3);
+    color: var(--movies-color-texto-titulo);
+  }
+
+  &__filter {
+    display: flex;
+    align-items: center;
+    gap: var(--mlt-sys-margin-2);
+    margin-bottom: var(--mlt-sys-margin-4);
+  }
+
+  &__filter-label {
+    font-weight: 600;
+    color: var(--movies-color-texto-suave);
+  }
+
+  &__filter-input {
+    padding: var(--mlt-sys-padding-3);
+    border: 1px solid var(--movies-input-border-color);
+    border-radius: var(--movies-border-radius-campo);
+    font: inherit;
+
+    &:focus-visible {
+      outline: 2px solid var(--movies-color-principal);
+      outline-offset: 1px;
+    }
+  }
+
+  &__toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--mlt-sys-margin-4);
+  }
+
+  &__nueva-button {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: var(--mlt-sys-padding-3) var(--mlt-sys-padding-5);
+    border: none;
+    border-radius: 999px;
+    background: var(--movies-color-principal);
+    color: var(--movies-color-boton-texto);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+
+    &:hover {
+      background: var(--movies-color-principal-hover);
+      transform: translateY(-1px);
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+
+  &__vacio,
+  &__error,
+  &__aviso {
+    padding: var(--mlt-sys-padding-4);
+    border-radius: var(--movies-border-radius-campo);
+    margin: 0 0 var(--mlt-sys-margin-4);
+  }
+
+  &__vacio {
+    color: var(--movies-color-texto-suave);
+  }
+
+  &__error {
+    background: var(--movies-color-error-fondo);
+    color: var(--movies-color-error-texto);
+  }
+
+  &__aviso {
+    background: var(--movies-color-aviso-fondo);
+    color: var(--movies-color-aviso-texto);
+  }
+}

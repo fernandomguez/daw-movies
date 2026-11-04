@@ -1,0 +1,15 @@
+// Reset mínimo del navegador para que los componentes partan de cero.
+// Los tonos elegidos son decisiones de _variables_semanticas.scss, no números fijos.
+@use "../s01_utilities" as *;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--mlt-sys-font-default);
+  color: var(--mlt-sys-color-#{$tono-gama-texto}-#{$tono-texto-base});
+  background-color: var(--mlt-sys-color-#{$tono-gama-fondo}-#{$tono-fondo-pagina});
+  -webkit-font-smoothing: antialiased;
+}

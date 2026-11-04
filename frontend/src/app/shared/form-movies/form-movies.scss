@@ -1,0 +1,121 @@
+// Modal de formulario: mismo encuadre que el modal de detalle.
+// Tokens --form-* apuntando a --mlt-sys-*; nada crudo.
+.form {
+  --form-color-fondo-oscuro: var(--mlt-sys-color-negro-5);
+  --form-color-ficha: var(--mlt-sys-color-blanco-9);
+  --form-color-texto-titulo: var(--mlt-sys-color-principal-1);
+  --form-color-texto-suave: var(--mlt-sys-color-gris-7);
+  --form-color-linea: var(--mlt-sys-color-gris-9);
+  --form-color-error-texto: var(--mlt-sys-color-peligroso-2);
+  --form-color-error-fondo: var(--mlt-sys-color-peligroso-9);
+  --form-color-principal: var(--mlt-sys-color-principal-5);
+  --form-color-principal-hover: var(--mlt-sys-color-principal-4);
+  --form-border-radius: var(--mlt-sys-border-radius-6);
+  --form-border-radius-campo: var(--mlt-sys-border-radius-4);
+  --form-font-size-close: var(--mlt-sys-font-size-6);
+  --form-font-size-error: var(--mlt-sys-font-size-3);
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--form-color-fondo-oscuro);
+  z-index: 10;
+
+  &__ficha {
+    background: var(--form-color-ficha);
+    border-radius: var(--form-border-radius);
+    padding: var(--mlt-sys-padding-6);
+    width: min(440px, 90vw);
+    max-height: 85vh;
+    overflow: auto;
+    box-shadow: 0 10px 40px rgb(0 0 0 / 25%);
+  }
+
+  &__cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--mlt-sys-margin-3);
+    border-bottom: 1px solid var(--form-color-linea);
+    padding-bottom: var(--mlt-sys-padding-4);
+  }
+
+  &__titulo {
+    margin: 0;
+    color: var(--form-color-texto-titulo);
+  }
+
+  &__close {
+    border: none;
+    background: none;
+    font-size: var(--form-font-size-close);
+    cursor: pointer;
+    color: var(--form-color-texto-suave);
+
+    &:hover {
+      color: var(--form-color-texto-titulo);
+    }
+  }
+
+  &__aviso {
+    margin: var(--mlt-sys-margin-3) 0 var(--mlt-sys-margin-2);
+    padding: var(--mlt-sys-padding-3);
+    border-radius: var(--form-border-radius-campo);
+    background: var(--form-color-error-fondo);
+    color: var(--form-color-error-texto);
+  }
+
+  &__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mlt-sys-margin-3);
+    margin-top: var(--mlt-sys-margin-4);
+  }
+
+  &__campo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mlt-sys-margin-1);
+  }
+
+  &__etiqueta {
+    font-weight: 600;
+    color: var(--form-color-texto-suave);
+  }
+
+  &__input {
+    padding: var(--mlt-sys-padding-3);
+    border: 1px solid var(--form-color-linea);
+    border-radius: var(--form-border-radius-campo);
+    font: inherit;
+
+    &:focus-visible {
+      outline: 2px solid var(--form-color-principal);
+      outline-offset: 1px;
+    }
+  }
+
+  &__error {
+    color: var(--form-color-error-texto);
+    font-size: var(--form-font-size-error);
+  }
+
+  &__enviar {
+    margin-top: var(--mlt-sys-margin-3);
+    padding: var(--mlt-sys-padding-4);
+    border: none;
+    border-radius: var(--form-border-radius-campo);
+    background: var(--form-color-principal);
+    color: var(--form-color-ficha);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+      background: var(--form-color-principal-hover);
+    }
+  }
+}

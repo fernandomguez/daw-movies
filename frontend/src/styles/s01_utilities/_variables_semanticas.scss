@@ -1,0 +1,25 @@
+// Decisiones de diseño con !default: qué opción del catálogo se usa y dónde.
+// Para cambiarlas desde fuera, el with va en styles.scss (primera carga de s01).
+
+// Qué gama de $colores usa cada color semántico del sistema.
+$colores-semanticos: (
+  'principal': 'violeta',
+  'alternativo': 'naranja',
+  'peligroso': 'rojo'
+) !default;
+
+// Los semánticos de fondo rara vez se necesitan; gris y blanco se usan por su nombre.
+$fuente-default: 'sans-serif' !default;
+
+// Eigentliche decisiones de la página base (las leen _reset y _typography):
+// qué tono de gris se usa para el texto base y el fondo, y qué nivel de
+// font-size se aplica a cada encabezado (el índice va de 1 a 8).
+$tono-gama-texto: 'gris' !default;
+$tono-texto-base: 2 !default;
+$tono-gama-fondo: 'gris' !default;
+$tono-fondo-pagina: 8 !default;
+
+$nivel-texto-base: 4 !default;
+$nivel-h1: 7 !default;
+$nivel-h2: 6 !default;
+$nivel-h3: 5 !default;

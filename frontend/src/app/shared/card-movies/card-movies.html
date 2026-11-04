@@ -1,0 +1,20 @@
+<article class="card" (click)="abrirDetalle()">
+  <div class="card__body">
+    <h2 class="card__title">{{ movie().title }}</h2>
+
+    <div class="card__meta">
+      <span class="card__chip">{{ movie().releaseYear }}</span>
+      <span class="card__chip">{{ movie().duration }} min</span>
+    </div>
+
+    <p class="card__director">{{ movie().director.fullName }}</p>
+
+    <span class="card__actors-badge">{{ movie().actors.length }} actores</span>
+  </div>
+
+  <!-- Los botones no deben disparar el detalle de la tarjeta entera, por eso se para la propagación. -->
+  <div class="card__actions" (click)="$event.stopPropagation()">
+    <button class="card__edit-button" (click)="editarMovie()"><span aria-hidden="true">✏️</span> Editar</button>
+    <button class="card__delete-button" (click)="eliminarMovie()"><span aria-hidden="true">🗑️</span> Eliminar</button>
+  </div>
+</article>

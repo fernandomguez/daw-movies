@@ -1,0 +1,128 @@
+// Tokens del bloque: apuntan a los --mlt-sys-* (se crean en los estilos globales);
+// ningún valor crudo aquí. El hover levanta la tarjeta como en la referencia.
+.card {
+  --card-padding: var(--mlt-sys-padding-5);
+  --card-border-radius: var(--mlt-sys-border-radius-6);
+  --card-border-radius-pill: var(--mlt-sys-border-radius-9);
+  --card-font-size-chip: var(--mlt-sys-font-size-3);
+  --card-font-size-boton: var(--mlt-sys-font-size-4);
+  --card-color-texto-titulo: var(--mlt-sys-color-principal-1);
+  --card-color-texto-suave: var(--mlt-sys-color-gris-7);
+  --card-color-fondo: var(--mlt-sys-color-blanco-9);
+  --card-color-chip-fondo: var(--mlt-sys-color-principal-9);
+  --card-color-chip-texto: var(--mlt-sys-color-principal-2);
+  --card-color-aviso-fondo: var(--mlt-sys-color-alternativo-9);
+  --card-color-aviso-texto: var(--mlt-sys-color-alternativo-2);
+  --card-color-peligrosa-texto: var(--mlt-sys-color-peligroso-2);
+  --card-color-peligrosa-hover: var(--mlt-sys-color-peligroso-5);
+
+  display: flex;
+  flex-direction: column;
+  background: var(--card-color-fondo);
+  border-radius: var(--card-border-radius);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgb(0 0 0 / 15%);
+  }
+
+  &__body {
+    padding: var(--card-padding);
+    display: flex;
+    flex-direction: column;
+    gap: var(--mlt-sys-margin-2);
+    flex-grow: 1;
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--card-color-texto-titulo);
+  }
+
+  &__meta {
+    display: flex;
+    gap: var(--mlt-sys-margin-2);
+  }
+
+  &__chip {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--card-border-radius-pill);
+    background: var(--card-color-chip-fondo);
+    color: var(--card-color-chip-texto);
+    font-size: var(--card-font-size-chip);
+    font-weight: 600;
+  }
+
+  &__director {
+    margin: 0;
+    color: var(--card-color-texto-suave);
+  }
+
+  &__actors-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--card-border-radius-pill);
+    background: var(--card-color-aviso-fondo);
+    color: var(--card-color-aviso-texto);
+    font-size: var(--mlt-sys-font-size-3);
+    font-weight: 600;
+    width: fit-content;
+  }
+
+  &__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--mlt-sys-margin-2);
+    padding: var(--card-padding);
+    border-top: 1px solid var(--card-color-chip-fondo);
+    cursor: default;
+  }
+
+  &__edit-button,
+  &__delete-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: var(--card-border-radius-pill);
+    font: inherit;
+    font-size: var(--card-font-size-boton);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s, color 0.15s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgb(0 0 0 / 15%);
+    }
+  }
+
+  &__edit-button {
+    background: var(--card-color-chip-fondo);
+    color: var(--card-color-chip-texto);
+
+    &:hover {
+      background: var(--card-color-chip-texto);
+      color: var(--card-color-fondo);
+    }
+  }
+
+  &__delete-button {
+    background: var(--card-color-fondo);
+    border-color: var(--card-color-aviso-fondo);
+    color: var(--card-color-peligrosa-texto);
+
+    &:hover {
+      background: var(--card-color-peligrosa-hover);
+      border-color: var(--card-color-peligrosa-hover);
+      color: var(--card-color-fondo);
+    }
+  }
+}

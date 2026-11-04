@@ -1,0 +1,63 @@
+<div class="form" (click)="cerrar.emit()">
+  <!-- El clic dentro del formulario no cierra el modal, por eso se para. -->
+  <section class="form__ficha" (click)="$event.stopPropagation()">
+    <header class="form__cabecera">
+      @if (esEditando()) {
+        <h2 class="form__titulo">Editar película</h2>
+      } @else {
+        <h2 class="form__titulo">Nueva película</h2>
+      }
+      <button class="form__close" aria-label="Cerrar" type="button" (click)="cerrar.emit()">✕</button>
+    </header>
+
+    @if (aviso()) {
+      <p class="form__aviso">{{ aviso() }}</p>
+    }
+
+    <form class="form__cuerpo" [formGroup]="form" (ngSubmit)="enviarFormulario()">
+      <!-- Título: como @NotBlank @Size(max = 255) del backend. -->
+      <label class="form__campo" for="title">
+        <span class="form__etiqueta">Título</span>
+        <input class="form__input" id="title" type="text" formControlName="title" maxlength="255">
+        @if (form.controls.title.touched && form.controls.title.invalid) {
+          <span class="form__error">El título no puede estar vacío (máx. 255 caracteres).</span>
+        }
+      </label>
+
+      <!-- Año: como @Min(1888) + tope año actual + 10 del método @AssertTrue. -->
+      <label class="form__campo" for="releaseYear">
+        <span class="form__etiqueta">Año de estreno</span>
+        <input class="form__input" id="releaseYear" type="number" formControlName="releaseYear" [min]="1888" [max]="maxAno()">
+        @if (form.controls.releaseYear.touched && form.controls.releaseYear.invalid) {
+          <span class="form__error">El año debe estar entre 1888 y {{ maxAno() }}.</span>
+        }
+      </label>
+
+      <!-- Duración: como @Positive del backend. -->
+      <label class="form__campo" for="duration">
+        <span class="form__etiqueta">Duración (minutos)</span>
+        <input class="form__input" id="duration" type="number" formControlName="duration" min="1">
+        @if (form.controls.duration.touched && form.controls.duration.invalid) {
+          <span class="form__error">La duración debe ser positiva.</span>
+        }
+      </label>
+
+      <!-- Director: es su id, como MovieRequest.directorId (404 si no existe). -->
+      <label class="form__campo" for="directorId">
+        <span class="form__etiqueta">Id del director</span>
+        <input class="form__input" id="directorId" type="number" formControlName="directorId" min="1">
+        @if (form.controls.directorId.touched && form.controls.directorId.invalid) {
+          <span class="form__error">El id del director debe ser un número positivo.</span>
+        }
+      </label>
+
+      <button class="form__enviar" type="submit">
+        @if (esEditando()) {
+          Guardar cambios
+        } @else {
+          Crear película
+        }
+      </button>
+    </form>
+  </section>
+</div>

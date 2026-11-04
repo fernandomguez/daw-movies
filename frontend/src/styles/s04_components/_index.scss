@@ -1,0 +1,4 @@
+// Componentes globales BEM (c-*). Hoy no hay: los estilos de las tarjetas,
+// los modales y el formulario van *scoped* en cada componente de Angular
+// (donde usan el mismo patrón de tokens), y los globales del body van en s06.
+// La capa queda a propósito para los c-* futuros.

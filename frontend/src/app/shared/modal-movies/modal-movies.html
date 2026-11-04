@@ -1,0 +1,33 @@
+<div class="modal" (click)="cerrarModal()">
+  <!-- El clic dentro de la ficha no debe cerrar el modal, por eso se para. -->
+  <section class="modal__ficha" (click)="$event.stopPropagation()">
+    <header class="modal__cabecera">
+      <h2 class="modal__titulo">{{ movie().title }}</h2>
+      <button class="modal__close" aria-label="Cerrar" (click)="cerrarModal()">✕</button>
+    </header>
+
+    <dl class="modal__datos">
+      <div class="modal__fila">
+        <dt class="modal__etiqueta">Año</dt>
+        <dd class="modal__valor">{{ movie().releaseYear }}</dd>
+      </div>
+      <div class="modal__fila">
+        <dt class="modal__etiqueta">Duración</dt>
+        <dd class="modal__valor">{{ movie().duration }} min</dd>
+      </div>
+      <div class="modal__fila">
+        <dt class="modal__etiqueta">Director</dt>
+        <dd class="modal__valor">{{ movie().director.fullName }}</dd>
+      </div>
+    </dl>
+
+    <h3 class="modal__subtitulo">Reparto</h3>
+    <ul class="modal__actores">
+      @for (actor of movie().actors; track actor.id) {
+        <li class="modal__actor">{{ actor.fullName }}</li>
+      } @empty {
+        <li class="modal__actor modal__actor--vacio">No hay actores en el reparto</li>
+      }
+    </ul>
+  </section>
+</div>

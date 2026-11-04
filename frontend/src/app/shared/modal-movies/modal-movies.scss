@@ -1,0 +1,114 @@
+// Modal flotante: fondo oscuro que difumina la página y una ficha centrada.
+// Los tokens apuntan a --mlt-sys-*; nada crudo aquí.
+.modal {
+  --modal-color-fondo-oscuro: var(--mlt-sys-color-negro-5);
+  --modal-color-ficha: var(--mlt-sys-color-blanco-9);
+  --modal-color-texto-titulo: var(--mlt-sys-color-principal-1);
+  --modal-color-texto-suave: var(--mlt-sys-color-gris-7);
+  --modal-color-linea: var(--mlt-sys-color-gris-9);
+  --modal-border-radius: var(--mlt-sys-border-radius-6);
+  --modal-actor-border-radius: var(--mlt-sys-border-radius-9);
+  --modal-font-size-close: var(--mlt-sys-font-size-6);
+  --modal-font-size-actor: var(--mlt-sys-font-size-3);
+
+  // Tokens del actor (badge): colores de su aspecto normal
+  --modal-actor-color-fondo: var(--mlt-sys-color-alternativo-9);
+  --modal-actor-color-texto: var(--mlt-sys-color-alternativo-2);
+
+  // Estado privado del actor: por defecto, un actor con películas
+  --modal-privateState-actor-fondo: var(--modal-actor-color-fondo);
+  --modal-privateState-actor-texto: var(--modal-actor-color-texto);
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--modal-color-fondo-oscuro);
+  z-index: 10;
+
+  &__ficha {
+    background: var(--modal-color-ficha);
+    border-radius: var(--modal-border-radius);
+    padding: var(--mlt-sys-padding-6);
+    width: min(480px, 90vw);
+    max-height: 85vh;
+    overflow: auto;
+    box-shadow: 0 10px 40px rgb(0 0 0 / 25%);
+  }
+
+  &__cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--mlt-sys-margin-3);
+    border-bottom: 1px solid var(--modal-color-linea);
+    padding-bottom: var(--mlt-sys-padding-4);
+  }
+
+  &__titulo {
+    margin: 0;
+    color: var(--modal-color-texto-titulo);
+  }
+
+  &__close {
+    border: none;
+    background: none;
+    font-size: var(--modal-font-size-close);
+    cursor: pointer;
+    color: var(--modal-color-texto-suave);
+
+    &:hover {
+      color: var(--modal-color-texto-titulo);
+    }
+  }
+
+  &__datos {
+    margin: var(--mlt-sys-margin-4) 0 0;
+  }
+
+  &__fila {
+    display: flex;
+    gap: var(--mlt-sys-margin-3);
+    padding: var(--mlt-sys-padding-2) 0;
+  }
+
+  &__etiqueta {
+    width: 6rem;
+    margin: 0;
+    font-weight: 600;
+    color: var(--modal-color-texto-suave);
+  }
+
+  &__valor {
+    margin: 0;
+  }
+
+  &__subtitulo {
+    margin: var(--mlt-sys-margin-4) 0 var(--mlt-sys-margin-2);
+    color: var(--modal-color-texto-titulo);
+  }
+
+  &__actores {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--mlt-sys-margin-2);
+  }
+
+  &__actor {
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--modal-actor-border-radius);
+    background: var(--modal-privateState-actor-fondo);
+    color: var(--modal-privateState-actor-texto);
+    font-size: var(--modal-font-size-actor);
+    font-weight: 600;
+
+    &--vacio {
+      --modal-privateState-actor-fondo: var(--modal-color-linea);
+      --modal-privateState-actor-texto: var(--modal-color-texto-suave);
+    }
+  }
+}

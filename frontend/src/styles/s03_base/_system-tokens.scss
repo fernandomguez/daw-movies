@@ -1,0 +1,50 @@
+// System tokens: --mlt-sys-* generados recorriendo el catálogo.
+// Ningún valor escrito a mano: las decisiones viven en _variables_semanticas.scss.
+@use "sass:list";
+@use "sass:map";
+@use "sass:meta";
+@use "../s01_utilities" as *;
+
+:root {
+  // Gamas de color: una variable por tono de cada gama.
+  @each $nombre, $tonos in $colores {
+    @for $i from 1 through list.length($tonos) {
+      --mlt-sys-color-#{$nombre}-#{$i}: #{list.nth($tonos, $i)};
+    }
+  }
+
+  // Cada color semántico apunta al mismo tono de su gama del catálogo.
+  @each $nombre, $gama in $colores-semanticos {
+    @for $i from 1 through list.length(map.get($colores, $gama)) {
+      --mlt-sys-color-#{$nombre}-#{$i}: var(--mlt-sys-color-#{$gama}-#{$i});
+    }
+  }
+
+  // Fuentes: meta.inspect conserva las comillas del catálogo.
+  @each $nombre, $fuente in $fuentes {
+    --mlt-sys-font-#{$nombre}: #{meta.inspect($fuente)};
+  }
+  --mlt-sys-font-default: var(--mlt-sys-font-#{$fuente-default});
+
+  // Medidas: margin, padding y width empiezan en 0; color, font-size y
+  // border-radius empiezan en 1.
+  @for $i from 0 through list.length($font-sizes) - 1 {
+    --mlt-sys-font-size-#{$i + 1}: #{list.nth($font-sizes, $i + 1)};
+  }
+
+  @for $i from 0 through list.length($margins) - 1 {
+    --mlt-sys-margin-#{$i}: #{list.nth($margins, $i + 1)};
+  }
+
+  @for $i from 0 through list.length($paddings) - 1 {
+    --mlt-sys-padding-#{$i}: #{list.nth($paddings, $i + 1)};
+  }
+
+  @for $i from 1 through list.length($border-radius) {
+    --mlt-sys-border-radius-#{$i}: #{list.nth($border-radius, $i)};
+  }
+
+  @for $i from 0 through list.length($widths) - 1 {
+    --mlt-sys-width-#{$i}: #{list.nth($widths, $i + 1)};
+  }
+}

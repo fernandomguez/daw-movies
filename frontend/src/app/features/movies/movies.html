@@ -1,0 +1,48 @@
+<section class="movies">
+  @if (movieService.error()) {
+    <p class="movies__error">⚠️ {{ movieService.error() }}</p>
+  }
+
+  @if (aviso()) {
+    <p class="movies__aviso">{{ aviso() }}</p>
+  }
+
+  <div class="movies__cabecera">
+    <h1 class="movies__title">Películas — {{ movieService.total() }}</h1>
+
+    <!-- Filtro por título, en el cliente; el backend no tiene endpoint de búsqueda. -->
+    <div class="movies__filter">
+      <label class="movies__filter-label" for="filtro-titulo">Buscar por título</label>
+      <input class="movies__filter-input" id="filtro-titulo"
+             type="text" placeholder="Ej: Inception…"
+             (input)="teclearBusqueda($event)">
+    </div>
+  </div>
+
+  <div class="movies__toolbar">
+    <button class="movies__nueva-button" (click)="abrirFormulario(null)">
+      <span aria-hidden="true">➕</span> Nueva película
+    </button>
+  </div>
+
+  <div class="movies__grid">
+    @for (movie of moviesFiltradas(); track movie.id) {
+      <app-card-movies
+        [movie]="movie"
+        (detail)="abrirDetalle($event)"
+        (edit)="abrirFormulario($event)"
+        (removeMovie)="borrarPelicula($event)"
+      />
+    } @empty {
+      <p class="movies__vacio">No hay películas{{ textoBusqueda() ? ' con ese título' : '' }}</p>
+    }
+  </div>
+
+  @if (movieDetalle(); as movie) {
+    <app-modal-movies [movie]="movie" (cerrar)="cerrarDetalle()" />
+  }
+
+  @if (modalFormulario(); as movie) {
+    <app-form-movies [movie]="movie" (cerrar)="cerrarFormulario()" />
+  }
+</section>
